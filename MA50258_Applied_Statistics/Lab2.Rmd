@@ -1,0 +1,192 @@
+---
+title: 'MA50258 Lab 2'
+author: "Your name here"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    code_download: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = TRUE)
+# The option warning = FALSE supresses all the output warnings! 
+# You can  override this option in each code chunk as shown in some cases below!
+```
+
+# Introduction
+
+
+You can download the `*.Rmd` version of this page by clicking in the **Code button** at the top right of this page. If the **Code button** does not work you can download the 'Lab2.Rmd' file from the Moodle page. You should use RStudio,
+ 
+
+
+
+
+## Packages
+
+Below is the list of packages that we will use in this lab. 
+
+```{r}
+#| message: false
+library(tidyverse) 
+library(janitor) # to clean names in a data frame
+library(kableExtra) # for nicer tables
+```
+
+
+## Instructions
+
+1. To answer the following questions, simply fill in the code chunks with your own code.
+
+2. You should use  the `dplyr` verbs introduced in [Chapter 2](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/02-intro-tidyverse.html) of the lecture notes
+
+3. You should use  `ggplot2` commands as introduced in [Chapter 3](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/03-intro-ggplot.html) and [Chapter 4](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/04-intro-regression.html) of the lecture notes. 
+
+4. Label your plots appropriately as well as ensuring that appropriate legends describe different types of objects in the same plot.
+
+5. Once you complete your answers, knit the corresponding Rmarkdown (`.Rmd`) document to
+produce an HTML file.  The name of the HTML file should be Lab2.html. You should submit both Rmd and HTML files in the [submission point in Moodle](https://moodle.bath.ac.uk/mod/assign/view.php?id=1197563). 
+
+6. For all the  questions, only use the subset of the dataset that corresponds to countries in America. 
+
+7. You should get rid of the introduction section (e.g. all of the above)  in your submission.
+
+
+# Gapminder data set
+
+This data set was introduced in [Section 2.3](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/02-intro-tidyverse.html#sec-gapminder-data) of the lecture notes.
+
+The `gapminder` tibble contains a dataset of economic social indicators such as gross domestic product (gdp) per capita, population and life expectancy of many countries over the period from 1952 to 2007 in increments of 5 years.
+
+The  data frame `gapminder` has 1704 rows and 6 variables:
+
+
+* `country` A factor with 142 levels (eg 142 countries in the data set)
+
+* `continent` A factor with 5 levels 
+
+* `year` An integer vector with  years ranging from 1952 to 2007 in increments of 5 years.
+
+* `lifeExp` life expectancy at birth, in years
+
+* `pop` Total population
+
+* `gdpPercap` GDP per capita (US dollars, inflation-adjusted)
+
+
+
+
+
+The data can be loaded into `R` using the following command:
+
+```{r,message=FALSE}
+library(gapminder)
+gapminder <- clean_names(gapminder)
+gapminder <- gapminder %>% filter(continent == "Americas")
+```
+
+
+Note that each row in `gapminder` refers to an specific country in a specific year.
+
+
+
+
+# Questions
+
+## Question 1
+
+
+Produce a scatter plot of time in years in the horizontal axis and life expectancy at birth in the vertical axis.
+
+```{r}
+ggplot(data = gapminder, aes(x = year, y = life_exp)) +
+  geom_point()
+```
+
+What can you conclude form this plot?
+
+
+## Question 2
+
+
+Produce a scatter plot of time in years in the horizontal axis and life expectancy at birth in the vertical axis. In the same graph, plot the corresponding fitted linear regression in a different colour. 
+
+```{r}
+ggplot(data = gapminder, aes(x = year, y = life_exp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+```
+
+What can you conclude from the linear regression fit?
+```{r}
+summary(lm(life_exp ~ year, data = gapminder))
+```
+My answer:
+There is a gradual increase in life expectancy over time. The linear regression fit suggests that life expectancy has increased by 0.36765 years per year.
+
+## Question 3
+
+
+Produce a scatter plot of GDP per capita in the horizontal axis and life expectancy at birth in the vertical axis.
+
+```{r}
+ggplot(data = gapminder, aes(x = gdp_percap, y = life_exp)) +
+  geom_point()
+```
+
+What can you conclude from this plot?
+My answer:
+There is a positive relationship between GDP per capita and life expectancy at birth.
+
+## Question 4
+Produce a scatter plot of GDP per capita in the horizontal axis and life expectancy at birth in the vertical axis. In the same graph, plot the corresponding empirical LOESS regression estimate in a different colour. 
+
+```{r}
+ggplot(data = gapminder, aes(x = gdp_percap, y = life_exp)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, color = "blue")
+```
+
+What can you conclude from the LOESS fit?
+My answer:
+The LOESS fit suggests that the relationship between GDP per capita and life expectancy at birth is not linear. The relationship is positive but the rate of increase in life expectancy decreases as GDP per capita increases.
+
+## Question 5
+
+For each observed year, produce a scatter plot of GDP per capita in the horizontal axis and life expectancy at birth in the vertical axis. In each scatter,  also plot the corresponding empirical LOESS regression estimate as well as the corresponding linear regression fit both in different colours.
+
+```{r}
+ggplot(data = gapminder, aes(x = gdp_percap, y = life_exp)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  facet_wrap(~year)
+```
+
+What can you conclude from both fits?
+My answer:
+LOESS fit is a better fit than the linear regression fit for this dataset.
+The linear regression fit suggests that the relationship between GDP per capita and life expectancy at birth is positive and linear. The LOESS fit suggests that the relationship is positive but the rate of increase in life expectancy decreases as GDP per capita increases.
+
+## Question 6
+
+Using both the linear regression and LOESS fits to _"predict"_ the average life expectancy across countries:
+
+a. with a GDP per capita of 15,000 US dollars in 1982
+
+b. with a GDP per capita of 15,000 US dollars in 2002
+
+c. with a GDP per capita of 40,000 US dollars in 1982
+
+d. with a GDP per capita of 65,000 US dollars in 2002
+
+Here, prediction means evaluating the estimated mean regression line at the required values of the explanatory variables. 
+
+```{r}
+#| message: false
+`````
+
+Present your results in a table and then below it, explain any similarities and differences between the predictions.

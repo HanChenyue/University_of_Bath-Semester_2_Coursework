@@ -1,0 +1,621 @@
+---
+title: 'MA50258: Applied Statistics Lab 1'
+author: "Your name here"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    code_download: yes
+  pdf_document:
+    keep_tex: yes
+    number_sections: yes
+always_allow_html: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE)
+```
+
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
+
+# Instructions
+
+-   As indicated in each part, complete your answers, in the 'Lab1.Rmd'
+    file which can be downloaded by clicking in the **Code button** at
+    the top right of this page. If the **Code button** does not work you
+    can download the 'Lab1.Rmd' file from the Moodle page. You should
+    open this file in RStudio.
+
+-   I'm going to ask that you trust me with this lab! You haven't
+    learned about this kind of document yet, called an R Markdown (.Rmd)
+    file- please just go with it! I promise we'll actually explain it
+    later.
+
+-   After you complete your answers you should convert this file into an
+    HTML file by following the instructions in the
+    <a href="#knit-to-html">Knit to html</a> section at the end of this
+    file!
+
+-   You should submit both your completed R Markdown file (which should
+    be named 'Lab1.Rmd') and the created HTML file (which should be
+    named 'Lab1.html') to the
+    <a href="https://moodle.bath.ac.uk/mod/assign/view.php?id=1111421">submission
+    point in Moodle</a>
+
+-   This is lab is a **formative assessment** and you will receive
+    feedback to your submitted work on an informal basis.
+
+# Introduction
+
+The goal of this lab is to consolidate your knowledge about `R`'s tools
+for data handling and exploration (`dplyr` package), and data
+visualisation (`ggplot2` package). You are encouraged to use pipes
+(`%>%`) as well as appropriate indentation in your code answers.
+
+# Packages
+
+Below is the list of packages that we will use in this lab. Remember to
+install them with the command:
+
+```{r,eval=FALSE}
+install.packages("name_of_package")
+```
+
+before using them! Do not install packages within your scripts! You
+should install a package once per computer. You can see the full list of
+packages installed on your computer by looking at the *Packages* tab in
+the bottom right pane in RStudio.
+
+```{r message=FALSE}
+library(tidyverse) 
+library(lubridate) # to manipulate  variables in date format 
+# lubridate is included in tidyverse but not loaded by default
+library(janitor) # to clean names in a data frame
+library(GGally) # to draw scatter plot matrices using ggplot2 
+## GGally is an add-on package to ggplot2
+library(knitr) # general purpose literate programming tools
+library(klippy) # to copy chunks of code to clipboard
+# klippy should be installed using
+# remotes::install_github("rlesur/klippy")
+```
+
+# Part I: Weather data
+
+In this part you will work with the same four weather datasets used last
+semester in Lab 1 of CM50266. The data contains daily values of:
+
+-   outdoor temperature,
+
+-   indoor temperature and humidity,
+
+-   barometric pressure and
+
+-   rainfall
+
+from October 2016 to October 2017.
+
+## Load the data
+
+The four csv files can be downloaded as a zip file
+[here](data/lab1data.zip). Save the files and place them in your working
+directory.
+
+### Task 1
+
+In the code chunk below, write `R` code to load the four datasets into
+`R` data frames using the function `read_csv` from the [readr
+package](https://readr.tidyverse.org/reference/index.html) (this package
+is loaded when loading the `tidyverse` package). The data frames names
+in `R` should be: \``pressure`, `indoor_temp`, `outdoor_temp` and
+`rainfall`
+
+```{r Task_1}
+# your code here
+pressure <- read_csv("barometer-last-year.csv")
+indoor_temp <- read_csv("indoor-temperature-last-year.csv")
+outdoor_temp <- read_csv("outside-temperature-last-year.csv")
+rainfall <- read_csv("rainfall-last-year.csv")
+```
+
+## Variable names and classes
+
+Some of the variables in the data frames created above have messy names
+that contain spaces and uppercase letters. To convert the variable names
+to [snake_case](https://en.wikipedia.org/wiki/Snake_case) we can use the
+function `clean_names` from the `janitor` package.
+
+### Task 2
+
+In the code chunk below, write `R` code to change all the variable names
+in the four data frames to snake_case. The name of the data frames
+should stay the same. Also, display the variable names (before and after
+applying `clean_names`) of all four data frames using the `R` function
+`names`.
+
+```{r Task_2}
+# your code here
+# Before
+cat("Before applying clean_names():\n")
+cat("pressure is: ", names(pressure), "\n")
+cat("indoor_temp is: ", names(indoor_temp), "\n")
+cat("outdoor_temp is: ", names(outdoor_temp), "\n")
+cat("rainfall is: ", names(rainfall), "\n")
+
+# Applying clean_names()
+pressure <- pressure %>% clean_names()
+indoor_temp <- indoor_temp %>% clean_names()
+outdoor_temp <- outdoor_temp %>% clean_names()
+rainfall <- rainfall %>% clean_names()
+
+# After
+cat("After applying clean_names():\n")
+cat("pressure is: ", names(pressure), "\n")
+cat("indoor_temp is: ", names(indoor_temp), "\n")
+cat("outdoor_temp is: ", names(outdoor_temp), "\n")
+cat("rainfall is: ", names(rainfall), "\n")
+```
+
+### Task 3
+
+In the code chunk below, write `R` code to display the classes of all
+variables in the four data sets. How many different types of variables
+there are? You may want to read the Details in the help file
+`?DateTimeClasses`.
+
+```{r Task_3}
+# Your code here
+# you may use any of the following commands:
+# class
+# str
+# glimpse
+# Displaying the classes of all variables in the four data sets
+# code for "pressure" dataframe
+cat("pressure has", ncol(pressure), "variables.", "\n")
+for (col_name in names(pressure)) {
+  cat("Class of", col_name, ":", class(pressure[[col_name]]), "\n")
+}
+# code for "indoor_temp" dataframe
+cat("indoor_temp has", ncol(indoor_temp), "variables.", "\n")
+for (col_name in names(indoor_temp)) {
+  cat("Class of", col_name, ":", class(indoor_temp[[col_name]]), "\n")
+}
+# code for "outdoor_temp" dataframe
+cat("outdoor_temp has", ncol(outdoor_temp), "variables.", "\n")
+for (col_name in names(outdoor_temp)) {
+  cat("Class of", col_name, ":", class(outdoor_temp[[col_name]]), "\n")
+}
+# code for "rainfall" dataframe
+cat("rainfall has", ncol(rainfall), "variables.", "\n")
+for (col_name in names(rainfall)) {
+  cat("Class of", col_name, ":", class(rainfall[[col_name]]), "\n")
+}
+```
+
+## Join the data frames
+
+We would like to combine the four data frames into one, based on the
+dates column. We can do this using the `left_join` function from the
+`dplyr` package. For example, to join the data frames `pressure` and
+`indoor_temp` we can use:
+
+```{r}
+?left_join
+joined_data_frame <- pressure %>% 
+                        left_join(indoor_temp, by = "date_time")
+```
+
+### Task 4
+
+In the code chunk below, write `R` code to join all four data sets to
+create a single data frame called `weather`. Pay special attention to
+the argument `suffix =` of `left_join`. You should use
+`c(".indoor",".outdoor")` as suffix.
+
+```{r Task_4}
+# Your code here
+weather <- pressure %>%
+  left_join(indoor_temp, by = "date_time", suffix = c(".pressure", ".indoor")) %>%
+  left_join(outdoor_temp, by = "date_time", suffix = c(".indoor", ".outdoor")) %>%
+  left_join(rainfall, by = "date_time", suffix = c(".outdoor", ".rainfall"))
+glimpse(weather)
+```
+
+## Statistical summaries
+
+We already learned that we can obtain summaries of the data in `R` using
+the `summary` function:
+
+```{r}
+summary(weather)
+```
+
+There are separate functions for each component of this output. See for
+example `?mean` `?min` `?max` etc. Note that these have specific
+optional arguments for missing data.
+
+```{r}
+mean(weather$mm)
+mean(weather$mm, na.rm = TRUE)
+```
+
+The sample standard deviation is not included in `summary()`. We can use
+the `R` function `apply` to evaluate any function on either the rows or
+columns of our data.
+
+```{r}
+?apply
+?sd # help on the standrad deviation
+apply(weather, 2, sd, na.rm = T)
+```
+
+We get a warning message since the first column (a date) corresponds to
+a type of variable where the standard deviation is not necessarily well
+defined. We can get around this by re-doing the command, taking out the
+first column:
+
+```{r}
+apply(weather[,-1], 2, sd, na.rm = T)
+```
+
+You may want to read this chapter on [subsetting atomic
+vectors](https://adv-r.hadley.nz/subsetting.html) in R.
+
+### Task 5
+
+In the code chunk below, write `R` code to compute the minimum, maximum,
+mean and standard deviation for each weather measurement. You should the
+place the results into a data frame which in turn should be converted to
+a table using the `kable`command from the `knitr` package.
+
+```{r Task_5}
+# Your code here
+# Define the variables for which summary statistics are needed
+# Apply the function to each column of the dataframe
+weather_summary <- apply(weather[,-1], 2, function(x) c(min = min(x, na.rm = TRUE),
+                                                        max = max(x, na.rm = TRUE),
+                                                        mean = mean(x, na.rm = TRUE),
+                                                        sd = sd(x, na.rm = TRUE)))
+kable(weather_summary)
+```
+
+## Pairwise relationships and correlations
+
+The correlation coefficient is a measure of the *linear* relationship
+between two numeric variables. We can calculate this correlation
+coefficient for two variables using the `cor` function in `R`. For
+example, the correlation between the minimum and maximum outdoor
+temperatures can be computed as follows:
+
+```{r}
+?cor
+cor(weather$temperature_range_low.outdoor,
+    weather$temperature_range_high.outdoor)
+```
+
+Unsurprisingly, these two variables are strongly positively correlated!
+
+To compute the correlation matrix corresponding to a data frame we can
+use `cor` again but with a single argument which should be a data frame
+where all variables are of numeric class. For example:
+
+```{r,error=TRUE}
+cor(indoor_temp) # will give an error
+cor(indoor_temp[,-1]) # removes the date column
+```
+
+### Task 6
+
+In the code chunk below, write `R` code to find and display the
+correlation between all pairs of the weather measurements. Remove all
+rows in the data that contain missing values before computing the
+correlations (you may use `na.omit` or `complete.cases` for this). You
+should convert the correlation matrix to a table using the `kable`
+command from the `knitr` package.
+
+```{r Task_6}
+# Your code here
+# Pay special attention to the argument 'suffix' of 'left_join'
+# You use the argument `use = 'pairwise.complete.obs'` in `cor`
+weather_correlation <- cor(weather[, -1], use = "pairwise.complete.obs")
+kable(weather_correlation)
+```
+
+## Plots
+
+We can use `ggplot2` to draw (for example) the time series of average
+outdoor temperatures:
+
+```{r}
+?geom_line
+weather %>% 
+  ggplot() + 
+    geom_line(aes(date_time,
+                  temperature.outdoor)) +
+    labs(x = "date", y = "outdoor temperature")
+```
+
+or a scatter plot of the minimum versus maximum outdoor temperatures:
+
+```{r}
+weather %>% ggplot() +   
+  geom_point(aes(temperature_range_low.outdoor,
+                 temperature_range_high.outdoor)) +
+  labs(x = "Minimum outdoor temperature", 
+       y = "Maximum outdoor temperature")
+
+```
+
+The R function `pairs` in`R` will create a scatter plot matrix of all
+possible pairs of numeric variables in a data frame.
+
+```{r}
+pairs(weather[,-1])
+```
+
+For a large data frame, this is not exactly visually appealing, but it
+can work for smaller ones:
+
+```{r}
+pairs(weather[,2:5])
+```
+
+There is no single command to draw a scatter plot matrix in `ggplot2`
+but we can use the \``GGally` package and its function `ggpairs` to do
+it with a single command.
+
+```{r,warning=FALSE}
+ggpairs(weather[,-1])
+```
+
+which looks visually more appealing!
+
+In `ggplot2` is easy to stratify plots by a factor variable. Let's try
+looking at the relationship between minimum and maximum outdoor
+temperature but now by broken by month:
+
+```{r}
+?month # from  `lubridate` package
+# to create the month variable on the fly!
+weather %>% 
+  ggplot(aes(temperature_range_low.outdoor,
+             temperature_range_high.outdoor)) +
+  geom_point() + 
+  facet_wrap(~month(date_time, label = TRUE)) +
+  labs(x = "Minimum outdoor temperature", 
+       y = "Maximum outdoor temperature")
+```
+
+### Task 7
+
+In the code chunk below, write `R` code to plot the relationship between
+humidity and barometric pressure, both overall and also by month.
+
+```{r Task_7}
+# Your code here
+
+# Plot by overall
+weather %>%
+  ggplot(aes(humidity, baro)) +
+  geom_point() +
+  labs(x = "Humidity", y = "Barometric pressure") 
+
+# Plot by month
+weather %>%
+  ggplot(aes(humidity, baro)) +
+  geom_point() +
+  facet_wrap(~month(date_time, label = TRUE)) +
+  labs(x = "Humidity", y = "Barometric pressure")
+```
+
+\*\* My answer: How tightly or sparsely humidity and barometric pressure fluctuate 
+varies depending the seasons \*\*
+
+Write here in words what can you say about the linearity of the
+relationship of the variables. You may find elucidating reading the
+following two articles:
+-   [Same Stats, Different Graphs: Generating Datasets with Varied
+    Appearance and Identical Statistics through Simulated
+    Annealing](https://www.autodesk.com/research/publications/same-stats-different-graphs)
+ 
+-   [The Datasaurus data
+    package](https://cran.r-project.org/web/packages/datasauRus/vignettes/Datasaurus.html)
+
+\*\* ***Remove text enclosed by `***` after completing*** \*\*
+
+### Task 8
+
+In the code chunk below, write `R` code to plot the time series of all
+three: minimum, average and maximum outdoor temperatures all in the same
+graph and in different line colours using `ggplot2`.
+
+```{r Task_8}
+# Your code here
+weather %>%
+  ggplot() +
+  geom_line(aes(date_time, temperature_range_low.outdoor, colour = "Minimum")) +
+  geom_line(aes(date_time, temperature.outdoor, colour = "Average")) +
+  geom_line(aes(date_time, temperature_range_high.outdoor, colour = "Maximum")) +
+  labs(x = "Date", y = "Temperature") +
+  scale_colour_manual(values = c("Minimum" = "blue", "Average" = "green", "Maximum" = "red"))
+
+```
+
+# Part II: Sustainable development goals (SDG) data
+
+In this part we will use a different data set! The data comes from
+UNESCO's [Sustainable Development
+Goals](https://en.unesco.org/sustainabledevelopmentgoals). The data is
+of free access via UNESCO [Institute of
+Statistics](http://data.uis.unesco.org). The dataset contains:
+
+-   Information about 89 countries
+
+-   9 variables of education and socio-demographic
+
+-   Yearly information from 2013 to 2017
+
+## Variable dictionary
+
+The description of the variables in the SDG data set is below.
+
+-   `country`: Name of the country (character)
+
+-   `year`: year of observation
+
+-   `continent`: name of the continent (character)
+
+-   `region`: region of the continent (character)
+
+-   `years_education`: mean number of years in education for population
+    over 25 years of age
+
+-   `gdp`: GDP per capita (in US dollars)
+
+-   `life_expectancy` = Life expectancy at birth in years
+
+-   `infant_mortality_rate`= infant mortality rate (per 1,000 live
+    births)
+
+-   `income_class` = World Bank income classification (character): L
+    =low, LM =low-middle, UM = middle-upper and H= upper
+
+## Load the data
+
+The data can be loaded into `R` using the following command:
+
+```{r,message=FALSE}
+sdg <- read_csv("sdg.csv")
+```
+
+Have a quick glimpse of the data:
+
+```{r}
+glimpse(sdg)
+```
+
+Similar to the `gapminder` dataset, each row in `sdg` refers to an
+specific country in a specific year.
+
+## Missing values
+
+The `R` function `is.na` takes a vector or data frame as argument and
+returns a vector or data frame of only logical values where `TRUE` means
+the corresponding entry corresponds to a `NA` (missing value) and
+`FALSE` otherwise. For example
+
+```{r}
+sum(is.na(sdg$life_expectancy))
+```
+
+tells us that the variable `life_expectancy` has
+`r sum(is.na(sdg$life_expectancy))` missing values.
+
+### Task 9
+
+In the code chunk below, write `R` code to find and display the total
+number of missing values in the `sdg` data frame and also broken by each
+variable.
+
+```{r Task_9}
+# Your code here
+total_missing <- sum(is.na(sdg))
+cat("Total number of missing values:", total_missing, "\n")
+
+for (col_name in names(sdg)) {
+  missing_values <- sum(is.na(sdg[[col_name]]))
+  cat("Number of missing values in variable", col_name, ":", missing_values, "\n")
+}
+```
+
+## Descriptive Statistics
+
+### Task 10
+
+In the code chunk below, write `R` code to find and display:
+
+-   The 10 countries with the highest years in education in 2017!
+
+-   The 10 countries with lowest infant mortality in 2013!
+
+You should the place the results into a data frame which in turn should
+be converted to a table using the `kable`command from the `knitr`
+package.
+
+```{r Task_10}
+# Your code here
+highest_years_education <- sdg %>% filter(year == 2017) %>% slice_max(n = 10, years_education)
+lowest_infant_mortality <- sdg %>% filter(year == 2013) %>% slice_min(n = 10, infant_mortality_rate)
+
+kable(highest_years_education, caption = "10 countries with the highest years in education in 2017")
+kable(lowest_infant_mortality, caption = "10 countries with the lowest infant mortality in 2013")
+```
+
+### Task 11
+
+In the code chunk below, write `R` code to find and display the mean and
+the standard deviation of the life expectancy for each continent. You
+should the place the results into a data frame which in turn should be
+converted to a table using the `kable`command from the `knitr` package.
+
+```{r Task_11}
+# Your code here
+life_expectancy_summary <- sdg %>% group_by(continent) %>% 
+  summarise(mean = mean(life_expectancy, na.rm = TRUE), 
+            sd = sd(life_expectancy, na.rm = TRUE))
+kable(life_expectancy_summary, caption = "Mean and standard deviation of the life expectancy for each continent")
+```
+
+## Plots
+
+### Task 12
+
+In the code chunk below, write `R` code to display a scatterplot of
+`life_expectancy` (vertical) against `gdp` (horizontal) with information
+for 2017 only and indicating the different continents with different
+colours.
+
+```{r Task_12}
+# Your code here
+sdg %>% filter(year == 2017) %>%
+  ggplot(aes(gdp, life_expectancy, colour = continent)) +
+  geom_point() +
+  labs(x = "GDP", y = "Life expectancy")
+```
+
+### Task 13
+
+In the code chunk below, write `R` code to display a scatter plot of
+`life_expectancy` (vertical) against the natural logarithm of `gdp`
+(horizontal) and also with a linear fit obtained by least squares!
+
+```{r Task_13}
+# Your code here
+sdg %>% 
+  ggplot(aes(log(gdp), life_expectancy)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Logarithm of GDP", y = "Life expectancy")
+```
+
+### Task 14
+
+In the code chunk below, write `R` code to display a different scatter
+plot for each year of `life_expectancy`(vertical) against the natural
+logarithm of `gdp` (horizontal) and with a linear fit obtained by least
+squares!
+
+```{r Task_14}
+# Your code here
+sdg %>% 
+  ggplot(aes(log(gdp), life_expectancy)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~year) +
+  labs(x = "Logarithm of GDP", y = "Life expectancy")
+```
