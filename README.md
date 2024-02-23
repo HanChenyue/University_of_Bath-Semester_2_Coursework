@@ -1,15 +1,9 @@
 ## Semester_2_Coursework
-#### Repository for 2024 Semester 2 Coursework
+### Repository for 2024 Semester 2 Coursework:
 
-###### CM50266
-######## Applied Data Science (Tesco Dataset)
-###### EL10705
-######## Introduction to English Linguistics
-###### MA50258
-######## Applied Statistics
-###### MA50259
-######## Statistical Design of Investigations
-###### MA50260
-######## Statistical Modelling
-###### MA50261
-######## Research Project Preparation
+__CM50266__ Applied Data Science (Tesco Dataset)
+__EL10705__ Introduction to English Linguistics
+__MA50258__ Applied Statistics
+__MA50259__ Statistical Design of Investigations
+__MA50260__ Statistical Modelling
+__MA50261__ Research Project Preparation
