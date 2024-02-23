@@ -1,4 +1,4 @@
-# Semester_2_Coursework
+# Semester 2 Coursework
 ## Repository for 2024 Semester 2 Coursework:
 
 * __CM50266__ Applied Data Science (Tesco Project)
