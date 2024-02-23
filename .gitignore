@@ -48,5 +48,6 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-# Large Zip Files
-/*.zip
+# CSV and Zip Files
+*.csv
+*.zip
