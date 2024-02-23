@@ -1,5 +1,5 @@
-## Semester_2_Coursework
-### Repository for 2024 Semester 2 Coursework:
+# Semester_2_Coursework
+## Repository for 2024 Semester 2 Coursework:
 
 * __CM50266__ Applied Data Science (Tesco Dataset)
 * __EL10705__ Introduction to English Linguistics
