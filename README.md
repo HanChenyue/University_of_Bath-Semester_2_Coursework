@@ -6,4 +6,3 @@
 * __MA50258__ Applied Statistics
 * __MA50259__ Statistical Design of Investigations
 * __MA50260__ Statistical Modelling
-* __MA50261__ Research Project Preparation
