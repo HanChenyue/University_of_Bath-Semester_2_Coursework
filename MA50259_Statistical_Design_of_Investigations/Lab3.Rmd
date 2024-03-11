@@ -6,21 +6,30 @@ output:
   pdf_document: default
   html_document:
     df_print: paged
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-In this practical you will learn more of how to  analyse an experimental design that does not have full rank and also the basics of the corresponding hypothesis testing.  Take the time to run each of the following commands and analyse the displayed results to understand what the code is doing.
-
+In this practical you will learn more of how to analyse an experimental
+design that does not have full rank and also the basics of the
+corresponding hypothesis testing. Take the time to run each of the
+following commands and analyse the displayed results to understand what
+the code is doing.
 
 ## Estimation in the treatment effects model
 
-Consider  the treatment effects model of a completely randomized design (CRD) with $t=3$  levels and $r_i=4$ replicates
-$$\boldsymbol{Y}=\boldsymbol{X\beta}+\boldsymbol{\epsilon}$$
-where $\boldsymbol{\epsilon}\sim MVN(\boldsymbol{0},\sigma^2 \,\boldsymbol{I})$ and
+Consider the treatment effects model of a completely randomized design
+(CRD) with $t=3$ levels and $r_i=4$ replicates
+$$\boldsymbol{Y}=\boldsymbol{X\beta}+\boldsymbol{\epsilon}$$ where
+$\boldsymbol{\epsilon}\sim MVN(\boldsymbol{0},\sigma^2 \,\boldsymbol{I})$
+and
 
+```{=tex}
 \begin{small}
 $$
 \boldsymbol{y}=
@@ -86,19 +95,19 @@ y_{34}
 \right)
 $$
 \end{small}
-
-1. Load the corresponding packages to use in this tutorial
+```
+1.  Load the corresponding packages to use in this tutorial
 
 ```{r,message=FALSE,echo=TRUE}
 library(tidyverse)
 library(MASS)
 ```
 
-
-2. As done in Lab 2, simulate the response with a normal distribution. Also, construct the design matrix $\boldsymbol{X}$.
+2.  As done in Lab 2, simulate the response with a normal distribution.
+    Also, construct the design matrix $\boldsymbol{X}$.
 
 ```{r}
-t<-3; # the number of treatmenet levels
+t<-3; # the number of treatment levels
 r<-4; # the number of replicates 
 n<-t*r
 levels<-c("level 1","level 2","level 3"); 
@@ -120,40 +129,29 @@ X
 colnames(X)<-c("reference","effect 1","effect 2","effect 3")
 ```
 
-```{r,results=FALSE, echo=FALSE}
-t<-3; # the number of treatmenet levels
-r<-4; # the number of replicates 
-n<-t*r
-levels<-c("level 1","level 2","level 3");
-fact <- gl(t,r,labels=levels) 
-crd <- tibble(  treatment=fact )
-set.seed(13579)
-mu<-500 # reference value
-tau<-c(50,0,-30) # treatment effects= differences wrt to mu
-sd<-10 # overall standard deviation
-means<-mu+tau %>% rep(each=r) # vector of means
-y<-rnorm(n,mean=means,sd=sd)
-crd$response<-y
-Z <- model.matrix(~ fact-1)
-X<-cbind(1,as.matrix(Z))
-colnames(X)<-c("reference","effect 1","effect 2","effect 3")
-```
+3.  **(H)** **Definition:** A generalized inverse of the symmetric
+    matrix $\boldsymbol{X^TX}$ is a square matrix $\boldsymbol{G}$
+    satisfying $$\boldsymbol{X^TXGX^TX=X^TX}$$
 
-
-3. **(H)** **Definition:** A generalized inverse of the symmetric matrix  $\boldsymbol{X^TX}$ is a square  matrix $\boldsymbol{G}$ satisfying $$\boldsymbol{X^TXGX^TX=X^TX}$$ 
-
-The command \texttt{ginv} in the package \texttt{MASS} computes one type of generalised inverse called the Moore-Penrose generalised inverse (here we call it $\boldsymbol{G}_1$). Another type of generalized inverse can be calculated for our specific case of $\boldsymbol{X^TX}$ as follows
-$$\boldsymbol{G}_2=
+The command \texttt{ginv} in the package \texttt{MASS} computes one type
+of generalised inverse called the Moore-Penrose generalised inverse
+(here we call it $\boldsymbol{G}_1$). Another type of generalized
+inverse can be calculated for our specific case of $\boldsymbol{X^TX}$
+as follows $$\boldsymbol{G}_2=
 \left(
 \begin{array}{cc}
 0 & 0\\
 0 & (\boldsymbol{Z^TZ})^{-1} \\
 \end{array}
 \right)
-$$
-where $\boldsymbol{Z}$ is the design matrix of the means model. Compute two solutions, $\tilde{\boldsymbol{\beta}}_1$ and $\tilde{\boldsymbol{\beta}}_2$ to the normal equations 
-$$\boldsymbol{X^TX\beta}=\boldsymbol{X^Ty}$$
-in our example using these two types of generalised inverse. That is, compute $\tilde{\boldsymbol{\beta}}_1=\boldsymbol{G}_1 \boldsymbol{X^Ty}$ and $\tilde{\boldsymbol{\beta}}_2=\boldsymbol{G}_2 \boldsymbol{X^Ty}$
+$$ where $\boldsymbol{Z}$ is the design matrix of the means model.
+Compute two solutions, $\tilde{\boldsymbol{\beta}}_1$ and
+$\tilde{\boldsymbol{\beta}}_2$ to the normal equations
+$$\boldsymbol{X^TX\beta}=\boldsymbol{X^Ty}$$ in our example using these
+two types of generalised inverse. That is, compute
+$\tilde{\boldsymbol{\beta}}_1=\boldsymbol{G}_1 \boldsymbol{X^Ty}$ and
+$\tilde{\boldsymbol{\beta}}_2=\boldsymbol{G}_2 \boldsymbol{X^Ty}$
+
 ```{r}
 # Q1
 ginv1 <- ginv(t(X) %*% X)
@@ -166,79 +164,170 @@ cat("Beta 1:\n")
 beta1
 cat("Beta 2:\n")
 beta2
-# Understand: 4 treatment due to baseline mean and 3 treatment effects
-# Understand: 3 treatment levels due to making first row, first column of Z zero
 ```
 
-```{r,results=FALSE,echo=FALSE}
-```
-4. **Definition:** A linear combination $\boldsymbol{\lambda^T\beta}$ of the parameter vector $\boldsymbol{\beta}$ is said to be **estimable** if it can be estimated unbiasedly with a linear combination of the observations, that is, if there exists a vector $\boldsymbol{a}$ of length $n$ such that 
-$$E[\boldsymbol{a^TY}]=\boldsymbol{\lambda^T\beta}\,,\qquad \mbox{for all } \boldsymbol{\beta}$$
+4.  **Definition:** A linear combination $\boldsymbol{\lambda^T\beta}$
+    of the parameter vector $\boldsymbol{\beta}$ is said to be
+    **estimable** if it can be estimated unbiasedly with a linear
+    combination of the observations, that is, if there exists a vector
+    $\boldsymbol{a}$ of length $n$ such that
+    $$E[\boldsymbol{a^TY}]=\boldsymbol{\lambda^T\beta}\,,\qquad \mbox{for all } \boldsymbol{\beta}$$
 
-- It is easy to check that $\boldsymbol{\lambda^T\beta}$ is estimable  if  and only if there exists a vector $\boldsymbol{a}$ of length $n$ such that $\boldsymbol{\lambda}=\boldsymbol{X^Ta}$, that is, if $\boldsymbol{\lambda}$ belongs to the space generated by the rows of $\boldsymbol{X}$. Which ones of the following linear combinations are estimable? 
+-   It is easy to check that $\boldsymbol{\lambda^T\beta}$ is estimable
+    if and only if there exists a vector $\boldsymbol{a}$ of length $n$
+    such that $\boldsymbol{\lambda}=\boldsymbol{X^Ta}$, that is, if
+    $\boldsymbol{\lambda}$ belongs to the space generated by the rows of
+    $\boldsymbol{X}$. Which ones of the following linear combinations
+    are estimable?
 
-- $\boldsymbol{\lambda_1^T\beta}=\mu+\tau_1$ 
+-   $\boldsymbol{\lambda_1^T\beta}=\mu+\tau_1$
 
-- $\boldsymbol{\lambda_2^T\beta}=\tau_1-\tau_2$ 
+-   $\boldsymbol{\lambda_2^T\beta}=\tau_1-\tau_2$
 
-- $\boldsymbol{\lambda_3^T\beta}=\mu-\tau_1$ 
+-   $\boldsymbol{\lambda_3^T\beta}=\mu-\tau_1$
 
-- $\boldsymbol{\lambda_4^T\beta}=\tau_1$ 
+-   $\boldsymbol{\lambda_4^T\beta}=\tau_1$
 
 ```{r}
 lambda1<-c(1,1,0,0)
 lambda2<-c(0,1,-1,0)
 lambda3<-c(1,-1,0,0)
 lambda4<-c(0,1,0,0)
-# you can check for estimability using the rank
-# of the extended matrix
 qr(rbind(X,lambda1))$rank
 qr(rbind(X,lambda2))$rank
 qr(rbind(X,lambda3))$rank
 qr(rbind(X,lambda4))$rank
 ```
+\hrulefill
+\underline{My answer}
 
+* $\boldsymbol{\lambda_1^T\beta}=\mu+\tau_1$ and $\boldsymbol{\lambda_2^T\beta}=\tau_1-\tau_2$ are estimable, $\boldsymbol{\lambda_3^T\beta}=\mu-\tau_1$ and $\boldsymbol{\lambda_4^T\beta}=\tau_1$ are not estimable.
 
-```{r,results=FALSE,echo=FALSE}
-lambda1<-c(0,1,-1,0)
-lambda2<-c(1,1,0,0)
-lambda3<-c(1,-1,0,0)
-lambda4<-c(0,1,0,0)
+* You check for estimability by noting the rank of the extended matrix.
+
+* Since $\boldsymbol{\lambda_1^T\beta}$ and a$\boldsymbol{\lambda_2^T\beta}=\tau_1-\tau_2$ are full rank with rank = 3, they are estimable as they are not linearly dependant on column 1 of X due to being a 3x3 matrix (Both are actually derived from Z matrix), unlike $\boldsymbol{\lambda_3^T\beta}=\mu-\tau_1$ and $\boldsymbol{\lambda_4^T\beta}=\tau_1$ which are rank 4 and therefore linearly dependant on column 1 of X due to being a 4x4 matrix.
+
+\hrulefill
+
+5.  **(H)** If $\boldsymbol{\lambda^T\beta}$ is estimable, then we can
+    estimate it with any solution to the normal equations
+    $\tilde{\boldsymbol{\beta}}$ by simply using
+    $$\widehat{\boldsymbol{\lambda^T\beta}}:=\boldsymbol{\lambda^T}\tilde{\boldsymbol{\beta}}=\boldsymbol{\lambda^TGX^Ty}=\boldsymbol{a^TXGX^Ty}$$
+    and the estimator does not depend on the particular choice of
+    generalised inverse $\boldsymbol{G}$. Verify that this last
+    statement is true for the linear combinations
+    $\boldsymbol{\lambda_1^T\beta}=\mu+\tau_1$ and
+    $\boldsymbol{\lambda_2^T\beta}=\tau_1-\tau_2$ using the two
+    solutions of the normal equations found in question 3.
+
+```{r, eval=TRUE, echo=TRUE}
+# For lambda1 = mu + tau1
+test1 <- lambda1%*%beta1
+test2 <- lambda1%*%beta2
+check1 <- mu + tau[1]
+difference1 <- test1 - check1
+
+# For lambda2 = tau1 - tau2
+test3 <- lambda2%*%beta1
+test4 <- lambda2%*%beta2
+check2 <- tau[1] - tau[2]
+difference2 <- test4 - check2
+
+cat("test1: ", test1)
+cat("test2: ", test2)
+cat("test3: ", test3)
+cat("test4: ", test4)
+cat("mu + tau1: ", check1)
+cat("tau1 - tau2: ", check2)
+cat("Difference between lambda1 and check1:", difference1)
+cat("Difference between lambda2 and check2:", difference2)
 ```
 
+\hrulefill
+\underline{My answer}
 
-5. **(H)** If $\boldsymbol{\lambda^T\beta}$ is estimable, then we can estimate it with any solution to the normal equations $\tilde{\boldsymbol{\beta}}$ by simply using 
-$$\widehat{\boldsymbol{\lambda^T\beta}}:=\boldsymbol{\lambda^T}\tilde{\boldsymbol{\beta}}=\boldsymbol{\lambda^TGX^Ty}=\boldsymbol{a^TXGX^Ty}$$ 
-and the estimator does not depend on the particular choice of generalised inverse $\boldsymbol{G}$. Verify that this last statement is true for the linear combinations $\boldsymbol{\lambda_1^T\beta}=\mu+\tau_1$ and $\boldsymbol{\lambda_2^T\beta}=\tau_1-\tau_2$  using the two solutions of the normal equations found in  question 3.
+* $\boldsymbol{\lambda_1^T\beta_1}$ and $\boldsymbol{\lambda_1^T\beta_2}$ return approximately same value, as do $\boldsymbol{\lambda_2^T\beta_1}$ and $\boldsymbol{\lambda_2^T\beta_2}$. This is because the estimator does not depend on the particular choice of generalised inverse $\boldsymbol{G}$ being used.
+
+* Difference between $\boldsymbol{\lambda_1^T\beta_1}$ and $\boldsymbol{\lambda_1^T\beta_2}$ versus $\boldsymbol{\mu + \tau_1}$ is -10.67 and difference between $\boldsymbol{\lambda_2^T\beta_1}$ and $\boldsymbol{\lambda_2^T\beta_2}$ versus $\boldsymbol{\tau_1 - \tau_2}$ is -22.06.
+
+\hrulefill
 
 
+6.  The reason why the 2 estimators above: one based on
+    $\boldsymbol{G}_1$ and the other based on $\boldsymbol{G}_2$, do not
+    depend on the particular choice of generalised inverse is because
+    the product $$\boldsymbol{XGX^T}$$ is invariant to the choice of
+    generalised inverse $\boldsymbol{G}$. Verify this product does not
+    depend on the choice of $\boldsymbol{G}$ using the two generalised
+    inverses $\boldsymbol{G}_1$ and $\boldsymbol{G}_2$ computed above,
+    that is, verify that $$\boldsymbol{XG_1X^T}=\boldsymbol{XG_2X^T}$$
 
-
-6. The reason why the 2 estimators above: one based on $\boldsymbol{G}_1$ and the other based on $\boldsymbol{G}_2$, do not depend on the particular choice of generalised inverse is because the product 
-$$\boldsymbol{XGX^T}$$
-is invariant to the choice of generalised inverse $\boldsymbol{G}$. Verify this product does not depend on the choice of $\boldsymbol{G}$ using the two generalised inverses $\boldsymbol{G}_1$ and $\boldsymbol{G}_2$ computed above, that is, verify that 
-$$\boldsymbol{XG_1X^T}=\boldsymbol{XG_2X^T}$$
 ```{r}
+# Output of both commands indicate a near zero difference
 X%*%ginv1%*%t(X)-X%*%ginv2%*%t(X)
+near(X%*%ginv1%*%t(X),X%*%ginv2%*%t(X))
 ```
-
 
 ```{r,results=FALSE, echo=FALSE}
 X%*%ginv1%*%t(X)-X%*%ginv2%*%t(X)
 ```
-7. **(H)** For the treatment effects model in a CRD, there can be at most $t$ linearly independent estimable linear combinations, in other words, the space of estimable linear combinations is of dimension $t$, the number of levels of the treatment effect. Given two estimable linear combinations $\boldsymbol{\lambda_1^T\beta}$ and $\boldsymbol{\lambda_2^T\beta}$, they are said to be linearly independent if $\boldsymbol{\lambda}_1$ and $\boldsymbol{\lambda}_2$ are linearly independent. Verify that $\boldsymbol{\lambda}_1$ and $\boldsymbol{\lambda}_2$ in question 5 are linearly independent. Here, the dimension is $t=3$ so find a third linearly independent combination $\boldsymbol{\lambda_3^T\beta}$
 
+7.  **(H)** For the treatment effects model in a CRD, there can be at
+    most $t$ linearly independent estimable linear combinations, in
+    other words, the space of estimable linear combinations is of
+    dimension $t$, the number of levels of the treatment effect. Given
+    two estimable linear combinations $\boldsymbol{\lambda_1^T\beta}$
+    and $\boldsymbol{\lambda_2^T\beta}$, they are said to be linearly
+    independent if $\boldsymbol{\lambda}_1$ and $\boldsymbol{\lambda}_2$
+    are linearly independent. Verify that $\boldsymbol{\lambda}_1$ and
+    $\boldsymbol{\lambda}_2$ in question 5 are linearly independent.
+    Here, the dimension is $t=3$ so find a third linearly independent
+    combination $\boldsymbol{\lambda_3^T\beta}$
+```{r}
+# A linear combination lambda_T is estimable if and only if there exists a solution R to the system X^T * X * R = lambda.
+r_1 <- ginv1 %*% lambda1
+r_1
+r_2 <- ginv1 %*% lambda2
+r_2
+# How to find r_3?
+
+# Chatgpt
+qr(cbind(X, lambda1))$rank
+qr(cbind(X, lambda2))$rank
+qr(cbind(X, lambda3))$rank
+# Once we confirm lambda1 and lambda2 are linearly independent, we can find a third linearly independent combination lambda3
+# This third vector lambda3 cannot be expressed as a linear combination of lambda1 and lambda2, and it should also be linearly independent of the columns of X.
+# But rank is 3 for both, isn't it non-full rank and thus not linearly independent?
+
+# strange thing is r(bind(X, lambda1, 2, and 3))$rank is 3, cbind gets me 4 maybe this is the answer?
+```
 
 <!-- # Recall lecture 2 class, if I have a non full rank model, I can make a transformation to make it full rank -->
-8. Any linear  model of less than full rank (such as the treatment effects model in a CRD) can always be reparametrised into a linear  model of full rank. Given $t$ linearly
-independent estimable combinations $\boldsymbol{\lambda_1^T\beta},\ldots, \boldsymbol{\lambda_t^T\beta}$. Let $\boldsymbol{\Lambda^T}=(\boldsymbol{\lambda}_1,\cdots,\boldsymbol{\lambda}_t)$ be the matrix of dimension $(t+1) \times t$ whose columns are $\{\boldsymbol{\lambda}_i\}$. Let $\gamma$ be a vector of length $t+1$ such that the square matrix $\boldsymbol{U}^T=(\boldsymbol{\lambda}_1,\cdots,\boldsymbol{\lambda}_t,\gamma)=(\boldsymbol{\Lambda} \,|\,\gamma)$ is non-singular with inverse $\boldsymbol{W}=\boldsymbol{U}^{-1}=(\boldsymbol{W}_1 \,|\,\eta)$. If $\boldsymbol{W}$ diagonalises $\boldsymbol{X^TX}$, that is
-$$\boldsymbol{W}^T\boldsymbol{X^TX}\boldsymbol{W}=diag(v_1,\dots,v_t,0)$$
-for some constants $v_1,\ldots,v_t$.
-Then $\boldsymbol{X\eta}=\boldsymbol{0}$ and we can write
-$$\boldsymbol{Y}=\boldsymbol{X\beta}+\boldsymbol{\epsilon}=\boldsymbol{(XW_1)(\Lambda\beta)}+\boldsymbol{(X\eta)(\gamma^T\beta)}+\boldsymbol{\epsilon}=\boldsymbol{Z\delta}+\boldsymbol{\epsilon}$$
-where $\boldsymbol{Z}=\boldsymbol{XW_1}$ has  rank $t$ and $\boldsymbol{\delta}=\boldsymbol{\Lambda\beta}$ so this model is full rank.
-The reparametrised full rank model is not unique.
-The commands below construct two different reparametrised full rank models both starting from the non full rank treatment effect model. Verify that the first one corresponds to the means model.
+
+8.  Any linear model of less than full rank (such as the treatment
+    effects model in a CRD) can always be reparametrised into a linear
+    model of full rank. Given $t$ linearly independent estimable
+    combinations
+    $\boldsymbol{\lambda_1^T\beta},\ldots, \boldsymbol{\lambda_t^T\beta}$.
+    Let
+    $\boldsymbol{\Lambda^T}=(\boldsymbol{\lambda}_1,\cdots,\boldsymbol{\lambda}_t)$
+    be the matrix of dimension $(t+1) \times t$ whose columns are
+    $\{\boldsymbol{\lambda}_i\}$. Let $\gamma$ be a vector of length
+    $t+1$ such that the square matrix
+    $\boldsymbol{U}^T=(\boldsymbol{\lambda}_1,\cdots,\boldsymbol{\lambda}_t,\gamma)=(\boldsymbol{\Lambda} \,|\,\gamma)$
+    is non-singular with inverse
+    $\boldsymbol{W}=\boldsymbol{U}^{-1}=(\boldsymbol{W}_1 \,|\,\eta)$.
+    If $\boldsymbol{W}$ diagonalises $\boldsymbol{X^TX}$, that is
+    $$\boldsymbol{W}^T\boldsymbol{X^TX}\boldsymbol{W}=diag(v_1,\dots,v_t,0)$$
+    for some constants $v_1,\ldots,v_t$. Then
+    $\boldsymbol{X\eta}=\boldsymbol{0}$ and we can write
+    $$\boldsymbol{Y}=\boldsymbol{X\beta}+\boldsymbol{\epsilon}=\boldsymbol{(XW_1)(\Lambda\beta)}+\boldsymbol{(X\eta)(\gamma^T\beta)}+\boldsymbol{\epsilon}=\boldsymbol{Z\delta}+\boldsymbol{\epsilon}$$
+    where $\boldsymbol{Z}=\boldsymbol{XW_1}$ has rank $t$ and
+    $\boldsymbol{\delta}=\boldsymbol{\Lambda\beta}$ so this model is
+    full rank. The reparametrised full rank model is not unique. The
+    commands below construct two different reparametrised full rank
+    models both starting from the non full rank treatment effect model.
+    Verify that the first one corresponds to the means model.
 
 ```{r}
 lambda1<-c(1,1,0,0)
@@ -247,11 +336,11 @@ lambda3<-c(1,0,0,1)
 Lambda=rbind(lambda1,lambda2,lambda3)
 gama<-c(1,1,0,1) # arbitrary vector as long as U is non-singular
 #gama<-c(1,0,1,1) # alternative 1
-gama<-c(0,0,1,1) # alternative 2
+# gama<-c(0,0,1,1) # alternative 2
 U<-rbind(Lambda,gama)
 U
 qr(U)$rank
-W<-solve(U)
+W<-solve(U) # use solve() to get the inverse
 W
 W1<-W[,1:3]
 eta<-W[,4]
@@ -280,44 +369,15 @@ qr(Z2)$rank # should have full column rank
 t(W)%*%t(X)%*%X%*%W # check that it diagonalises X'X
 ```
 
-
-```{r,echo=FALSE,results=FALSE}
-lambda1<-c(1,1,0,0)
-lambda2<-c(1,0,1,0)
-lambda3<-c(1,0,0,1)
-Lambda=rbind(lambda1,lambda2,lambda3)
-gama<-c(1,1,0,1) 
-U<-rbind(Lambda,gama)
-qr(U)$rank
-W<-solve(U)
-W1<-W[,1:3]
-eta<-W[,4]
-X%*%eta # should be zero vector
-Z1<-X%*%W1 # new design matrix
-qr(Z1)$rank # should have full column rank
-
-##
-
-E<-t(eigen(t(X)%*%X)$vectors)
-Lambda=E[1:3,]
-gama<-E[4,]
-U<-rbind(Lambda,gama)
-qr(U)$rank
-W<-solve(U)
-W1<-W[,1:3]
-eta<-W[,4]
-X%*%eta # should be zero vector
-Z2<-X%*%W1 # new design matrix
-qr(Z2)$rank # should have full column rank
-t(W)%*%t(X)%*%X%*%W # diagonalises X'X
-```
-
-9. The error sum of squares is defined as
-$$ssE:=\|\boldsymbol{y}-\boldsymbol{X\tilde{\beta}}\|^2$$ 
-where $\boldsymbol{\tilde{\beta}}$ is a solution to the normal equations. This can be written as
-$$ssE:=\|\boldsymbol{y}-\boldsymbol{XGX^Ty}\|^2$$ 
-and therefore is invariant to the choice of generalised inverse $\boldsymbol{G}$ since $\boldsymbol{XGX^T}$ is also invariant. Verify, using our observed sample that
-$$\|\boldsymbol{y}-\boldsymbol{XG_1X^Ty}\|^2-\|\boldsymbol{y}-\boldsymbol{XG_2X^Ty}\|^2$$
+9.  The error sum of squares is defined as
+    $$ssE:=\|\boldsymbol{y}-\boldsymbol{X\tilde{\beta}}\|^2$$ where
+    $\boldsymbol{\tilde{\beta}}$ is a solution to the normal equations.
+    This can be written as
+    $$ssE:=\|\boldsymbol{y}-\boldsymbol{XGX^Ty}\|^2$$ and therefore is
+    invariant to the choice of generalised inverse $\boldsymbol{G}$
+    since $\boldsymbol{XGX^T}$ is also invariant. Verify, using our
+    observed sample that
+    $$\|\boldsymbol{y}-\boldsymbol{XG_1X^Ty}\|^2-\|\boldsymbol{y}-\boldsymbol{XG_2X^Ty}\|^2$$
 
 ```{r,eval=FALSE}
 # enough to check the vectors
@@ -326,26 +386,23 @@ d2<-y-X%*%ginv2%*%t(X)%*%y
 d1-d2
 ```
 
-```{r,echo=FALSE,results=FALSE}
-# enough to check the vectors
-d1<-y-X%*%ginv1%*%t(X)%*%y
-d2<-y-X%*%ginv2%*%t(X)%*%y
-d1-d2
-```
 
-10. To test the hypothesis 
-$$H_0\,: \tau_1=\cdots=\tau_t$$
-we can compute the error sum of squares in the reduced model where $H_0$ is true. Note this reduced model is given by
-$$\boldsymbol{Y}=\boldsymbol{1}\mu+\boldsymbol{\epsilon}$$
-where $\boldsymbol{1}$ is the column vector on ones of dimension $n$. Clearly
-this model is of full rank and the solution to the normal equations
-$$\boldsymbol{1^T1}\mu=\boldsymbol{1^Ty}=\sum_{i=1}^n y_i$$
-is $\hat{\mu}=\bar{y}=\boldsymbol{1^Ty}/n$ and the corresponding error sum of squares is 
+10. To test the hypothesis $$H_0\,: \tau_1=\cdots=\tau_t$$ we can
+    compute the error sum of squares in the reduced model where $H_0$ is
+    true. Note this reduced model is given by
+    $$\boldsymbol{Y}=\boldsymbol{1}\mu+\boldsymbol{\epsilon}$$ where
+    $\boldsymbol{1}$ is the column vector on ones of dimension $n$.
+    Clearly this model is of full rank and the solution to the normal
+    equations
+    $$\boldsymbol{1^T1}\mu=\boldsymbol{1^Ty}=\sum_{i=1}^n y_i$$ is
+    $\hat{\mu}=\bar{y}=\boldsymbol{1^Ty}/n$ and the corresponding error
+    sum of squares is
 
-$$ssE_0:=\|\boldsymbol{y}-\boldsymbol{1}\hat{\mu}\|^2=\|\boldsymbol{y}-\boldsymbol{1}\bar{y}\|^2$$ 
-The test statistic commonly used is 
-$$F=\frac{n-t}{t-1}\frac{SSE_0-SSE}{SSE}$$
-Compute $F$ for our data and compare to the one given using the \texttt{aov} command in R given by \texttt{aov(response~treatment,crd)}.
+$$ssE_0:=\|\boldsymbol{y}-\boldsymbol{1}\hat{\mu}\|^2=\|\boldsymbol{y}-\boldsymbol{1}\bar{y}\|^2$$
+The test statistic commonly used is
+$$F=\frac{n-t}{t-1}\frac{SSE_0-SSE}{SSE}$$ Compute $F$ for our data and
+compare to the one given using the \texttt{aov} command in R given by
+\texttt{aov(response~treatment,crd)}.
 
 ```{r,eval=FALSE}
 SSE<-t(d1)%*%d1
@@ -356,7 +413,3 @@ FF
 aov1<-aov(response~treatment,crd)
 summary(aov1)
 ```
-
-
-
-
