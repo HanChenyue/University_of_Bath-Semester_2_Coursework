@@ -1,0 +1,195 @@
+---
+title: 'MA50259: Statistical Design of Investigations'
+author: "Coursework 1 (2024)"
+candidate number: "239390631"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(Matrix)
+```
+
+# Part 1: Baking Powder Experiment
+
+In an experiment to study the effect of the amount of baking powder in a biscuit dough upon the rise heights (measured in centimetre) of the biscuits, four levels of baking powder were tested and four replicate biscuits were made with each level in a random order. The results are shown in the table below (tsp stands for teaspoon)
+
+```{=tex}
+\begin{center}
+%\captionof{table}{Comparison of performance of three different methods for $\lambda=8$, $n=1000$, $K=3$ and balanced community size with varying OIR\label{perftab1result}}  % title name of the table
+%\label{estimresult}
+\begin{tabular}{l c c c}  % creating 10 columns
+\hline                       % inserting double-line
+ .25 tsp & 0.5 tsp & .75 tsp & 1 tsp\\
+\hline
+11.4 & 27.8 & 47.6 & 61.6\\
+11.0 & 29.2 & 47.0 & 62.4\\
+11.3 & 26.8 & 47.3 & 63.0\\
+ 9.5 & 26.0 & 45.5 & 63.9
+\end{tabular}
+\end{center}
+```
+1.  What is the experimental unit and which type of experimental design is this?
+
+\hrulefill
+\underline{Answer:}
+
+\textbf{Definition} of an \textit{experimental unit}: The item under study upon which something is changed. This could be things, human subjects, or just a point in time.
+
+The \textit{experimental unit} in this coursework is the biscuit.
+
+\textbf{Definition} of a \textit{experimental design}: A collection of experiments or runs that is planned in advance of the actual execution. The particular runs selected in an experimental design will depend upon the purpose of the design.
+
+This type of experimental design is known as completely randomised design (CRD).
+
+\hrulefill
+
+2.  Read-in the data in the table above in R as a \texttt{data.frame} in such a way that it can be used by the \texttt{lm} function without any modification, that is, your data frame should have 2 columns and 16 rows. The variables in the dataframe should be called \texttt{riseht} and \texttt{type}. The data frame should be called \texttt{biscuits}
+
+```{r}
+options(width = 50)
+biscuits <- data.frame(riseht=c(11.4,11.0,11.3,9.5,27.8,29.2,26.8,26.0,47.6,47.0
+                                ,47.3,45.5,61.6,62.4,63.0,63.9),
+                       type=rep(c(0.25,0.5,0.75,1),each=4))
+biscuits$type <- factor(biscuits$type)
+```
+
+```{r}
+# Delete this later
+library(ggplot2)
+ggplot(biscuits,aes(x=type,y=riseht))+geom_point(alpha=0.5)+xlab("Baking Powder (tsp)")+ylab("Rise Height (cm)")
+```
+
+3.  Construct in R, the design matrix $\boldsymbol{X}$ corresponding to the model: $$y_{ij}=\mu+\tau_j+\epsilon_{ij}$$ where $\tau_{0.25}, \tau_{0.50}$, $\tau_{0.75}$ and $\tau_{1.0}$ are the effects of the levels of the baking powder. All $\epsilon_{ij}\sim N(0,\sigma^2)$ and are mutually independent.
+
+```{r}
+# Z <- model.matrix(~type-1,data=biscuits)
+t <- length(unique(factor(biscuits$type))) # number of treatments
+r <- nrow(biscuits)/t # number of replicates per treatment
+n <- nrow(biscuits) # total number of experimental units
+levels <- unique(factor(biscuits$type)) # levels of the baking powder
+fact <- gl(t,r,labels=levels) # factor variable
+Z <- model.matrix(~fact-1) # matrix Z as the means model of a CRD
+X <- cbind(1,Z) # design matrix X as the treatment effects model of a CRD
+colnames(X) <- c("reference", "0.25 tsp", "0.50 tsp", "0.75 tsp", "1.00 tsp") # naming the columns
+X
+```
+
+
+
+4.  How many unknown parameters are in the model?
+
+\hrulefill
+\underline{Answer:}
+
+4 unknown parameters:
+
+i. Reference rise height of the biscuit when there is no treatment $\mu$
+
+ii. Treatment effects $\tau_{i}$
+
+iii. Experimental errors $\epsilon_{ij}$
+
+iv. Variance of the experimental error, $\sigma^2$. 
+
+\hrulefill
+
+
+5.  Find the rank of the design matrix $\boldsymbol{X}$. You should justify your answer.
+
+```{r}
+# Figure out how does QR decomposition allows us to find the rank of a matrix
+qr(X)$rank
+```
+
+\hrulefill
+\underline{Answer:}
+
+The rank of the design matrix $\boldsymbol{X}$ is 4. This is because the design matrix $\boldsymbol{X}$ has 5 columns and the rank of a matrix is the maximum number of linearly independent column vectors in the matrix. The first column of $\boldsymbol{X}$ is a column of ones, and thus the remaining 4 columns are dependent on the first column but not to one another. Therefore, the rank of $\boldsymbol{X}$ is 4 as shown in the QR decomposition of $\boldsymbol{X}$ above.
+
+\hrulefill
+
+6.  Perform the analysis of variance to test the hypothesis of no treatment effect. You should do the computations using the theory given in the lectures and not simply use the command \texttt{aov}.
+
+7.  Formulate a contrast to test the hypothesis that increase in rise height is a linear function of the increase in baking powder in the dough, and test this hypothesis.
+
+8.  Estimate the variance $\sigma^2$ of the experimental error.
+
+9.  Discuss whether the assumptions for the considered linear model are justified.
+
+10. If the dough were made in batches and the four replicate biscuit rise heights in each column (shown in the table above) were all from the same batch, would your answer to (a) be different? How could the data be analyzed if this were the case?
+
+# Part 2: Free fall of Papers of Different Dimension
+
+In this part of the coursework you will design a factorial experiment, collect the data and then analyse it. You will carry out this experiment to identify how different design factors influence the free fall time of a piece of paper.
+
+**Experimental Units**
+
+In this experiment each experimental unit will correspond to a single piece of paper. Replicates will mean you will have to use as many papers of different dimension as needed.
+
+**Instructions**
+
+In this experiment you will need to drop many pieces of paper from a certain height. Please follow the following instructions:
+
+-   Use white printer paper (if needed you can use the university printer papers).
+
+-   Label your papers according to the factor variables (described below) and the replicate number.
+
+-   Perform the experiment in a large open space, mostly isolated from wind.
+
+-   Always allow the papers to fall approximately from the same height, straight towards the floor.
+
+-   You can do some practice before starting the main experiment, but I recommend to use different papers for this. The practice papers can be used more than once.
+
+-   Do not do all the experiment in one go. Take a few breaks to make sure your arm does not get tired and always use the same arm for the experiment.
+
+-   Recycle all the paper after finishing the experiment.
+
+**Response**
+
+Time in seconds (time to be recorded to the nearest whole second) of the free fall of the paper. To measure the free fall time, follow the following instructions:
+
+-   Locate a position from where you would drop the piece of paper. You can mark that with your bag/other item. Stand there and drop the piece of paper from a certain height. Use your mobile/ a stopwatch to record the free fall time of the paper.
+
+-   Record the times in seconds (time to be recorded to the nearest whole second) in a spreadsheet making reference to each level of the factor.
+
+-   If anything goes wrong, for example if the paper touches your body before falling down, repeat that particular run with a different (pristine) paper.
+
+-   Repeat the experiment by dropping the pieces of paper from (approximately) the same height every time.
+
+**Factor variables**
+
+-   Factor 1 (length of the paper): (2 levels) 5 cm, 6 cm. You can measure the length using a ruler.
+
+-   Factor 2 (Width of the paper): (2 levels) 5.5 cm, 6.5 cm. You can measure the width using a ruler.
+
+**Randomization**
+
+Remember to assign the factor level combinations to the experimental units (the piece of paper) completely at random. You can do this in R using the \texttt{sample} function. For example, for a balanced design with $r=3$ replicates, you can assign the level combinations to a total of 12 papers using the following command
+
+```{r}
+f<-rep(c("5,5.5","6,5.5","5,6.5","6,6.5"),each=3)
+sample(f,12)
+```
+
+The experiment will be balanced in the sense that each factor level combination will have the same number of replicates $r$ but you will have to determine the number of replicates. For this, consider the model with interactions:
+
+$$y_{ijk}=\mu+\tau_i+\alpha_j +\gamma_{ij}+\epsilon_{ijk}$$
+
+where $\tau_{3.5}, \tau_{4.5}$ are the effects of the two different lengths of the papers, $\alpha_{3}, \alpha_{4}$ are the effects of the two different widths of the papers, $\gamma_{ij}$ are the effects of the interactions. All $\epsilon_{ijk}\sim N(0,\sigma^2)$ and are mutually independent.
+
+Before running the main experiment, you will need to perform a simple pilot experiment in order to estimate the variance parameter $\sigma^2$. You should perform $n_{pilot}=10$ runs with 10 different papers of length 5 cm and width 5.5 cm.
+
+Specifically of length 5 cm and width 5.5 cm respectively. Denote by $t_1,\ldots,t_{10}$ the observed times in seconds. You should estimate the variance in the usual way, that is, $$\widehat{\sigma}^2=\frac{1}{n_{pilot}-1}\sum_{i=1}^{10}(t_i-\bar{t})^2$$
+
+a)  Report your 10 observations from the pilot experiment as well as your estimated value of $\sigma^2$.
+
+b)  Denote $\Delta_{5}:=\mu_{5,5.5}-\mu_{5,6.5}$ and $\Delta_{6}:=\mu_{6,5.5}-\mu_{6,6.5}$ where $\mu_{ij}$ is the mean response for length $i\in\{5,6\}$ and width $j \in \{5.5, 6.5\}$. State the null and the alternative hypotheses for a two-sided test of $\Delta_{5} = \Delta_{6}$. Let $\Delta = |\Delta_{5} - \Delta_{6}|$. We would like to detect an absolute difference $\Delta=1$ with high power. Determine the number of replicates $r$ necessary to achieve at least 90% power using a significance level $\alpha=0.05$.
+
+c)  Use ANOVA and your collected data to test if length of paper has a significant effect. Clearly state the hypotheses you are testing. Repeat the test but now consider width instead of length of paper.
+
+d)  Use the previous ANOVA table to comment on if the interaction effect is significant or not. Clearly state the hypotheses you are testing to check if the interaction effect is significant or not. Also, comment on the same using an appropriate plot. Mention any lurking variables one needs to be aware of.

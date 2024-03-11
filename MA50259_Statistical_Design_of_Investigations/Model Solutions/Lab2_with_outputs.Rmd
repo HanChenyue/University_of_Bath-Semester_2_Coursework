@@ -1,0 +1,387 @@
+---
+title: 'MA50259: Statistical Design of Investigations'
+author: "Lab sheet 2: Estimability under non full rank"
+date: ""
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+In this practical you will start learning the basics of how to  analyse an experimental design that does not have full rank.  Take the time to run each of the following commands and analyse the displayed results to understand what the code is doing.
+
+## Estimation in the means model
+
+Consider  the means model of a completely randomized design (CRD) with $t=3$ treatment levels and $r_i=4$ replicates per level:
+$$\boldsymbol{Y}=\boldsymbol{Z\mu}+\boldsymbol{\epsilon}$$
+
+where $\boldsymbol{\epsilon}\sim MVN(\boldsymbol{0},\sigma^2 \,\boldsymbol{I})$ and
+
+\begin{small}
+$$
+\boldsymbol{y}=
+\left(
+\begin{array}{c}
+y_{11}\\
+y_{12}\\
+y_{13}\\
+y_{14}\\
+y_{21}\\
+y_{22}\\
+y_{23}\\
+y_{24}\\
+y_{31}\\
+y_{32}\\
+y_{33}\\
+y_{34}
+\end{array}
+\right)
+\,,\,\,
+\boldsymbol{Z}=
+\left(
+\begin{array}{cccc}
+ 1 & 0 & 0 \\
+ 1 & 0 & 0 \\
+ 1 & 0 & 0 \\
+ 1 & 0 & 0 \\
+ 0 & 1 & 0 \\
+ 0 & 1 & 0 \\
+ 0 & 1 & 0 \\
+ 0 & 1 & 0 \\
+ 0 & 0 & 1 \\
+ 0 & 0 & 1 \\
+ 0 & 0 & 1 \\
+ 0 & 0 & 1 
+\end{array}
+\right)\,,\,\,
+\boldsymbol{\mu}=
+\left(
+\begin{array}{c}
+\mu_1 \\
+\mu_2 \\
+\mu_3
+\end{array}
+\right)\,,\,\,
+\boldsymbol{\epsilon}=
+\left(
+\begin{array}{c}
+\epsilon_{11}\\
+\epsilon_{12}\\
+\epsilon_{13}\\
+\epsilon_{14}\\
+\epsilon_{21}\\
+\epsilon_{22}\\
+\epsilon_{23}\\
+\epsilon_{24}\\
+\epsilon_{31}\\
+\epsilon_{32}\\
+\epsilon_{33}\\
+\epsilon_{34}
+\end{array}
+\right)
+$$
+\end{small}
+
+
+1. Load the corresponding packages to use in this tutorial
+
+```{r,message=FALSE,echo=TRUE}
+library(tidyverse)
+library(Matrix)
+library(MASS)
+```
+
+2. Construct the matrix $\boldsymbol{Z}$ in R
+
+```{r}
+t<-3; # the number of treatmenet levels
+r<-4; # the number of replicates 
+n<-t*r # total number of experimental units
+levels<-c("level 1","level 2","level 3"); 
+fact <- rep(levels,each = r) %>% factor()
+#fact<-gl(t,r,labels=levels) # alternative code
+
+crd <- tibble(  treatment=fact )
+
+Z <- model.matrix(~ fact-1)
+Z
+```
+
+
+3. Verify that $\boldsymbol{Z}$ has rank equal to $t=3$. In this case we say the model is **full rank**  since the matrix $\boldsymbol{Z}$ has rank equal to the its number of columns
+
+```{r}
+rankMatrix(Z)[1]
+#qr(Z)$rank # alternative code
+```
+
+4. Simulate the response values and plot them agains the treatment levels
+
+```{r}
+set.seed(13579)
+mu<-500 # reference value
+tau<-c(50,0,-30) # treatment effects= differences wrt to mu
+sd<-10 # overall standard deviation
+means<-mu+tau %>% rep(each=r) # vector of means
+y<-rnorm(n,mean=means,sd=sd)
+crd$response<-y
+y
+ggplot(crd,aes(treatment,response))+geom_point()
+
+```
+
+
+5. The least squares estimate $\widehat{\boldsymbol{\mu}}$ of $\boldsymbol{\mu}$, which under the assumptions stated in the lecture is equivalent to maximum likelihood, is given by the unique solution of the normal equations
+$$\boldsymbol{Z^TZ}\,\widehat{\boldsymbol{\mu}}=\boldsymbol{Z^Ty}$$
+Find the least squares estimate $\widehat{\boldsymbol{\mu}}$ of $\mu$ as follows
+$$\widehat{\mu}=(\boldsymbol{Z^TZ})^{-1}\boldsymbol{Z^Ty}$$
+```{r}
+S<-t(Z)%*%Z
+mu.hat<-solve(S)%*%t(Z)%*%y
+mu.hat
+```
+
+6. Verify that the entries of $\widehat{\boldsymbol{\mu}}$ are simply the arithmetic means of the response values at each treatment level
+
+```{r}
+by_group <- group_by(crd, treatment) 
+means.crd<-summarize(by_group, means = mean(response))
+glimpse(means.crd)
+```
+
+7. Verify that the entries of $\widehat{\boldsymbol{\mu}}$ are also given in the output of the \texttt{lm} command
+
+
+```{r,echo=TRUE,size ='tiny'}
+mod.crd.means<-lm(response~treatment-1,data=crd)
+summary(mod.crd.means)
+```
+
+8. Using the invariance property of maximum likelihood estimates, find estimates of the following quantities
+
+
+- $\mu_2-\mu_1$
+
+- $\mu_3-\mu_1$
+
+- $\mu_3-\mu_2$
+
+```{r}
+mu.hat[2]-mu.hat[1]
+mu.hat[3]-mu.hat[1]
+mu.hat[3]-mu.hat[2]
+```
+
+
+## Estimation in the treatment effects model
+
+Consider  the treatment effects model of a completely randomized design (CRD) with $t=3$  levels and $r_i=4$ replicates
+$$\boldsymbol{Y}=\boldsymbol{X\beta}+\boldsymbol{\epsilon}$$
+where $\boldsymbol{\epsilon}\sim MVN(\boldsymbol{0},\sigma^2 \,\boldsymbol{I})$ and
+
+\begin{small}
+$$
+\boldsymbol{y}=
+\left(
+\begin{array}{c}
+y_{11}\\
+y_{12}\\
+y_{13}\\
+y_{14}\\
+y_{21}\\
+y_{22}\\
+y_{23}\\
+y_{24}\\
+y_{31}\\
+y_{32}\\
+y_{33}\\
+y_{34}
+\end{array}
+\right)
+\,,\,\,
+\boldsymbol{X}=
+\left(
+\begin{array}{cccc}
+1 & 1 & 0 & 0 \\
+1 & 1 & 0 & 0 \\
+1 & 1 & 0 & 0 \\
+1 & 1 & 0 & 0 \\
+1 & 0 & 1 & 0 \\
+1 & 0 & 1 & 0 \\
+1 & 0 & 1 & 0 \\
+1 & 0 & 1 & 0 \\
+1 & 0 & 0 & 1 \\
+1 & 0 & 0 & 1 \\
+1 & 0 & 0 & 1 \\
+1 & 0 & 0 & 1 
+\end{array}
+\right)\,,\,\,
+\boldsymbol{\beta}=
+\left(
+\begin{array}{c}
+\mu \\
+\tau_1 \\
+\tau_2 \\
+\tau_3
+\end{array}
+\right)\,,\,\,
+\boldsymbol{\epsilon}=
+\left(
+\begin{array}{c}
+\epsilon_{11}\\
+\epsilon_{12}\\
+\epsilon_{13}\\
+\epsilon_{14}\\
+\epsilon_{21}\\
+\epsilon_{22}\\
+\epsilon_{23}\\
+\epsilon_{24}\\
+\epsilon_{31}\\
+\epsilon_{32}\\
+\epsilon_{33}\\
+\epsilon_{34}
+\end{array}
+\right)
+$$
+\end{small}
+
+
+
+
+9. Construct the design matrix $\boldsymbol{X}$
+
+```{r}
+
+X<-cbind(1,as.matrix(Z))
+colnames(X)<-c("reference","effect 1","effect 2","effect 3")
+X
+```
+
+10. Verify that $\boldsymbol{X}$ has rank $t=3$. We say that this **model does not have full rank** since the rand of $\boldsymbol{X}$ is less its number of columns.
+
+```{r}
+rankMatrix(X)[1]
+```
+
+
+11. We can attempt to find the least squares estimate of $\boldsymbol{\beta}$ and we arrive again  at the normal equations
+$$\boldsymbol{X^TX\beta}=\boldsymbol{X^Ty}$$
+Try to find the inverse of $\boldsymbol{X^TX}$. Why this does not work?
+
+```{r,eval=FALSE}
+solve(t(X)%*%X)
+```
+
+
+
+12. **Definition:** A generalized inverse of a square matrix $\boldsymbol{A}$ is another square matrix $\boldsymbol{A^-}$ satisfying $$\boldsymbol{AA^-A=A}$$ The command \texttt{ginv} in the package \texttt{MASS} computes one type of generalised inverse called the Moore-Penrose generalised inverse. Compute the Moore-Penrose generalised inverse of $\boldsymbol{X^TX}$ using \texttt{ginv}.
+
+```{r}
+ginv1<-ginv(t(X)%*%X)
+ginv1
+```
+
+
+
+13. Another type of generalized inverse can be calculated for the specific case of $\boldsymbol{X^TX}$ as follows
+$$(\boldsymbol{X^TX})^-=
+\left(
+\begin{array}{cc}
+0 & 0\\
+0 & (\boldsymbol{Z^TZ})^{-1} \\
+\end{array}
+\right)
+$$
+Compute this type of generalised inverse in our example
+```{r}
+ginv2<-rbind(0,cbind(0,solve(t(Z)%*%Z)))
+ginv2
+```
+
+an alternative
+```{r}
+Z2<-X[,c(1,3,4)]
+ginv3<-matrix(0,4,4)
+ginv3[c(1,3,4),c(1,3,4)]<-solve(t(Z2)%*%Z2)
+```
+
+
+14. The system of normal equations has many solutions! Verify (analytically, not in R) that if $(\boldsymbol{X^TX})^{-}$ is a generalized inverse of $\boldsymbol{X^TX}$ then $$\tilde{\boldsymbol{\beta}}=(\boldsymbol{X^TX})^{-} \boldsymbol{X^Ty}$$ 
+is a solution to the normal equations
+$$\boldsymbol{X^TX\beta}=\boldsymbol{X^Ty}\,.$$
+
+
+15. Find two solutions to the normal equations based on the two types of generalised inverses described above. Verify numerically that they actually solve the normal equations. Comment on the differences between the two solutions found
+
+```{r}
+beta1<-ginv1%*%t(X)%*%y
+beta1
+beta2<-ginv2%*%t(X)%*%y
+beta2
+
+beta3<-ginv3%*%t(X)%*%y
+beta3
+
+# now we verify the solve the normal equations
+t(X)%*%X%*%beta1-t(X)%*%y
+t(X)%*%X%*%beta2-t(X)%*%y
+```
+
+
+Note that \texttt{beta3} gives the same solution as the default choice in R via \texttt{lm} as shown below
+```{r}
+model.fit<-lm(response~treatment,crd)
+coefficients(model.fit)
+```
+
+
+
+
+16. As done in question 7, find estimates for 
+
+- $\mu_2-\mu_1$  
+
+- $\mu_3-\mu_1$
+
+- $\mu_3-\mu_2$
+
+using the each of the  two estimates found in the previous question. Compare your answers with those from question 8.
+
+```{r}
+beta1[3]-beta1[2]
+beta1[4]-beta1[2]
+beta1[4]-beta1[3]
+
+beta2[3]-beta2[2]
+beta2[4]-beta2[2]
+beta2[4]-beta2[3]
+```
+
+17. Now estimate $\mu_i=\mu+\tau_i$ for $i=1,2,3$ using both estimates of $\boldsymbol{\beta}$  and compare your answers with those in question 5!
+
+
+
+```{r}
+beta1[1]+beta1[2]
+beta1[1]+beta1[3]
+beta1[1]+beta1[4]
+
+beta2[1]+beta2[2]
+beta2[1]+beta2[3]
+beta2[1]+beta2[4]
+
+
+
+```
+
+18.   Compute the solutions given in the output of the \texttt{lm} command and compare with the answers in the previous two questions
+
+```{r}
+mod.crd.treat<-lm(response~treatment,data=crd)
+summary(mod.crd.treat)
+```
+
