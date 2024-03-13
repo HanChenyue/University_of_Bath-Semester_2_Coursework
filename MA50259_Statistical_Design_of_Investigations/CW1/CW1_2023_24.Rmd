@@ -113,15 +113,125 @@ The rank of the design matrix $\boldsymbol{X}$ is 4. This is because the design 
 
 \hrulefill
 
+<!-- Perform the analysis of variance to test the hypothesis of no treatment effect using the command \texttt{aov}. -->
+```{r}
+# Delete this later
+anova(lm(riseht~type,data=biscuits))
+# Alternative
+aov(riseht ~ type, data = biscuits)
+```
 6.  Perform the analysis of variance to test the hypothesis of no treatment effect. You should do the computations using the theory given in the lectures and not simply use the command \texttt{aov}.
 
+```{r}
+# Compute the ANOVA table
+# Am I suppose to use the reduced model here? SSE_0 = y^T * A * y (Refer to week 3 lecture 1)
+# Another possibility is that since the non full rank model is the treatment effect model. No treatment effect model meant using the full rank model.
+
+# ChatGPT
+# The ANOVA table is computed using the following steps:
+# Calculate grand mean
+grand_mean <- mean(biscuits$riseht)
+
+# Calculate the total sum of squares (SSTotal)
+SSTotal <- sum((biscuits$riseht - grand_mean)^2)
+
+# Calculate the treatment sum of squares (SSTreatment)
+means <- tapply(biscuits$riseht, biscuits$type, mean)
+SSTreatment <- sum(r*means^2) - n*grand_mean^2
+
+# Calculate the error sum of squares (SSError)
+SSError <- SSTotal - SSTreatment
+
+# Calculate the degrees of freedom for the treatment (dfTreatment)
+dfTreatment <- t - 1
+
+# Calculate the degrees of freedom for the error (dfError)
+dfError <- n - t
+
+# Calculate the mean square for the treatment (MSTreatment)
+MSTreatment <- SSTreatment/dfTreatment
+
+# Calculate the mean square for the error (MSError)
+MSError <- SSError/dfError
+
+# Calculate the F-statistic
+F_stat <- MSTreatment/MSError
+
+# Calculate the p-value
+p_value <- 1 - pf(F_stat,dfTreatment,dfError)
+
+# Create the ANOVA table
+ANOVA_table <- data.frame(Source=c("Treatment","Error","Total"),
+                          `Sum of Squares`=c(SSTreatment,SSError,SSTotal),
+                          `Degrees of Freedom`=c(dfTreatment,dfError,n-1),
+                          `Mean Square`=c(MSTreatment,MSError,""),
+                          `F-statistic`=c(F_stat,"",""),
+                          `p-value`=c(p_value,"",""))
+
+ANOVA_table
+```
+
+```{r}
+# Using SSE under the null model (and I suspect the full rank model)
+y <- biscuits$riseht
+# SSE_0 <- t(y) %*% (diag(n) - (1/n) * rep(1,n) %*% t(rep(1,n))) %*% y 
+
+# More rigour to avoid the auto-convert from %*%
+SSE_0 <- t(matrix(y, ncol = 1)) %*% (diag(n) - (1/n) * rep(1,n) %*% t(rep(1,n))) %*% matrix(y, ncol = 1)
+SSE_0
+```
+
 7.  Formulate a contrast to test the hypothesis that increase in rise height is a linear function of the increase in baking powder in the dough, and test this hypothesis.
+```{r}
+# Compute the contrast matrix
+C <- matrix(c(0,1,-1,0,0,0,1,-1),ncol=1)
+# Compute the contrast estimate
+C_hat <- t(C)%*%ginv(t(X)%*%X)%*%t(X)%*%y
+# Compute the contrast variance
+var_C_hat <- MS_error*t(C)%*%ginv(t(X)%*%X)%*%C
+# Compute the t-statistic
+t_stat <- C_hat/sqrt(var_C_hat)
+# Compute the p-value
+p_value <- 2*pt(-abs(t_stat),n-t)
+c(C_hat,var_C_hat,t_stat,p_value)
+```
 
 8.  Estimate the variance $\sigma^2$ of the experimental error.
+```{r}
+# Estimate the variance of the experimental error
+sigma2_hat <- MS_error
+sigma2_hat
+```
 
 9.  Discuss whether the assumptions for the considered linear model are justified.
 
+\hrulefill
+\underline{Answer:}
+
+The assumptions for the considered linear model are:
+
+i. The errors $\epsilon_{ij}$ are independent and identically distributed $N(0,\sigma^2)$.
+
+ii. The errors $\epsilon_{ij}$ are independent of the treatment effects $\tau_{i}$.
+
+iii. The errors $\epsilon_{ij}$ are independent of one another.
+
+iv. The errors $\epsilon_{ij}$ are normally distributed.
+
+v. The errors $\epsilon_{ij}$ have constant variance $\sigma^2$.
+
+The first four assumptions are justified because the experimental design is a completely randomised design (CRD) and the errors $\epsilon_{ij}$ are assumed to be independent and identically distributed $N(0,\sigma^2)$. The fifth assumption is justified because the variance of the experimental error $\sigma^2$ is constant as shown in the ANOVA table above.
+
+\hrulefill
+
 10. If the dough were made in batches and the four replicate biscuit rise heights in each column (shown in the table above) were all from the same batch, would your answer to (a) be different? How could the data be analyzed if this were the case?
+
+\hrulefill
+\underline{Answer:}
+
+If the dough were made in batches and the four replicate biscuit rise heights in each column were all from the same batch, then the assumption of independence of the errors $\epsilon_{ij}$ would be violated. This is because the errors $\epsilon_{ij}$ would not be independent of one another. In this case, the data could be analysed using a randomised complete block design (RCBD) where the blocks would be the batches of dough and the treatments would be the levels of the baking powder. The ANOVA table would be computed using the same method as in question 6 but the design matrix $\boldsymbol{X}$ would be different.
+
+\hrulefill
 
 # Part 2: Free fall of Papers of Different Dimension
 
