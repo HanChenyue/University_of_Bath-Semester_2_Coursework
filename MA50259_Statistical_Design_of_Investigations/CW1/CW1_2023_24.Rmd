@@ -549,18 +549,23 @@ a)  Report your 10 observations from the pilot experiment as well as
     your estimated value of $\sigma^2$.
 
 ```{r}
-set.seed(37) # Set seed for reproducibility
-
-
-
 # Pilot experiment
 pilot_raw <- c(3.28, 3.52, 3.56, 3.54, 3.66, 3.62, 2.98, 3.10, 3.28, 2.98)
 
 # Round to nearest whole second
 pilot <- round(pilot_raw)
 
-# Estimate the variance of the experimental error
-variance_of_experimental_error_pilot <- sum((pilot - mean(pilot))^2) / (length(pilot) - 1)
+kable(
+  data.frame(
+    `Number of Observations` = 1:10,
+    `Free Fall Time` = pilot_raw,
+    `Free Fall Time Rounded to Nearest Second` = pilot
+  ),
+  align = "c"
+)
+
+# Estimating the variance of the experimental error using the given formula
+variance_of_experimental_error_pilot <- round(sum((pilot - mean(pilot))^2) / (length(pilot) - 1), 4)
 variance_of_experimental_error_pilot
 ```
 
@@ -575,20 +580,41 @@ b)  Denote $\Delta_{5}:=\mu_{5,5.5}-\mu_{5,6.5}$ and
     significance level $\alpha=0.05$.
 
 ```{r}
+library(daewr)
 # Power calculation
-# The power of a test is the probability of rejecting the null hypothesis when the alternative hypothesis is true.
-# The power of a test is calculated using the formula:
-# power = 1 - pnorm(qnorm(1 - alpha/2) - abs(delta), 0, sqrt(sigma^2/n))
-# where alpha is the significance level, delta is the absolute difference, sigma^2 is the variance of the experimental error, and n is the number of replicates.
-
-# Calculate the number of replicates necessary to achieve at least 90% power
+rmin <- 2
+rmax <- 10
 alpha <- 0.05
-power <- 0.9
 delta <- 1
-sigma <- variance_of_experimental_error_pilot
-n <- 10
-r <- ceiling((qnorm(1 - alpha/2) - qnorm(power)) ^ 2 * sigma / delta ^ 2)
-r
+nlev <- c(2,2)
+nreps <- c(rmin:rmax)
+power <- Fpower2(alpha, nlev, nreps, delta, sqrt(variance_of_experimental_error_pilot))
+kable(power, align = "c")
+```
+
+\hrulefill
+
+\underline{Answer:}
+
+The null hypothesis, $H_0$: $\Delta_{5} = \Delta_{6}$.
+
+The alternative hypothesis, $H_a$: $\Delta_{5} \neq \Delta_{6}$.
+
+We would like to detect an absolute difference $\Delta=1$ with high power. The number of replicates $r$ necessary to achieve at least 90% power using a significance level $\alpha=0.05$ is $nrep = 4$.
+
+\hrulefill
+
+```{r}
+# Generating the data
+set.seed(37) # Set seed for reproducibility
+nrep <- 4 # number of replicates
+lengths <- factor(c(5, 6))
+widths <- factor(c(5.5, 6.5))
+
+# Creating the experimental design
+experimental_design <- expand.grid(lengths, widths, 1:nrep)
+
+
 ```
 
 c)  Use ANOVA and your collected data to test if length of paper has a
@@ -602,8 +628,12 @@ d)  Use the previous ANOVA table to comment on if the interaction effect
     variables one needs to be aware of.
 
 ```{r}
-# Assuming you have the knitr package installed
+set.seed(37)
+# Generating the data
 
+```
+
+```{r}
 # Creating the dataframe
 data <- data.frame(
   Length = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
