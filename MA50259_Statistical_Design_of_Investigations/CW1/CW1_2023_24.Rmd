@@ -12,6 +12,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(Matrix)
+library(knitr) # Added in to generate a neater pdf
 ```
 
 # Part 1: Baking Powder Experiment
@@ -195,50 +196,103 @@ SSE_0
 
 7.  Formulate a contrast to test the hypothesis that increase in rise height is a linear function of the increase in baking powder in the dough, and test this hypothesis.
 ```{r}
-## OLD ANSWER - DELETE LATER
-# # Compute the contrast matrix
-# C <- c(0,1,-1,0,0) # Contrast to test the hypothesis that increase in rise height is a linear function of the increase in baking powder in the dough in this case it is 0.25 tsp - 0.5 tsp
-# 
-# # Compute the contrast estimate
-ginverse <- rbind(0, cbind(0, solve(t(Z) %*% Z))) # Alternatively, use the MASS library but I'm not sure if that is allowed
-# Beta <- ginverse %*% t(X) %*% y
-# contrast_estimate <- t(C) %*% Beta
-# contrast_estimate # The contrast estimate is -16.65
+# Contrast Reference: https://online.stat.psu.edu/stat555/node/73/
 
-# ChatGPT code
-# # Linear contrast including the intercept
-linear_contrast <- c(0, -3, -1, 1, 3) # make c_0 = 0 
- 
-# # Applying the contrast
-# Assuming 'biscuits$riseht' is your response variable and 'Z' is your design matrix
-contrast_value <- sum(linear_contrast * colMeans(X * y))
-# 
-# # Computing the standard error of the contrast
-# # This requires the standard error of the means, which can be calculated from the data
-# # Assuming the variance of the errors is known or can be estimated
-# # If unknown, it needs to be estimated from the data
-error_variance <- var(y) # replace this with your estimate if available
-# sample_size <- nrow(X) # or the number of observations per treatment if it differs
-# std_error_contrast <- sqrt(sum((linear_contrast^2) * error_variance) / sample_size)
-# 
-# # Performing the t-test
-# t_value <- contrast_value / std_error_contrast
-# df <- nrow(X) - length(linear_contrast) # degrees of freedom
-# p_value <- 2 * pt(-abs(t_value), df) # two-tailed p-value
-# 
-# # Result
-# list(t_value = t_value, p_value = p_value)
 
-library(gmodels)
+
+# Formulate the contrast
+# Since we are testing whether the increase in rise height is a linear function of the increase
+# in baking powder in the dough, we can use the contrast:
+linear_contrast_c <- c(-3, -1, 1, 3)
+
+# Calculate the contrast estimate
+# Reusing the 'means' variable obtained when calculating the SSTreatment for ANOVA table
+contrast_estimate <- linear_contrast_c %*% means
+
+# Calculate the standard error of the contrast estimate
+# The standard error of the contrast estimate is calculated using the formula:
+# SE = sqrt(MSerror * sum(c^2)/t)
+# Refer: https://websites.umich.edu/~gonzo/coursenotes/file3.pdf page 3-3 
+SE_contrast_estimate <- sqrt(MSError * sum(linear_contrast_c^2)/t)
+
+# Calculate the t-statistic
+t_stat <- contrast_estimate / SE_contrast_estimate
+
+# Calculate the p-value in a two-tailed test
+# Refer: https://www.geeksforgeeks.org/how-to-calculate-the-p-value-of-a-t-score-in-r/
+p_value_contrast <- 2 * pt(-abs(t_stat), dfError)
+
+# List the contrast estimate, standard error, t-statistic, and p-value
+contrast_results <- data.frame(Contrast=c("Contrast Test"),
+                               `Contrast Estimate`=round(contrast_estimate, 2),
+                               `Contrast Standard Error`=round(SE_contrast_estimate, 2),
+                               `t-Statistic`=round(t_stat, 2),
+                               `p-Value`=sprintf("%.2e", p_value_contrast))
+kable(contrast_results, align = "c")
 
 ```
 
 
 \hrulefill
 \underline{Answer:}
-In the model for the crd, the statistical hypothesis of interest is $h_0$: $\mu_1$ = $\mu_2$ = ...= $\mu_t$ or $\tau_1$ = $\tau_2$ = ...= $\tau_t$ where $\mu_i$ is the mean response for the $i$th treatment and $\tau_i$ is the effect of the $i$th treatment. 
 
-The alternative hypothesis is $H_a$: at least two of the $\tau$s differs.
+A contrast is a linear combination $\mathbf{c}^T\beta = c_0\mu + \sum_{i=1}^{t}c_i\tau_i$ of the treatment means where $\sum_{i=0}^{t}c_i = 0$. 
+
+A contrast allows us to test the hypothesis that increase in rise height is a linear function of the increase in baking powder in the dough.
+
+Let $c_0 = 0$ as we are only interested to check for presence of a linear trend.
+
+Since we are testing whether the increase in rise height is a linear function of the increase in baking powder in the dough, we can use the contrast:
+$$c = (-3, -1, 1, 3)$$
+which is a classical orthogonal contrast coefficients for testing the linear trend in the treatment means. This also fulfils the requirement that the sum of the contrast weights is equal to zero.
+
+The contrast weights are chosen such that the first treatment level is weighted by -3, the second treatment level is weighted by -1, the third treatment level is weighted by 1, and the fourth treatment level is weighted by 3. Doing so allows the $\tau_2$ and $\tau_3$ to serve as a pivot point for the linear trend, while multiplying $\tau_1$ by -3 allows us to "pull" the contrast value down, and multiplying $\tau_4$ by 3 allows us to "push" the contrast value up. Thus allows symmetrical distribution of the contrast weights around the pivot point, making it suitable to check a simple linear trend.
+
+$~$
+$~$
+
+\underline{Setting up our hypothesis test:}
+
+Let: 
+
+The null hypothesis,  $H_0$: $\tau_1 = \tau_2 = \tau_3 = \tau_4$.
+
+The alternative hypothesis, $H_a$: at least two of the $\tau$s differs.
+
+$~$
+$~$
+
+The contrast estimates to 175.18 using the formula:
+
+$c^T\hat{\tau_i} =  \text{contrast weight} \times \text{mean within individual treatment levels}$ =
+$(-3 \times 10.800) + (-1 \times 27.450) + (1 \times 46.850) + (3 \times 62.725) = 175.18$
+
+$~$
+
+Next, we calculate the standard error of the contrast using the formula:
+
+$\text{standard error (contrast)} = \sqrt{MSE \times \frac{\sum_{i=1}^{t}c_i^2}{t}} = \sqrt{1.124 \times \frac{(-3)^2 + (-1)^2 + (1)^2 + (3)^2}{4}} = 2.37$
+
+
+where
+
+$MSE = \text{mean square error}$
+
+$c_i = \text{contrast weight}$
+
+$t = \text{number of treatments}$
+
+$~$
+$~$
+
+The t-statistic is calculated using the formula:
+
+$t = \frac{\text{contrast estimate}}{\text{standard error (contrast)}} = \frac{175.18}{2.37} = 73.89$
+
+$~$
+$~$
+
+The p-value is calculated using a t-score of 73.89 and 12 degrees of freedom (n-t = 16-4 = 12). We obtain a p-value of $2.51 \times 10^-17$, which is less than the significance level of 0.05 (*5% is commonly used in a typical hypothesis test*). Therefore, we reject the null hypothesis and conclude that there is a linear trend in the treatment means given that the p-value is less than 0.05 ($2.51 \times 10^-17 < 0.05$).
 
 \hrulefill
 
@@ -247,17 +301,12 @@ The alternative hypothesis is $H_a$: at least two of the $\tau$s differs.
 # Estimate the variance of the experimental error
 # The variance of the experimental error is estimated using the formula:
 # \hat{\sigma}^2 = SSE / (n - t)
-# where SSE is the sum of squares of the experimental error and n is the total number of experimental units.
-# The degrees of freedom for the error is n - t.
 
-# Estimate the variance of the experimental error
-# SSE_test <- (t(y) %*% y) - (t(Beta) %*% t(X) %*% y) # Non-reduced model
-# SSE_test / (n - t)
-# For non-reduced model
+# Formulate the ginverse for non-full rank treatment model
+ginverse <- rbind(0, cbind(0, solve(t(Z) %*% Z)))
 SSE_test2 <- t(y) %*% (diag(n) - X %*% ginverse %*% t(X)) %*% y
-variance_of_experimental_error <- SSE_test2 / (n - t)
-round(variance_of_experimental_error, 4) # round to 4 decimal places
-
+variance_of_experimental_error <- round(SSE_test2 / (n - t), 4)
+variance_of_experimental_error
 ```
 
 9.  Discuss whether the assumptions for the considered linear model are justified.
@@ -395,7 +444,6 @@ d)  Use the previous ANOVA table to comment on if the interaction effect is sign
 
 ```{r}
 # Assuming you have the knitr package installed
-library(knitr)
 
 # Creating the dataframe
 data <- data.frame(
