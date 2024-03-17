@@ -1,3 +1,4 @@
+---
 title: 'MA50259: Statistical Design of Investigations'
 author: "Coursework 1 (2024)"
 candidate number: "239390631"
@@ -225,12 +226,12 @@ effect.
 # Formulate the contrast
 # Since we are testing whether the increase in rise height is a linear function of the
 # increase in baking powder in the dough, we can use the contrast:
-linear_contrast_c <- c(-3, -1, 1, 3)
-beta <- 
+linear_contrast_c <- c(0, -3, -1, 1, 3)
+ginverse <- rbind(0, cbind(0, solve(t(Z) %*% Z)))
+beta <- ginverse %*% t(X) %*% y
 
 # Calculate the contrast estimate
-# Reusing the 'means' variable obtained when calculating the SSTreatment for ANOVA table
-contrast_estimate <- linear_contrast_c %*% means
+contrast_estimate <- linear_contrast_c %*% beta
 
 # Calculate the standard error of the contrast estimate
 # The standard error of the contrast estimate is calculated using the formula:
@@ -270,14 +271,14 @@ A contrast allows us to test the hypothesis that increase in rise height
 is a linear function of the increase in baking powder in the dough.
 
 Let $c_0 = 0$ as we are only interested to check for presence of a
-linear trend due to varying the amount of baking powder used. Also, to simplify our calculations, instead of using contrast weights of $c = (0, -3, -1, 1, 3)$ on design matrix X, we can perform the test by using contrast weights of $c = (-3, -1, 1, 3)$ on matrix Z (cell means model).
+linear trend due to varying the amount of baking powder used.
 
 Since we are testing whether the increase in rise height is a linear
 function of the increase in baking powder in the dough, we can use the
-contrast: $$c = (-3, -1, 1, 3)$$ which is a classical orthogonal
+contrast: $$c = (0, -3, -1, 1, 3)$$ which is a classical orthogonal
 contrast coefficients for testing the linear trend in the treatment
 means. This also fulfils the requirement that the sum of the contrast
-weights is equal to zero.
+weights is equal to zero $\sum{c} = 0 - 3 - 1 + 1 + 3 = 0$.
 
 The contrast weights are chosen such that the first treatment level is
 weighted by -3, the second treatment level is weighted by -1, the third
@@ -301,18 +302,44 @@ The alternative hypothesis, $H_a$: at least two of the $\tau$s differs.
 
 $~$ $~$
 
+\underline{Calculating beta:}
+
+From the equation:
+
+$$\boldsymbol{X^TX\beta}=\boldsymbol{X^Ty}$$
+
+we can rewrite the equation to find $\tilde{\boldsymbol{\beta}}$ as:
+
+$$\tilde{\boldsymbol{\beta}}=(\boldsymbol{X^TX})^{-} \boldsymbol{X^Ty}$$ where $(\boldsymbol{X^TX})^{-}$ is the generalized inverse of $\boldsymbol{X^TX}$.
+
+A generalized inverse of a square matrix $\boldsymbol{A}$ is another square matrix $\boldsymbol{A^-}$ satisfying $$\boldsymbol{AA^-A=A}$$
+
+The generalized inverse of a non-full rank matrix is used to estimate the variance of the experimental error using the technique $$(\boldsymbol{X^TX})^-=
+\left(
+\begin{array}{cc}
+0 & 0\\
+0 & (\boldsymbol{Z^TZ})^{-1} \\
+\end{array}
+\right)
+$$
+
+where $\boldsymbol{X}$ is the design matrix and $\boldsymbol{Z}$ is the matrix of means.
+
+
+$~$ $~$
+
 ```{r}
 kable(means, col.names = c("Treatment Level", "Means Within Individual Treatment Levels"), align = "c")
 ```
 The contrast estimates to 175.18 using the formula:
 
-$c^T\hat{\tau_i} = \text{contrast weight} \times \text{mean within individual treatment levels} = (-3 \times 10.800) + (-1 \times 27.450) + (1 \times 46.850) + (3 \times 62.725) = 175.18$
+$c^T\hat{\beta} = 0 + c^T\hat{\tau_i} = \text{contrast weight} \times \text{mean within individual treatment levels} = (-3 \times 10.800) + (-1 \times 27.450) + (1 \times 46.850) + (3 \times 62.725) = 175.18$
 
 $~$
 
 Next, we calculate the standard error of the contrast using the formula:
 
-$\text{standard error (contrast)} = \sqrt{MSE \times \frac{\sum_{i=1}^{t}c_i^2}{t}} = \sqrt{1.124 \times \frac{(-3)^2 + (-1)^2 + (1)^2 + (3)^2}{4}} = 2.37$
+$\text{standard error (contrast)} = \sqrt{MSE \times \frac{\sum_{i=1}^{t}c_i^2}{\text{no. of treatment levels checked in this contrast}}} = \sqrt{1.124 \times \frac{(-3)^2 + (-1)^2 + (1)^2 + (3)^2}{4}} = 2.37$
 
 where
 
@@ -347,7 +374,6 @@ that the p-value is less than 0.05 ($2.51 \times 10^-17 < 0.05$).
 # \hat{\sigma}^2 = SSE / (n - t)
 
 # Formulate the ginverse for non-full rank treatment model
-ginverse <- rbind(0, cbind(0, solve(t(Z) %*% Z)))
 SSE_matrix_method <- t(y) %*% (diag(n) - X %*% ginverse %*% t(X)) %*% y
 variance_of_experimental_error <- round(SSE_matrix_method / (n - t), 4)
 variance_of_experimental_error
@@ -358,19 +384,6 @@ variance_of_experimental_error
 \underline{Answer:}
 
 The variance of the experimental error is estimated to be 1.124 using the formula $\hat{\sigma}^2 = \frac{SSE}{n - t}$.
-
-A generalized inverse of a square matrix $\boldsymbol{A}$ is another square matrix $\boldsymbol{A^-}$ satisfying $$\boldsymbol{AA^-A=A}$$
-
-The generalized inverse of a non-full rank matrix is used to estimate the variance of the experimental error using the technique $$(\boldsymbol{X^TX})^-=
-\left(
-\begin{array}{cc}
-0 & 0\\
-0 & (\boldsymbol{Z^TZ})^{-1} \\
-\end{array}
-\right)
-$$
-
-where $\boldsymbol{X}$ is the design matrix and $\boldsymbol{Z}$ is the matrix of means.
 
 Sum of Square Error (SSE) is calculated using the formula $$\boldsymbol{y^T(I-X(X^TX)^-X^T)y}$$
 
@@ -396,20 +409,20 @@ where:
 
 The assumptions for the considered linear model are:
 
-i.  The errors $\epsilon_{ij}$ are independent and identically
+i.  The errors $\epsilon_{ijk}$ are independent and identically
     distributed $N(0,\sigma^2)$.
 
-ii. The errors $\epsilon_{ij}$ are independent of the treatment effects
+ii. The errors $\epsilon_{ijk}$ are independent of the treatment effects
     $\tau_{i}$.
 
-iii. The errors $\epsilon_{ij}$ are independent of one another.
+iii. The errors $\epsilon_{ijk}$ are independent of one another.
 
-iv. The errors $\epsilon_{ij}$ are normally distributed.
+iv. The errors $\epsilon_{ijk}$ are normally distributed.
 
-v.  The errors $\epsilon_{ij}$ have constant variance $\sigma^2$.
+v.  The errors $\epsilon_{ijk}$ have constant variance $\sigma^2$.
 
 The first four assumptions are justified because the experimental design
-is a completely randomised design (CRD) and the errors $\epsilon_{ij}$
+is a completely randomised design (CRD) and the errors $\epsilon_{ijk}$
 are assumed to be independent and identically distributed
 $N(0,\sigma^2)$. The fifth assumption is justified because the variance
 of the experimental error $\sigma^2$ is constant as shown in the ANOVA
@@ -752,6 +765,5 @@ The null hypothesis, $H_0$: $\gamma_{ij} = 0$. The alternative hypothesis, $H_a$
 
 The p-value for the interaction effect $\gamma_{ij}$ is $0.337$ which is greater than the significance level of $0.05$. Therefore, we fail to reject the null hypothesis and conclude that the interaction effect is not significant.
 
-The interaction plot below shows the interaction effect between the length and width of the paper. 
 
 ```{r}
