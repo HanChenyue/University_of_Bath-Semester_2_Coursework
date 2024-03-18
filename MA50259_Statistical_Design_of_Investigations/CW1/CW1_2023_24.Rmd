@@ -18,7 +18,8 @@ library(Matrix)
 ```
 
 \underline{Disclaimer}:
-AI (RStudio built-in Co-Pilot and ChatGPT) are used in this coursework for code suggestions and debugging purposes.
+
+AI software (RStudio built-in Co-Pilot and ChatGPT) are used in this coursework for code, RMarkdown formatting, and explanation suggestions, debugging purposes.
 
 # Part 1: Baking Powder Experiment
 
@@ -409,47 +410,38 @@ where:
 
 The assumptions for the considered linear model are:
 
-i.  The errors $\epsilon_{ijk}$ are independent and identically
-    distributed $N(0,\sigma^2)$.
+1. There is an additive effect of the treatment levels on the means, e.g. $\mu_i = \mu + \tau_i$.
 
-ii. The errors $\epsilon_{ijk}$ are independent of the treatment effects
-    $\tau_{i}$.
+The assumption is justified as based on our contrast test, we have found that there is a linear trend in the treatment means. This means that the increase in rise height is a linear function of the increase in baking powder in the dough.
 
-iii. The errors $\epsilon_{ijk}$ are independent of one another.
+2. If the units are homogeneous, the probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, under the same treatment level, is the same.
 
-iv. The errors $\epsilon_{ijk}$ are normally distributed.
+3. The probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, is Gaussian.
 
-v.  The errors $\epsilon_{ijk}$ have constant variance $\sigma^2$.
+The two assumptions are justified as the experimental error $\epsilon_{ij}$ is assumed to be normally distributed with a mean of 0 and a constant variance $\sigma^2I$. This is supported by the fact that the variance of the experimental error is estimated to be 1.124 which is less than the variance due to the treatment effects of $\frac{SSTreatment}{dfTreatment} = \frac{6145.732}{3} = 2048.577$. This means that the experimental error is not large enough to affect the validity of the model.
 
-The first four assumptions are justified because the experimental design
-is a completely randomised design (CRD) and the errors $\epsilon_{ijk}$
-are assumed to be independent and identically distributed
-$N(0,\sigma^2)$. The fifth assumption is justified because the variance
-of the experimental error $\sigma^2$ is constant as shown in the ANOVA
-table above.
+```{r}
+# variance due to the treatment effects
+SSTreatment / dfTreatment
+
+```
+
 
 \hrulefill
 
 10. If the dough were made in batches and the four replicate biscuit
     rise heights in each column (shown in the table above) were all from
     the same batch, would your answer to (a) be different? How could the
-    data be analyzed if this were the case?
+    data be analysed if this were the case?
 
 \hrulefill
 
 \underline{Answer:}
 
-If the dough were made in batches and the four replicate biscuit rise
-heights in each column were all from the same batch, then the assumption
-of independence of the errors $\epsilon_{ij}$ would be violated. This is
-because the errors $\epsilon_{ij}$ would not be independent of one
-another. In this case, the data could be analysed using a randomised
-complete block design (RCBD) where the blocks would be the batches of
-dough and the treatments would be the levels of the baking powder. The
-ANOVA table would be computed using the same method as in question 6 but
-the design matrix $\boldsymbol{X}$ would be different.
+It would change the nature of the experiment as we lost the advantages gained due to randomisation. The assumption of independence of the errors $\epsilon_{ij}$ would be violated. This is because the errors $\epsilon_{ij}$ would not be independent of one another. In this case, the data could be analysed using a randomised complete block design where the blocks would be the batches of dough and the treatments would be the levels of the baking powder. 
 
 \hrulefill
+
 
 # Part 2: Free fall of Papers of Different Dimension
 
