@@ -103,7 +103,9 @@ X <- cbind(1,Z) # design matrix X as the treatment effects model of a CRD
 colnames(X) <- c("reference", "0.25 tsp", "0.50 tsp", "0.75 tsp", "1.00 tsp")
 
 # Display the design matrix X
-X
+kable(X, align = "c", caption = "Design Matrix X")
+
+
 ```
 
 4.  How many unknown parameters are in the model?
@@ -125,7 +127,7 @@ ii. Four treatment effects $\tau_{i}$ for $i=1,2,3,4$
     justify your answer.
 
 ```{r}
-qr(X)$rank
+cat("Rank of design matrix X: ", qr(X)$rank)
 ```
 
 \hrulefill
@@ -377,7 +379,7 @@ that the p-value is less than 0.05 ($2.51 \times 10^-17 < 0.05$).
 # Formulate the ginverse for non-full rank treatment model
 SSE_matrix_method <- t(y) %*% (diag(n) - X %*% ginverse %*% t(X)) %*% y
 variance_of_experimental_error <- round(SSE_matrix_method / (n - t), 4)
-variance_of_experimental_error
+cat("Variance of the experimental error: ", variance_of_experimental_error)
 ```
 
 \hrulefill
@@ -410,22 +412,43 @@ where:
 
 The assumptions for the considered linear model are:
 
-1. There is an additive effect of the treatment levels on the means, e.g. $\mu_i = \mu + \tau_i$.
+Assumption 1: There is an additive effect of the treatment levels on the means, e.g. $\mu_i = \mu + \tau_i$.
 
 The assumption is justified as based on our contrast test, we have found that there is a linear trend in the treatment means. This means that the increase in rise height is a linear function of the increase in baking powder in the dough.
 
-2. If the units are homogeneous, the probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, under the same treatment level, is the same.
-
-3. The probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, is Gaussian.
-
-The two assumptions are justified as the experimental error $\epsilon_{ij}$ is assumed to be normally distributed with a mean of 0 and a constant variance $\sigma^2I$. This is supported by the fact that the variance of the experimental error is estimated to be 1.124 which is less than the variance due to the treatment effects of $\frac{SSTreatment}{dfTreatment} = \frac{6145.732}{3} = 2048.577$. This means that the experimental error is not large enough to affect the validity of the model.
+Not to mention a simple scatter plot also shows a linear trend in the treatment means as we increase the amount of baking powder in the dough.
 
 ```{r}
-# variance due to the treatment effects
-SSTreatment / dfTreatment
-
+library(ggplot2)
+ggplot(biscuits, aes(x=type, y=riseht)) + 
+  geom_point() + 
+  labs(title="Scatter Plot of Rise Height Against Baking Powder Levels", x="Baking Powder Levels", y="Rise Height")
 ```
 
+
+Assumption 2: If the units are homogeneous, the probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, under the same treatment level, is the same.
+
+
+
+To check the assumption of homogeneity of variance, we can use the residuals vs fitted values plot. The residuals vs fitted values plot will helps us to assess whether the variance of the residual is consistent across all levels of the independent variable. If the variance of the residuals is consistent across all levels of the independent variable, then the assumption of homogeneity of variance is met.
+
+```{r}
+residuals <- residuals(aov(riseht ~ type, data = biscuits))
+plot(fitted(aov(riseht ~ type, data = biscuits)), residuals, xlab = "Fitted Values", ylab = "Residuals", main = "Residuals vs Fitted Values")
+```
+
+As shown in the residuals vs fitted values plot, the variance of the residuals is fairly consistent (no significant deviation on the datapoint observed) across all levels of the independent variable. This suggests that the assumption of homogeneity of variance is met.
+
+Assumption 3: The probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, is Gaussian.
+
+A QQ plot can be used to check the whether the residuals are normally distributed (Gaussian). If the residuals are normally distributed, the points in the QQ plot will fall approximately along a straight line.
+
+```{r}
+qqnorm(residuals)
+qqline(residuals)
+```
+
+As shown in the QQ plot, the points at both tails of the QQ points falls approximately along the straight line *(Observe the 3 points when theoretical quantiles are less than -1 and the 3 points when theoretical quantiles more than 1)*. This suggests that the residuals are normally distributed.
 
 \hrulefill
 
@@ -438,7 +461,11 @@ SSTreatment / dfTreatment
 
 \underline{Answer:}
 
-It would change the nature of the experiment as we lost the advantages gained due to randomisation. The assumption of independence of the errors $\epsilon_{ij}$ would be violated. This is because the errors $\epsilon_{ij}$ would not be independent of one another. In this case, the data could be analysed using a randomised complete block design where the blocks would be the batches of dough and the treatments would be the levels of the baking powder. 
+It would change the nature of the experiment as we lost the advantages gained due to randomisation. Randomisation is important as it helps to ensure that each individual treatment groups are comparable and that the effects observed are due to treatments rather than any underlying differences between the treatment groups. If the biscuits are made all from the same batches, this introduces the possibility of batch-to-batch variation influencing the results. It might have confound the effects of the baking powder, making it harder for us to isolate the true effect of each treatment level of the baking powder.
+
+The assumption of independence of the errors $\epsilon_{ij}$ would be violated. This is because the errors $\epsilon_{ij}$ would not be independent of one another. In other words, the error associated from one experimental unit (biscuit) should not be influence by error of any other biscuit for it to be considered independent. However, if the biscuits are made all from the same batches, that meant that all replicate within treatments come from the same batch and are thus manufactured under the same conditions (e.g. same temperature, same humidity, same manufacturing equipment used etc.). This would introduce the possibility of correlated error, as conditions within a batch could affect all the biscuits in a similar way.
+
+In this case, the data could be analysed using a randomised complete block design where the blocks would be the batches of dough and the treatments would be the levels of the baking powder. This would allow us to account for the batch-to-batch variation by ensuring that all treatments are represented within each batch.
 
 \hrulefill
 
