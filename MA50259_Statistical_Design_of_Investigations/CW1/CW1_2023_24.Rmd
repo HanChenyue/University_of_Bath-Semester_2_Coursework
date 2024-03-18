@@ -801,17 +801,16 @@ test_results
 
 The hypothesis test for the length of paper is as follows:
 
-The null hypothesis, $H_0$: $\tau_5 = \tau_6$. The alternative hypothesis, $H_a$: $\tau_5 \neq \tau_6$.
+The null hypothesis, $H_0$: $\tau_i = 0$. The alternative hypothesis, $H_a$: $\tau_i \neq 0$.
 
 The hypothesis test for the width of paper is as follows:
 
-The null hypothesis, $H_0$: $\alpha_{5.5} = \alpha_{6.5}$. The alternative hypothesis, $H_a$: $\alpha_{5.5} \neq \alpha_{6.5}$.
 
 The p-value for the standalone effect of the length of the paper $\tau_i$ is $0.337$ which is greater than the significance level of $0.05$. Therefore, we fail to reject the null hypothesis and conclude that the length of the paper does not have a significant effect on the free fall time of the paper.
 
 The p-value for the standalone effect of the width of the paper $\alpha_j$ is $0.337$ which is greater than the significance level of $0.05$. Therefore, we fail to reject the null hypothesis and conclude that the width of the paper does not have a significant effect on the free fall time of the paper.
 
-\hrule
+\hrulefill
 
 d)  Use the previous ANOVA table to comment on if the interaction effect
     is significant or not. Clearly state the hypotheses you are testing
@@ -844,5 +843,19 @@ The null hypothesis, $H_0$: $\gamma_{ij} = 0$. The alternative hypothesis, $H_a$
 
 The p-value for the interaction effect $\gamma_{ij}$ is $0.337$ which is greater than the significance level of $0.05$. Therefore, we fail to reject the null hypothesis and conclude that the interaction effect is not significant.
 
+Based on the interaction plot, the lines do no cross and the slope change is evident in one of the width levels but based on our ANOVA test, we fail to reject the null hypothesis and conclude that the interaction effect is not significant. Not to mention, given that the increase in free fall time from a paper length of 5cm to 6cm is very minimal, it might be possible that the slight gradient can be considered as near parallel to the other line (parallel means that is no interaction effect).
 
-```{r}
+However, it might be possible that as the number of factors increases, the interaction effect might become significant. This is something to be aware of.
+
+In terms of lurking variables, we consider factors such as:
+
+- Reaction time in starting and stopping the stopwatch that makes this an imperfect measurement
+- The height from which the paper is dropped (too low will not give enough time to measure, too high increases the risk of wind interference)
+- The environmental conditions such as wind, temperature, and humidity (despite being in a empty room with little airflow, it is hard to achieve a room with perfect measurement throughout the experiment)
+- Condition of the paper such as its weight, thickness, and texture (variability in manufacturing)
+
+These are all factors that could potentially influence the free fall time of the paper.
+
+Also, we note that the increment from 5cm to 6cm in length and 5.5cm to 6.5cm in width is quite small. It might be possible that the effect of the length and width of the paper on the free fall time is not significant due to the small increment in the length and width of the paper does not sufficiently allows us to conclude that the length and width of the paper has a significant effect on the free fall time. It would be better to use a larger increment in the length and width of the paper to see if the effect is significant or increase the amount of factor levels to see if the interaction effect becomes significant.
+
+\hrulefill
