@@ -186,7 +186,7 @@ p_value <- 1 - pf(F_stat,dfTreatment,dfError)
 
 kable(
   data.frame(
-    Source = c("Treatment", "Error", "Total"),
+    `Source` = c("Treatment", "Error", "Total"),
     `Sum of Squares` = c(SSTreatment, SSError, SSTotal),
     `Degrees of Freedom` = c(dfTreatment, dfError, n - 1),
     `Mean Square` = c(round(MSTreatment, 4), round(MSError, 4), ""),
@@ -252,7 +252,7 @@ p_value_contrast <- 2 * pt(-abs(t_stat), dfError)
 
 kable(
   data.frame(
-    Contrast = c("Contrast Test"),
+    `Contrast` = c("Contrast Test"),
     `Contrast Estimate` = round(contrast_estimate, 2),
     `Contrast Standard Error` = round(SE_contrast_estimate, 2),
     `t-Statistic` = round(t_stat, 2),
@@ -332,7 +332,13 @@ where $\boldsymbol{X}$ is the design matrix and $\boldsymbol{Z}$ is the matrix o
 $~$ $~$
 
 ```{r}
-kable(means, col.names = c("Treatment Level", "Means Within Individual Treatment Levels"), align = "c")
+kable(means,
+      col.names = c(
+        "Treatment Level",
+        "Means Within Individual Treatment Levels"
+        ),
+      align = "c"
+      )
 ```
 The contrast estimates to 175.18 using the formula:
 
@@ -441,14 +447,14 @@ As shown in the residuals vs fitted values plot, the variance of the residuals i
 
 Assumption 3: The probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, is Gaussian.
 
-A QQ plot can be used to check the whether the residuals are normally distributed (Gaussian). If the residuals are normally distributed, the points in the QQ plot will fall approximately along a straight line.
+A (Quantile-Quantile) QQ plot can be used to check the whether the residuals are normally distributed (Gaussian). If the residuals are normally distributed, the points in the QQ plot will fall approximately along a straight line.
 
 ```{r}
 qqnorm(residuals)
 qqline(residuals)
 ```
 
-As shown in the QQ plot, the points at both tails of the QQ points falls approximately along the straight line *(Observe the 3 points when theoretical quantiles are less than -1 and the 3 points when theoretical quantiles more than 1)*. This suggests that the residuals are normally distributed.
+As shown in the QQ plot, the points at both tail ends falls approximately along the straight line  without significant deviations *(Observe the 3 points when theoretical quantiles are less than -1 and the 3 points when theoretical quantiles more than 1)*. This suggests that the residuals are normally distributed.
 
 \hrulefill
 
@@ -596,8 +602,8 @@ kable(
 )
 
 # Estimating the variance of the experimental error using the given formula
-variance_of_experimental_error_pilot <- round(sum((pilot - mean(pilot))^2) / (length(pilot) - 1), 4)
-variance_of_experimental_error_pilot
+variance_of_pilot <- sum((pilot - mean(pilot))^2) / (length(pilot) - 1)
+cat("Variance of The Experimental Error: ", round(variance_of_pilot, 4))
 ```
 
 b)  Denote $\Delta_{5}:=\mu_{5,5.5}-\mu_{5,6.5}$ and
@@ -619,7 +625,7 @@ alpha <- 0.05
 delta <- 1
 nlev <- c(2,2)
 nreps <- c(rmin:rmax)
-power <- Fpower2(alpha, nlev, nreps, delta, sqrt(variance_of_experimental_error_pilot))
+power <- Fpower2(alpha, nlev, nreps, delta, sqrt(variance_of_pilot))
 kable(power, align = "c")
 ```
 
@@ -645,7 +651,8 @@ sample(f,16)
 # Inputting the collect data into a dataframe (Exclude the non-rounded observed values)
 df <- data.frame(
     `Length` = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
-    `Width` = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5, 5.5, 5.5, 6.5),
+    `Width` = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5,
+                5.5, 5.5, 6.5),
     `Fall_Time` = c(3, 3, 4, 4, 3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4) 
   )
 
@@ -654,8 +661,10 @@ kable(
   data.frame(
     `Number of Observations` = 1:16,
     `Length` = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
-    `Width` = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5, 5.5, 5.5, 6.5),
-    `Observed_Value` = c(3.35, 3.45, 3.57, 3.58, 3.45, 3.3, 3.2, 3.16, 2.85, 3.07, 3.4, 3.72, 3.2, 3.7, 3.68, 3.98),
+    `Width` = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5,
+                5.5, 5.5, 6.5),
+    `Observed_Value` = c(3.35, 3.45, 3.57, 3.58, 3.45, 3.3, 3.2, 3.16, 2.85, 3.07,
+                         3.4, 3.72, 3.2, 3.7, 3.68, 3.98),
     `Observed_Value_Rounded` = c(3, 3, 4, 4, 3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4) 
   ),
   align = "c"
@@ -684,13 +693,12 @@ where:
 - $\mu_{ij}$ represents the expected response in the ($i, j$)th cell
 
 and its corresponding effects model:
-#TODO: Retype this
-$$y_{ijk} = \mu + \alpha_i + \beta_j + \gamma_{ij} + \epsilon_{ijk}$$
+$$y_{ijk} = \mu + \tau_i+ \alpha_j + \gamma_{ij} + \epsilon_{ijk}$$
 
 where:
 
-- $\alpha_i$ (length of paper) and $\beta_j$ (width of paper) are the main treatment effects.
-- $\gamma_{ij}$ is the interaction effect between the cell mean, $\mu_{ij}$ and $\mu + \alpha_i + \beta_j$.
+- $\tau_i$ (length of paper) and $\alpha_j$ (width of paper) are the main treatment effects.
+- $\gamma_{ij}$ is the interaction effect between the cell mean, $\mu_{ij}$ and $\mu + \tau_i + \alpha_j$.
 - $\epsilon_{ijk}$ is the experimental error such that $E(\epsilon_{ijk}) = 0$ and $\epsilon ~ MVN(0, \sigma^2I)$.
 
 ```{r}
@@ -721,7 +729,8 @@ X_paper <- model.matrix(paper_model)
 time <- c(3, 3, 4, 4, 3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4)
 factor_combination <- data.frame(
   length = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
-  width = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5, 5.5, 5.5, 6.5)
+  width = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5, 5.5,
+            5.5, 6.5)
 )
 exp_results <- data.frame(time, factor_combination)
 
