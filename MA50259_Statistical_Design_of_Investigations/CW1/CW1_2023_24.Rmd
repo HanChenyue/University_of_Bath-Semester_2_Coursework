@@ -225,6 +225,11 @@ effect.
 
 ```{r}
 # Contrast Reference: https://online.stat.psu.edu/stat555/node/73/
+# Other references:
+# https://en.wikipedia.org/wiki/Contrast_(statistics)
+# Statistical Inference by Casella and Berger
+# Design and Analysis of Experiments with R by John Lawson
+# ChatGPT used only to understand the concept of contrast in simple terms as none of the suggested code is usable for this question
 
 # Formulate the contrast
 # Since we are testing whether the increase in rise height is a linear function of the
@@ -381,6 +386,7 @@ that the p-value is less than 0.05 ($2.51 \times 10^-17 < 0.05$).
 # Estimate the variance of the experimental error
 # The variance of the experimental error is estimated using the formula:
 # \hat{\sigma}^2 = SSE / (n - t)
+# Reference: Design and Analysis of Experiments with R by John Lawson
 
 # Formulate the ginverse for non-full rank treatment model
 SSE_matrix_method <- t(y) %*% (diag(n) - X %*% ginverse %*% t(X)) %*% y
@@ -439,7 +445,6 @@ ggplot(biscuits, aes(x=type, y=riseht)) +
 Assumption 2: If the units are homogeneous, the probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, under the same treatment level, is the same.
 
 
-
 To check the assumption of homogeneity of variance, we can use the residuals vs fitted values plot. The residuals vs fitted values plot will helps us to assess whether the variance of the residual is consistent across all levels of the independent variable. If the variance of the residuals is consistent across all levels of the independent variable, then the assumption of homogeneity of variance is met.
 
 ```{r}
@@ -456,7 +461,8 @@ As shown in the residuals vs fitted values plot, the variance of the residuals i
 
 Assumption 3: The probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, is Gaussian.
 
-A (Quantile-Quantile) QQ plot can be used to check the whether the residuals are normally distributed (Gaussian). If the residuals are normally distributed, the points in the QQ plot will fall approximately along a straight line.
+
+A (Quantile-Quantile) QQ plot can be used to check the whether the residuals are normally distributed (Gaussian). If the residuals are normally distributed, the tail endpoints in the QQ plot will fall along a straight line without significant deviation.
 
 ```{r}
 qqnorm(residuals)
@@ -475,6 +481,7 @@ As shown in the QQ plot, the points at both tail ends falls approximately along 
 \hrulefill
 
 \underline{Answer:}
+
 
 Changing the experiment to use the same dough batch for all replicates within each baking powder level would significantly alter the experimental design. This approach would eliminates batch-to-batch variation but it introduces new complications as randomisation plays a pivotal role in experimental design by ensuring that treatment groups are comparable and that observed effects are attributable to the treatments themselves, rather than underlying differences between groups. By using the same batch for all replicates of a given treatment, we control for batch variation, but at the risk of other forms of variability. If the batches have inherent differences not related to baking powder levels—such as variations in ingredient quality or environmental conditions during preparation—these could confound the results. This makes it difficult to isolate the true effects of the baking powder levels. Therefore, while using the same batch for each treatment level controls for one type of variability, it may inadvertently introduce another, potentially impacting the experiment's validity.
 
@@ -626,6 +633,8 @@ b)  Denote $\Delta_{5}:=\mu_{5,5.5}-\mu_{5,6.5}$ and
     significance level $\alpha=0.05$.
 
 ```{r}
+# Reference: Design and Analysis of Experiments with R by John Lawson
+
 library(daewr)
 # Power calculation
 # Minimum number of replicates needs to be at least 2 given that there
@@ -650,8 +659,7 @@ The null hypothesis, $H_0$: $\Delta_{5} = \Delta_{6}$.
 
 The alternative hypothesis, $H_a$: $\Delta_{5} \neq \Delta_{6}$.
 
-
-We would like to detect an absolute difference $\Delta=1$ with high power. The number of replicates $r$ necessary to achieve at least 90% power using a significance level $\alpha=0.05$ is $nrep = 4$. This is the minimum number of replicates required to achieve at least 90% power.
+$powera$ and $powerb$ exceed 0.9 or 90% when the number of replicates $nrep$ is 4. We would like to detect an absolute difference $\Delta=1$ with high power, thus, the number of replicates $r$ necessary to achieve at least 90% power using a significance level $\alpha=0.05$ is $nrep = 4$. This is the minimum number of replicates required to achieve at least 90% power.
 
 What is happening here is that given the following parameters:
 
@@ -667,11 +675,11 @@ We then iteratively calculate power for increasing number of replicates from 2 t
 The non-centrality parameters for a two-factor ANOVA (factors: length and width) can be calculated as follows:
 
 - For length:
-  \[ \lambda_\text{length} = b \times r \times \sum_{i=1}^{a} \frac{(\mu_{\text{length},i} - \mu_{\text{overall}})^2}{\sigma^2} \]
+  \[ \lambda_\text{length} = b \times nrep \times \sum_{i=1}^{a} \frac{(\mu_{\text{length},i} - \mu_{\text{overall}})^2}{\sigma^2} \]
 
 - For width:
-  \[ \lambda_\text{width} = a \times r \times \sum_{i=1}^{b} \frac{(\mu_{\text{width},i} - \mu_{\text{overall}})^2}{\sigma^2} \]
-  where \( b \) is the number of levels in width, \( a \) is the number of levels in length, \( r \) is the number of replicates, \( \mu_{\text{width},i} \) is the mean for each level of width, and \( \mu_{\text{overall}} \) is the overall mean.
+  \[ \lambda_\text{width} = a \times nrep \times \sum_{i=1}^{b} \frac{(\mu_{\text{width},i} - \mu_{\text{overall}})^2}{\sigma^2} \]
+  where \( b \) is the number of levels in width, \( a \) is the number of levels in length, \( \mu_{\text{width},i} \) is the mean for each level of width, and \( \mu_{\text{overall}} \) is the overall mean.
 
 - Next, we use the non-centrality parameters to calculate the power using the non-central F-distribution using the *daewr* library.
 
@@ -753,6 +761,9 @@ where:
 - $\gamma_{ij}$ is the interaction effect between the cell mean, $\mu_{ij}$ and $\mu + \tau_i + \alpha_j$.
 - $\epsilon_{ijk}$ is the experimental error such that $E(\epsilon_{ijk}) = 0$ and $\epsilon ~ MVN(0, \sigma^2I)$.
 
+---
+
+
 ```{r}
 # Creating the design matrix X
 # Define factor variables
@@ -777,8 +788,15 @@ colnames(X0)[1] <- "Intercept"
 kable(X0)
 ```
 
-```{r}
+---
 
+To test for:
+
+- null hypothesis, $H_0$: $\gamma_{ij} = 0$ (no interaction effect)
+- alternative hypothesis, $H_a$: $\gamma_{ij} \neq 0$ (interaction effect)
+
+
+```{r}
 library(MASS)
 X0 <- cbind(1, X1, X2)
 G <- ginv(t(X) %*% X)
@@ -859,7 +877,7 @@ The above method the method of computing the p-value is tedious. Alternatively, 
 ---
 
 ```{r}
-# Alternative method, faster method
+# Alternative method, a faster method suggested by ChatGPT
 df_alt <- data.frame(y, length_, width_)
 model <- aov(y ~ length_ * width_, data = df_alt)
 test_results <- anova(model)
@@ -899,7 +917,6 @@ d)  Use the previous ANOVA table to comment on if the interaction effect
     comment on the same using an appropriate plot. Mention any lurking
     variables one needs to be aware of.
 
-\hrulefill
 
 ```{r}
 # Interaction plot
@@ -918,8 +935,8 @@ interaction.plot(
 ```
 
 
+\hrulefill
 \underline{Answer:}
-
 
 
 The hypothesis test for the interaction effect is as follows:
@@ -935,7 +952,7 @@ $~$
 
 The p-value for the interaction effect $\gamma_{ij}$ is $0.337$ which is greater than the significance level of $0.05$. Therefore, we fail to reject the null hypothesis and conclude that the interaction effect is not significant.
 
-Based on the interaction plot, the lines do no cross and the slope change is evident in one of the width levels but based on our ANOVA test, we fail to reject the null hypothesis and conclude that the interaction effect is not significant. Not to mention, given that the increase in free fall time from a paper length of 5cm to 6cm is very minimal, it might be possible that the slight gradient can be considered as near parallel to the other line (Generally, a pair perfect parallel lines means that is no interaction effect).
+Based on the interaction plot, the lines do no cross and the slope change is evident in one of the width levels but based on our ANOVA test, we fail to reject the null hypothesis and conclude that the interaction effect is not significant. Not to mention, given that the increase in free fall time from a paper length of 5cm to 6cm is very minimal, it might be possible that the slight gradient can be considered as near parallel to the other line (Generally, a pair of perfect parallel lines means that is no interaction effect between the two).
 
 However, it might be possible that by increasing the number of levels within each factor, we may improve our ability to detect a significant interaction effect. This could be particularly important if there is a non-linear relationship between the factors and the response variable that isn't captured with fewer levels. This is something to be aware of.
 
