@@ -19,7 +19,7 @@ library(Matrix)
 
 \underline{Disclaimer}:
 
-AI software (RStudio built-in Co-Pilot and ChatGPT) are used in this coursework for code, RMarkdown formatting, and explanation suggestions, debugging purposes.
+AI software (RStudio built-in Co-Pilot and ChatGPT) are used in this coursework for code, RMarkdown formatting, explanation suggestions, grammar check, and debugging purposes.
 
 # Part 1: Baking Powder Experiment
 
@@ -476,7 +476,7 @@ As shown in the QQ plot, the points at both tail ends falls approximately along 
 
 \underline{Answer:}
 
-It would change the nature of the experiment as we lost the advantages gained due to randomisation. Randomisation is important as it helps to ensure that each individual treatment groups are comparable and that the effects observed are due to treatments rather than any underlying differences between the treatment groups. If the biscuits are made all from the same batches, this introduces the possibility of batch-to-batch variation influencing the results. It might have confound the effects of the baking powder, making it harder for us to isolate the true effect of each treatment level of the baking powder.
+Changing the experiment to use the same dough batch for all replicates within each baking powder level would significantly alter the experimental design. This approach would eliminates batch-to-batch variation but it introduces new complications as randomisation plays a pivotal role in experimental design by ensuring that treatment groups are comparable and that observed effects are attributable to the treatments themselves, rather than underlying differences between groups. By using the same batch for all replicates of a given treatment, we control for batch variation, but at the risk of other forms of variability. If the batches have inherent differences not related to baking powder levels—such as variations in ingredient quality or environmental conditions during preparation—these could confound the results. This makes it difficult to isolate the true effects of the baking powder levels. Therefore, while using the same batch for each treatment level controls for one type of variability, it may inadvertently introduce another, potentially impacting the experiment's validity.
 
 The assumption of independence of the errors $\epsilon_{ij}$ would be violated. This is because the errors $\epsilon_{ij}$ would not be independent of one another. In other words, the error associated from one experimental unit (biscuit) should not be influence by error of any other biscuit for it to be considered independent. However, if the biscuits are made all from the same batches, that meant that all replicate within treatments come from the same batch and are thus manufactured under the same conditions (e.g. same temperature, same humidity, same manufacturing equipment used etc.). This would introduce the possibility of correlated error, as conditions within a batch could affect all the biscuits in a similar way.
 
@@ -756,43 +756,121 @@ where:
 ```{r}
 # Creating the design matrix X
 # Define factor variables
-# length_of_paper <- df %>% mutate(length = as.factor(length))
-# width_of_paper <- factor(c(5.5, 6.5))
-# 
-# # Create interaction
-# inter <- interaction(length_of_paper, width_of_paper, sep = ",")
-# 
-# # Create the design matrix
-# X1 <- model.matrix(~length_of_paper - 1, df)
-# X2 <- model.matrix(~width_of_paper - 1, df)
-# X3 <- model.matrix(~inter - 1, df)
-# 
-# X <- rbind(X1, X2, X3)
-# colnames(X)[1] <- "(intercept)"
-# X
+length_ <- factor(df$Length)
+width_ <- factor(df$Width)
 
-# Alternative method
-length <- factor(df$Length)
-width <- factor(df$Width)
+# Creating the interaction model
+inter_ <- interaction(df$Length, df$Width, sep = ",")
 
-paper_model <- as.formula("~ length * width")
-X_paper <- model.matrix(paper_model)
+# Creating the design matrix
+X1 <- model.matrix(~ length_ - 1, data = df)
+X2 <- model.matrix(~ width_ - 1, data = df)
+X3 <- model.matrix(~ inter_ - 1, data = df)
 
-time <- c(3, 3, 4, 4, 3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4)
-factor_combination <- data.frame(
-  length = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
-  width = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5, 5.5,
-            5.5, 6.5)
+X <- cbind(1,X1, X2, X3)
+colnames(X)[1] <- "Intercept"
+kable(X)
+```
+```{r}
+X0 <- cbind(1, X1, X2)
+colnames(X0)[1] <- "Intercept"
+kable(X0)
+```
+
+```{r}
+
+library(MASS)
+X0 <- cbind(1, X1, X2)
+G <- ginv(t(X) %*% X)
+G0 <- ginv(t(X0) %*% X0)
+
+HX <- X %*% G %*% t(X)
+HX0 <- X0 %*% G0 %*% t(X0)
+
+y <- df$Fall_Time
+n <- length(y)
+
+r <- (diag(n) - HX) %*% y
+r0 <- (diag(n) - HX0) %*% y
+
+SSE <- t(r) %*% r
+SSE0 <- t(r0) %*% r0
+SSEInt <- SSE0 - SSE
+
+kable(
+  data.frame(
+    `SSE` = SSE,
+    `SSE0` = SSE0,
+    `SSEInt` = SSEInt
+  ),
+  align = "c",
+  caption = "Sum of Squares Error"
 )
-exp_results <- data.frame(time, factor_combination)
+```
 
-exp_results$length <- factor(exp_results$length)
-exp_results$width <- factor(exp_results$width)
+---
 
-exp_model <- aov(time ~ length * width, data = exp_results)
+After finding the $SSErrors$, we can compute the degree of freedom associated with $SSInt$ and $SSE$ and then compute the F-test statistics as follows:
 
-test_results <- anova(exp_model)
-test_results
+$F = \frac{SSInt / df_{SSInt}}{SSE / df_{SSE}}$
+
+where $df_{INT}$ and $df_{SSE}$ are the degrees of freedom associated with $SSInt$ and $SSE$ respectively.
+
+```{r}
+# Degrees of freedom
+df_SSE <- qr(diag(n)-HX)$rank 
+df_SSInt <- qr(HX-HX0)$rank
+kable(
+  data.frame(
+    `df_SSE` = df_SSE,
+    `df_SSInt` = df_SSInt
+  ),
+  align = "c",
+  caption = "Degrees of Freedom"
+)
+```
+
+```{r}
+# F-test statistics
+MSInt <- SSEInt / df_SSInt
+MSE <- SSE / df_SSE
+Fval <- MSInt / MSE
+cat("F-test statistics: ", Fval)
+```
+
+
+---
+
+Next, we compute the p-value associated using the fact that, under the null hypothesis:
+
+$F = \frac{SSInt / df_{SSInt}}{SSE / df_{SSE}} \sim F_{(df_{SSInt}, df_{SSE}, 0})$
+
+a central F distribution with $df_{SSInt}$ in the numerator and $df_{SSE}$ in the denominator.
+
+```{r}
+# P-value
+cat("P-value: ", round(pf(Fval, df_SSInt, df_SSE, lower.tail = FALSE), 3))
+```
+
+---
+
+The above method the method of computing the p-value is tedious. Alternatively, we can use the built-in R function to compute the p-value as follows:
+
+---
+
+```{r}
+# Alternative method, faster method
+df_alt <- data.frame(y, length_, width_)
+model <- aov(y ~ length_ * width_, data = df_alt)
+test_results <- anova(model)
+
+# Convert ANOVA table to a dataframe
+df_anova <- as.data.frame(test_results)
+
+rownames(df_anova) <- c("Length", "Width", "Interaction between Length & Width", "Residuals")
+colnames(df_anova) <- c("Degrees of Freedom", "Sum of Squares", "Mean Square", "F-Value", "Pr(>F)")
+df_anova["Pr(>F)"] <- round(df_anova["Pr(>F)"], 3) # Round the p-value to 3 decimal places
+kable(df_anova, align = "c")
 ```
 
 \hrulefill
@@ -825,18 +903,20 @@ d)  Use the previous ANOVA table to comment on if the interaction effect
 
 ```{r}
 # Interaction plot
-interaction.plot(exp_results$length
-                , exp_results$width
-                , exp_results$time
-                , xlab = "Paper Length"
-                , ylab = "Free Fall Time (seconds)"
-                , trace.label = "Paper Width"
-                , legend = TRUE
-                , col = c("red", "blue")
-                , lwd = 1
-                , main = "Interaction Plot of Length and Width of Paper"
-                 )
+interaction.plot(
+  df$Length,
+  df$Width,
+  df$Fall_Time,
+  xlab = "Paper Length",
+  ylab = "Free Fall Time (seconds)",
+  trace.label = "Paper Width",
+  legend = TRUE,
+  col = c("red", "blue"),
+  lwd = 1,
+  main = "Interaction Plot of Length and Width of Paper"
+)
 ```
+
 
 \underline{Answer:}
 
