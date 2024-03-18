@@ -428,7 +428,11 @@ Not to mention a simple scatter plot also shows a linear trend in the treatment 
 library(ggplot2)
 ggplot(biscuits, aes(x=type, y=riseht)) + 
   geom_point() + 
-  labs(title="Scatter Plot of Rise Height Against Baking Powder Levels", x="Baking Powder Levels", y="Rise Height")
+  labs(
+    title="Scatter Plot of Rise Height Against Baking Powder Levels",
+    x="Baking Powder Levels",
+    y="Rise Height"
+    )
 ```
 
 
@@ -440,7 +444,12 @@ To check the assumption of homogeneity of variance, we can use the residuals vs 
 
 ```{r}
 residuals <- residuals(aov(riseht ~ type, data = biscuits))
-plot(fitted(aov(riseht ~ type, data = biscuits)), residuals, xlab = "Fitted Values", ylab = "Residuals", main = "Residuals vs Fitted Values")
+plot(
+  fitted(aov(riseht ~ type, data = biscuits)),
+  residuals, xlab = "Fitted Values",
+  ylab = "Residuals",
+  main = "Residuals vs Fitted Values"
+     )
 ```
 
 As shown in the residuals vs fitted values plot, the variance of the residuals is fairly consistent (no significant deviation on the datapoint observed) across all levels of the independent variable. This suggests that the assumption of homogeneity of variance is met.
@@ -471,7 +480,7 @@ It would change the nature of the experiment as we lost the advantages gained du
 
 The assumption of independence of the errors $\epsilon_{ij}$ would be violated. This is because the errors $\epsilon_{ij}$ would not be independent of one another. In other words, the error associated from one experimental unit (biscuit) should not be influence by error of any other biscuit for it to be considered independent. However, if the biscuits are made all from the same batches, that meant that all replicate within treatments come from the same batch and are thus manufactured under the same conditions (e.g. same temperature, same humidity, same manufacturing equipment used etc.). This would introduce the possibility of correlated error, as conditions within a batch could affect all the biscuits in a similar way.
 
-In this case, the data could be analysed using a randomised complete block design where the blocks would be the batches of dough and the treatments would be the levels of the baking powder. This would allow us to account for the batch-to-batch variation by ensuring that all treatments are represented within each batch.
+In this case, the data should be analysed using a randomised complete block design where the blocks would be the batches of dough and the treatments would be the levels of the baking powder. This would allow us to account for the batch-to-batch variation by ensuring that all treatments are represented within each batch.
 
 \hrulefill
 
@@ -619,7 +628,11 @@ b)  Denote $\Delta_{5}:=\mu_{5,5.5}-\mu_{5,6.5}$ and
 ```{r}
 library(daewr)
 # Power calculation
+# Minimum number of replicates needs to be at least 2 given that there
+# are 2 levels present here
 rmin <- 2
+# We set an arbitrary value of 10 here for maximum number of replicate
+# given that the pilot experiment was done with 10 papers
 rmax <- 10
 alpha <- 0.05
 delta <- 1
@@ -638,7 +651,32 @@ The null hypothesis, $H_0$: $\Delta_{5} = \Delta_{6}$.
 The alternative hypothesis, $H_a$: $\Delta_{5} \neq \Delta_{6}$.
 
 
-We would like to detect an absolute difference $\Delta=1$ with high power. The number of replicates $r$ necessary to achieve at least 90% power using a significance level $\alpha=0.05$ is $nrep = 4$.
+We would like to detect an absolute difference $\Delta=1$ with high power. The number of replicates $r$ necessary to achieve at least 90% power using a significance level $\alpha=0.05$ is $nrep = 4$. This is the minimum number of replicates required to achieve at least 90% power.
+
+What is happening here is that given the following parameters:
+
+- variance of the experimental error $\sigma^2 = 0.2778$
+- standard deviation of the experimental error $\sigma = \sqrt{0.2778}$
+- delta, $\Delta = 1$
+- significance level, $\alpha = 0.05$
+- number of levels of the factor, $nlev = 2$ for each factor
+- desired power, $Power >= 0.9$
+
+We then iteratively calculate power for increasing number of replicates from 2 to 10 using the non-centrality parameter $\lambda$.
+
+The non-centrality parameters for a two-factor ANOVA (factors: length and width) can be calculated as follows:
+
+- For length:
+  \[ \lambda_\text{length} = b \times r \times \sum_{i=1}^{a} \frac{(\mu_{\text{length},i} - \mu_{\text{overall}})^2}{\sigma^2} \]
+
+- For width:
+  \[ \lambda_\text{width} = a \times r \times \sum_{i=1}^{b} \frac{(\mu_{\text{width},i} - \mu_{\text{overall}})^2}{\sigma^2} \]
+  where \( b \) is the number of levels in width, \( a \) is the number of levels in length, \( r \) is the number of replicates, \( \mu_{\text{width},i} \) is the mean for each level of width, and \( \mu_{\text{overall}} \) is the overall mean.
+
+- Next, we use the non-centrality parameters to calculate the power using the non-central F-distribution using the *daewr* library.
+
+- We then pick the minimum number of replicates required to achieve at least 90% power which is 4
+
 
 \hrulefill
 
@@ -646,8 +684,22 @@ We would like to detect an absolute difference $\Delta=1$ with high power. The n
 # Generating the data
 set.seed(37) # Set seed for reproducibility
 f<-rep(c("5,5.5","6,5.5","5,6.5","6,6.5"),each=4)
-sample(f,16)
+seed_37_randomised_design <- sample(f,16)
+seed_37_randomised_design
+```
 
+```{r}
+kable(
+  data.frame(
+    `Run Order` = 1:16,
+    `Length` = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
+    `Width` = c(5.5, 6.5, 5.5, 5.5, 5.5, 6.5, 5.5, 6.5, 6.5, 6.5, 5.5, 6.5, 6.5,
+                5.5, 5.5, 6.5)
+  ), align = "c"
+)
+```
+
+```{r}
 # Inputting the collect data into a dataframe (Exclude the non-rounded observed values)
 df <- data.frame(
     `Length` = c(6, 6, 6, 5, 5, 6, 5, 5, 5, 5, 6, 6, 5, 6, 5, 6),
@@ -774,13 +826,12 @@ d)  Use the previous ANOVA table to comment on if the interaction effect
 interaction.plot(exp_results$length
                 , exp_results$width
                 , exp_results$time
-                , xlab = "Length of Paper"
+                , xlab = "Paper Length"
                 , ylab = "Free Fall Time (seconds)"
-                , trace.label = "Width of Paper"
+                , trace.label = "Paper Width"
                 , legend = TRUE
                 , col = c("red", "blue")
                 , lwd = 2
-                # , type = "b"
                 , main = "Interaction Plot of Length and Width of Paper"
                  )
 ```
