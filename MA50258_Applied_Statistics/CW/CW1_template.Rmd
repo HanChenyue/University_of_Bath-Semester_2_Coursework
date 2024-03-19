@@ -53,6 +53,12 @@ q1_in_seconds <- sapply(formula_tom$q1, func_convert_time_to_seconds)
 q2_in_seconds <- sapply(formula_tom$q2, func_convert_time_to_seconds)
 q3_in_seconds <- sapply(formula_tom$q3, func_convert_time_to_seconds)
 fastest_lap_in_seconds <- sapply(formula_tom$fastest_lap, func_convert_time_to_seconds)
+
+# Adding the converted times to the original data frame
+formula_tom$q1_in_seconds <- q1_in_seconds
+formula_tom$q2_in_seconds <- q2_in_seconds
+formula_tom$q3_in_seconds <- q3_in_seconds
+formula_tom$fastest_lap_in_seconds <- fastest_lap_in_seconds
 ```
 
 ## Question 2
@@ -99,12 +105,29 @@ kable(
 
 What conclusions can you draw from your summaries?
 
+---
+
+<u> Answer </u>
+
+The summary statistics for the four lap time variables are presented in the table above. The minimum, mean, median and maximum times are calculated for each of the four variables.
+
+---
+
 ## Question 3
 
 Produce a scatter plot of `q1` against `q3`. In the same plot, add an overlay of the fit of the corresponding LOESS fit as well as the fit of the following linear regression model:
 
 $$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
 
+```{r}
+# Filtering out an extreme outlier on datapoint no. 2568 that has a lap time of 16min, this is done by ignoring all datapoint of more than 180s (3min)
+formula_tom_q1_outlier_filtered <- formula_tom %>% filter(q1_in_seconds < 180)
+ggplot(
+  formula_tom_q1_outlier_filtered,
+  aes(x = q1_in_seconds, y = q3_in_seconds)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = F, colour = "red")
+```
 What can you say about each fit, is there any agreement between them?
 
 ## Question 4
