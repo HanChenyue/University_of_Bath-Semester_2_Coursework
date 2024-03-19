@@ -3,12 +3,11 @@ title: 'MA50258: Applied Statistics'
 subtitle: 'Coursework  1'
 author: "Your candidate number here"
 output:
-  html_document:
-    number_sections: no
-    toc: yes
-    toc_float: yes
+  html_document: 
+    toc: true
+    toc_float: true
     code_folding: hide
-    code_download: yes
+    code_download: true
 ---
 
 ```{r knit options, include=FALSE}
@@ -21,6 +20,13 @@ knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,warning = FALSE,message= FAL
 library(tidyverse) 
 library(readr)
 library(here)
+
+# Other loaded packages
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(kableExtra)
+library(patchwork)
 ```
 
 ```{r data-load}
@@ -32,7 +38,21 @@ formula_tom <- read_csv(here("data", "formula_tom.csv"))
 The lap time variables (`q1`, `q2`, `q3` and `fastest_lap`) require conversion into a usable format, note the times in the raw data are recorded in minutes and seconds (where seconds are shown to three decimal places). Convert the times to seconds.
 
 ```{r,message=FALSE}
-# Your code answer here
+# To convert a variable q1 into minutes and seconds format we use ms()
+func_convert_time_to_seconds <- function(raw_time) {
+  # Check for NA or \N values and return NA for all
+  if (is.na(raw_time) || raw_time == "\\N") {
+    return(NA)
+  }
+  else {
+    return(as.numeric(ms(raw_time)))
+  }
+}
+
+q1_in_seconds <- sapply(formula_tom$q1, func_convert_time_to_seconds)
+q2_in_seconds <- sapply(formula_tom$q2, func_convert_time_to_seconds)
+q3_in_seconds <- sapply(formula_tom$q3, func_convert_time_to_seconds)
+fastest_lap_in_seconds <- sapply(formula_tom$fastest_lap, func_convert_time_to_seconds)
 ```
 
 ## Question 2
@@ -40,7 +60,41 @@ The lap time variables (`q1`, `q2`, `q3` and `fastest_lap`) require conversion i
 Summarise the four lap time variables (`q1`, `q2`, `q3` and `fastest_lap`) giving minimums, means, medians and maximums.
 
 ```{r,message=FALSE}
-# Your code answer here
+# Function to calculate the required statistics
+func_get_summary_stats <- function(x) {
+  c(Minimum = min(x, na.rm = TRUE), 
+    Mean = mean(x, na.rm = TRUE), 
+    Median = median(x, na.rm = TRUE), 
+    Maximum = max(x, na.rm = TRUE))
+}
+
+# Calculate summaries
+summary_q1 <- func_get_summary_stats(q1_in_seconds)
+summary_q2 <- func_get_summary_stats(q2_in_seconds)
+summary_q3 <- func_get_summary_stats(q3_in_seconds)
+summary_fastest_lap <- func_get_summary_stats(fastest_lap_in_seconds)
+
+# Combine into a data frame
+summary_df <- data.frame(
+  Q1 = summary_q1,
+  Q2 = summary_q2,
+  Q3 = summary_q3,
+  Fastest_Lap = summary_fastest_lap
+)
+
+# Use kable for a nice table format
+kable(
+  summary_df,
+      caption = "Summary of Fastest Lap Times of Each Competitor",
+      digits = 2,
+      align = "c",
+      col.names = c(
+        "From 1st Qualifying Session",
+        "From 2nd Qualifying Session",
+        "From 3rd Qualifying Session",
+        "Set Over The Race")
+      ) %>%
+  kable_styling("striped", full_width = F, position = "c")
 ```
 
 What conclusions can you draw from your summaries?
