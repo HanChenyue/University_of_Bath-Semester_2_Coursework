@@ -457,7 +457,10 @@ plot(
      )
 ```
 
-As shown in the residuals vs fitted values plot, the variance of the residuals is fairly consistent (no significant deviation on the datapoint observed) across all levels of the independent variable. This suggests that the assumption of homogeneity of variance is met.
+As shown in the residuals vs fitted values plot, the variance of the residuals is fairly consistent (*no significant deviation on the datapoints observed*) with minor deviations. However, with only 4 replicates per treatment, it is difficult to truly assess the homogeneity of variance. Ideally, we would like to increase the number of replicates, to obtain a more accurate assessment of the homogeneity of variance to see if the spread is consistent across treatment levels. Therefore, for assumption #2, if we \textbf{ONLY} based on only 4 replicate per treatment, the assumption of homogeneity of variance is justified.
+
+$~$
+$~$
 
 Assumption 3: The probability distribution of the response $y_{ij}$ or the experimental error $\epsilon_{ij}$, is Gaussian.
 
@@ -469,7 +472,8 @@ qqnorm(residuals)
 qqline(residuals)
 ```
 
-As shown in the QQ plot, the points at both tail ends falls approximately along the straight line  without significant deviations *(Observe the 3 points when theoretical quantiles are less than -1 and the 3 points when theoretical quantiles more than 1)*. This suggests that the residuals are normally distributed.
+As shown in the QQ plot, the points at both tail ends falls approximately along the straight line  without significant deviations *(Observe the 3 points when theoretical quantiles are less than -1 and the 3 points when theoretical quantiles more than 1)*. This suggests that the residuals are normally distributed but problem is we do not have sufficient datapoint to really tell. Again, like assumption #2, the more datapoints, the more accurate our assessment of the normality of the residuals will be as 3 datapoints at each tail end is insufficient. Therefore, for assumption #3, if we \textbf{ONLY} based on observing the 3 datapoints per tail endpoints to check for significant deviation, the assumption of normality of the residuals is justified.
+
 
 \hrulefill
 

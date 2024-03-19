@@ -1,0 +1,167 @@
+---
+title: 'MA50258: Applied Statistics'
+subtitle: 'Coursework  1'
+author: "Your candidate number here"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    code_folding: hide
+    code_download: yes
+---
+
+```{r knit options, include=FALSE}
+# knitting options here
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,warning = FALSE,message= FALSE)
+```
+
+```{r packages}
+# indicate all your loaded packages here
+library(tidyverse) 
+library(readr)
+library(here)
+```
+
+```{r data-load}
+formula_tom <- read_csv(here("data", "formula_tom.csv"))
+```
+
+## Question 1
+
+The lap time variables (`q1`, `q2`, `q3` and `fastest_lap`) require conversion into a usable format, note the times in the raw data are recorded in minutes and seconds (where seconds are shown to three decimal places). Convert the times to seconds.
+
+```{r,message=FALSE}
+# Your code answer here
+```
+
+## Question 2
+
+Summarise the four lap time variables (`q1`, `q2`, `q3` and `fastest_lap`) giving minimums, means, medians and maximums.
+
+```{r,message=FALSE}
+# Your code answer here
+```
+
+What conclusions can you draw from your summaries?
+
+## Question 3
+
+Produce a scatter plot of `q1` against `q3`. In the same plot, add an overlay of the fit of the corresponding LOESS fit as well as the fit of the following linear regression model:
+
+$$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
+
+What can you say about each fit, is there any agreement between them?
+
+## Question 4
+
+Fit the LOESS empirical estimate (joint with interaction) of the regression function $s$ in the model:
+
+$$E[\verb|q3||\verb|q1|,\verb|championship_points|]=s(\verb|q1|,log_{10}(\verb|championship_points|))$$
+
+```{r}
+# Your code answer here
+```
+
+Also, fit the following linear regression model:
+
+$$
+\begin{multline}
+E[\verb|q3||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
+\delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
+\end{multline}
+$$
+
+```{r}
+# Your code answer here
+```
+
+For both the linear model and the LOESS model:
+
+-   Plot the effect of `championship_points` on `q3`.
+
+-   Plot the effect of `q1` on `q3` for mid-deciles (eg percentiles of order 5%, 15%, 25%, …, 95%) of `championship_points.`
+
+Interpret both effect plots and comment on the fit the transformed linear model to the data. Also, give an interpretation of the estimated parameters in this model (apart from the intercept).
+
+## Question 5
+
+The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this had.
+
+```{r}
+# Your code answer here
+```
+
+## Question 6
+
+Create a new variable `qmin` that gives the minimum time each competitor set across `q1`, `q2` and `q3`. Produce a scatterplot of `q1`against `qmin`, fitting a suitable model to these data.
+
+```{r,message=FALSE}
+# Your code answer here
+```
+
+What model have you fitted, what conclusions can you draw?
+
+## Question 7
+
+Produce a scatterplot of `q1` and `fastest_lap`, write down and then fit a linear regression model that could be fitted to these data.
+
+$$Your theory answer here$$
+
+```{r,message=FALSE}
+# Your code answer here
+```
+
+Which of these times would you expect to be faster based on this model? (Hint you may wish to examine the parameter estimates of the linear model).
+
+## Question 8
+
+For your plot produced in Question 7 add the corresponding LOESS fit. Does this change the conclusions?
+
+```{r,message=FALSE}
+# Your code answer here
+```
+
+## Question 9
+
+Now we consider the impact of qualifying time (in particular `q1`) on `race_time`. Fit and compare the linear regression model 
+$$
+\begin{multline}
+E[\verb|race_time||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
+\delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
+\end{multline}
+$$
+with the generalised additive model fitting the regression function (including an interaction of the explanatory variables).
+
+$$
+E[\verb|race_time||\verb|q1|,log_{10}(\verb|championship_points|)]= s(\verb|q1|,log_{10}(\verb|championship_points|))
+$$
+```{r,message=FALSE}
+# Your code answer here
+```
+
+## Question 10
+
+Suppose we modify the linear model used in Question 9 such that we fit
+$$
+\begin{multline}
+E[log_{10}(\verb|race_time|)|\verb|q1|,log_{10}(\verb|championship_points|)]=\\
+\delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
+\end{multline}
+$$
+Discuss how this would modify the interpretation of model.
+
+
+## Question 11
+
+Suppose someone wishes for you to investigate the effect of `circuit_Id` why might this be problematic?
+
+## Question 12
+
+Choosing a subset of 5 observations of `circuit_Id` investigate the impact of `circuit_Id` by incorporating it into your linear model from Question 9.
+
+```{r,message=FALSE}
+# Your code answer here
+```
+
+What do you conclude about the impact of circuit?
