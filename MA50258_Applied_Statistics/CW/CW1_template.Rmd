@@ -1,7 +1,7 @@
 ---
 title: 'MA50258: Applied Statistics'
 subtitle: 'Coursework  1'
-author: "Your candidate number here"
+author: "09618"
 output:
   html_document: 
     toc: true
@@ -138,6 +138,7 @@ $$E[\verb|q3||\verb|q1|,\verb|championship_points|]=s(\verb|q1|,log_{10}(\verb|c
 
 ```{r}
 # Your code answer here
+
 ```
 
 Also, fit the following linear regression model:
