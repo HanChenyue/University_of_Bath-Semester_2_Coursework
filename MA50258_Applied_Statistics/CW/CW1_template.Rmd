@@ -242,7 +242,6 @@ formula_eda_q4 <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3
 log10_championship_points <- log10(formula_eda_q4$championship_points + 1)
 ggplot(
   formula_eda_q4,
-  # aes(x = q1_in_seconds, y = q3_in_seconds, col = log10_championship_points)) +
   aes(x = q1_in_seconds, y = q3_in_seconds, col = championship_points)) +
   geom_point(alpha = 0.25) +
   # geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
@@ -321,26 +320,6 @@ lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + log10_championship_points + q1
 loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + log10_championship_points, data = formula_tom_no_na_q4)
 ```
 
-```{r}
-# Add a new column for the decile groups
-formula_tom_no_na_q4 <- formula_tom_no_na_q4 %>%
-  mutate(
-    decile_group = cut(log10_championship_points, 
-                       breaks = quantile(log10_championship_points, probs = seq(0, 1, by = 0.1)),
-                       include.lowest = TRUE, 
-                       labels = FALSE)
-  )
-
-# Plotting the LOESS fit for each decile
-ggplot(formula_tom_no_na_q4, aes(x = q1_in_seconds, y = q3_in_seconds)) +
-  geom_point(aes(color = log10_championship_points), alpha = 0.25) +
-  # geom_smooth(method = "loess", se = FALSE, aes(color = log10_championship_points)) +
-  facet_wrap(~decile_group) +
-  labs(title = "LOESS fit of q3 against q1 across Deciles of Championship Points",
-       x = "q1 in Seconds", y = "q3 in Seconds") +
-  theme(legend.position = "bottom") +
-  scale_color_gradient2(low = "blue", mid = "green", high = "red", midpoint = median(max(log10_championship_points)/2, na.rm = TRUE))
-```
 
 also, fit the following linear regression model:
 
