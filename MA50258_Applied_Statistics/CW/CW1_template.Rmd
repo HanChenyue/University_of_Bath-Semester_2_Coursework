@@ -317,7 +317,6 @@ ggplot(
   aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
       y = q3_in_seconds)) +
   geom_point(alpha = 0.25) 
-)
 ```
 ```{r}
 # EDA Code
@@ -352,8 +351,11 @@ summary(loess_model_q4)
 
 ```{r}
 library(modelr) # For using add_prediction and data_grid functions
-mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0, 2.75, by = 1)/3)
-mid_decile_points <- signif(mid_decile_points, digits = 2)
+# mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0, 2.75, by = 1)/3)
+mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0, 1, by = 0.05))#/3)
+kable(mid_decile_points, caption = "Mid-Decile Points", align = "c")
+# mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(1, 19, by = 2)/20)
+# mid_decile_points <- signif(mid_decile_points, digits = 2)
 
 # Add the decile information with interaction to formula_tom_no_na_q4 dataframe
 pred_grid <- 
@@ -408,6 +410,83 @@ formula_tom_no_na_q4 %>%
     geom_point(alpha = 0.25) +
     geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid_without_interaction) +
     theme(legend.position = "bottom")
+
+# Zoom in to certain dense regions
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom")
+
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(60, 70) +
+    ylim(60, 75)
+
+formula_tom_no_na_q4 %>%
+  ggplot(
+    aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
+        y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(70, 80) +
+    ylim(60, 110)
+
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(80, 90) +
+    ylim(60, 110)
+
+formula_tom_no_na_q4 %>%
+  ggplot(
+    aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
+        y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(90, 100) +
+    ylim(60, 130)
+
+formula_tom_no_na_q4 %>%
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(100, 110) +
+    ylim(70, 130)
+
+formula_tom_no_na_q4 %>%
+  ggplot(
+    aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
+        y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(110, 120) +
+    ylim(70, 130)
+
+formula_tom_no_na_q4 %>%
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+    xlim(120, 130) +
+    ylim(70, 130)
+```
+
+```{r}
 ```
 
 also, fit the following linear regression model:
