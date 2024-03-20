@@ -54,7 +54,7 @@ q2_in_seconds <- sapply(formula_tom$q2, func_convert_time_to_seconds)
 q3_in_seconds <- sapply(formula_tom$q3, func_convert_time_to_seconds)
 fastest_lap_in_seconds <- sapply(formula_tom$fastest_lap, func_convert_time_to_seconds)
 
-# Adding the converted times to the original data frame
+# Adding the converted times back to the original data frame
 formula_tom$q1_in_seconds <- q1_in_seconds
 formula_tom$q2_in_seconds <- q2_in_seconds
 formula_tom$q3_in_seconds <- q3_in_seconds
@@ -118,16 +118,83 @@ The summary statistics for the four lap time variables are presented in the tabl
 Produce a scatter plot of `q1` against `q3`. In the same plot, add an overlay of the fit of the corresponding LOESS fit as well as the fit of the following linear regression model:
 
 $$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
-
-```{r}
+```{r, message=FALSE}
 # Filtering out an extreme outlier on datapoint no. 2568 that has a lap time of 16min, this is done by ignoring all datapoint of more than 180s (3min)
 formula_tom_q1_outlier_filtered <- formula_tom %>% filter(q1_in_seconds < 180)
 ggplot(
   formula_tom_q1_outlier_filtered,
   aes(x = q1_in_seconds, y = q3_in_seconds)) +
-  geom_point() +
-  geom_smooth(method = "loess", se = F, colour = "red")
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "Scatterplot of q1 against q3",
+    x = "q1 (seconds)",
+    y = "q3 (seconds)",
+    subtitle = "Excluding an extreme outlier"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
+  )
 ```
+```{r, message=FALSE}
+formula_tom_q1_extreme_filtering  <- formula_tom %>% filter(q1_in_seconds < 135)
+ggplot(
+  formula_tom_q1_extreme_filtering,
+  aes(x = q1_in_seconds, y = q3_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "Scatterplot of q1 against q3",
+    x = "q1 (seconds)",
+    y = "q3 (seconds)",
+    subtitle = "Extreme filtering"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
+  )
+```
+
+```{r, message=FALSE}
+unfitted_data_points <- formula_tom %>% filter(q1_in_seconds > 135) %>% select(q1_in_seconds, q3_in_seconds)
+kable(
+  unfitted_data_points,
+  caption = "Checking Unfitted Data Points",
+  digits = 2,
+  align = "c",
+) %>%
+  kable_styling("striped", full_width = F, position = "c")
+```
+
+```{r,message=FALSE}
+# The reason why there are some data points that aren't being shown is due to presence of missing data
+# Redoing the scatter plot and excluding data points with missing data
+formula_tom_no_na <- formula_tom %>% drop_na(q1_in_seconds, q3_in_seconds) %>% filter(q1_in_seconds < 180)
+ggplot(
+  formula_tom_no_na,
+  aes(x = q1_in_seconds, y = q3_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "Scatterplot of q1 against q3",
+    x = "q1 (seconds)",
+    y = "q3 (seconds)",
+    subtitle = "Excluding missing data and an extreme outlier"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
+  )
+```
+
+
 What can you say about each fit, is there any agreement between them?
 
 ## Question 4
