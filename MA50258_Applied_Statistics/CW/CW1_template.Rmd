@@ -197,7 +197,12 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
 
 What can you say about each fit, is there any agreement between them?
 
-<
+---
+
+<ul>Answer</ul>
+
+
+---
 
 ## Question 4
 
@@ -222,9 +227,11 @@ ggplot(
     subtitle = "Excluded missing data and an extreme outlier"
   ) + 
   theme(legend.position = "bottom") +
-  scale_colour_gradient(
+  scale_colour_gradient2(
     low = "blue",
-    high = "red"
+    mid = "green",
+    high = "red",
+    midpoint = median(max(formula_test$championship_points)/2, na.rm = TRUE)
   ) +
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
@@ -241,9 +248,11 @@ ggplot(
     subtitle = "Excluded missing data"
   ) + 
   theme(legend.position = "bottom") +
-  scale_colour_gradient(
+  scale_colour_gradient2(
     low = "blue",
-    high = "red"
+    mid = "green",
+    high = "red",
+    midpoint = median(max(log10_championship_points)/2, na.rm = TRUE)
   ) +
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
@@ -260,21 +269,20 @@ ggplot(
   formula_test_break_points,
   aes(x = q1_in_seconds, y = q3_in_seconds, col = log10_championship_points)) +
   geom_point(alpha = 0.25) +
-  # geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
-  # labs(
-  #   title = "q3 Against q1 with Championship Points (Log-Transformed)",
-  #   x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
-  #   y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-  #   subtitle = "Excluded missing data"
-  # ) + 
-  theme(legend.position = "bottom") +
-  scale_colour_gradient(
-    low = "blue",
-    high = "red"
+  labs(
+    title = "q3 Against q1 with Championship Points (Log-Transformed)",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
   ) +
-  facet_wrap(~decile, scales = "free", ncol = 4) 
-  # scale_x_continuous(labels = function(x) paste0(x, "s")) +
-  # scale_y_continuous(labels = function(y) paste0(y, "s"))
+  theme(legend.position = "bottom") +
+  scale_colour_gradient2(
+    low = "blue",
+    mid = "green",
+    high = "red",
+    midpoint = median(max(log10_championship_points)/2, na.rm = TRUE)
+  ) +
+  facet_wrap(~decile, scales = "free", ncol = 4)
 ```
 ```{r}
 # Your code answer here
@@ -285,35 +293,41 @@ formula_tom_no_na_q4 <- formula_tom %>% drop_na(championship_points, q1_in_secon
 championship_points_in_log10 <- log10(formula_tom_no_na_q4$championship_points + 1)
 
 # Plot the LOESS fit
-ggplot(
-  formula_tom_no_na_q4,
-  # aes(x = q1_in_seconds + q1_in_seconds*championship_points_in_log10, y = q3_in_seconds)) +
-  # aes(x = q1_in_seconds + q1_in_seconds*formula_tom_no_na_q4$championship_points, y = q3_in_seconds)) +
-  aes(x = q1_in_seconds, y = q3_in_seconds, group = championship_points_in_log10)) +
-  geom_point(alpha = 0.25) +
-  geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
-  labs(
-    title = "LOESS on q3 against q1 with non log-transformed championship points",
-    x = "q1 (seconds)",
-    y = "q3 (seconds)",
-    subtitle = "Excluded missing data"
-  ) +
-  theme(legend.position = "bottom") +
-  scale_x_continuous(labels = function(x) paste0(x, "s")) +
-  scale_y_continuous(labels = function(y) paste0(y, "s"))
+# ggplot(
+#   formula_tom_no_na_q4,
+#   aes(x = q1_in_seconds, y = q3_in_seconds, col = championship_points_in_log10)) +
+#   geom_point(alpha = 0.25) +
+#   geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
+#   labs(
+#     title = "LOESS on q3 against q1 with non log-transformed championship points",
+#     x = "q1",
+#     y = "q3",
+#     subtitle = "Excluded missing data"
+#   ) +
+#   theme(legend.position = "bottom") +
+#   scale_x_continuous(labels = function(x) paste0(x, "s")) +
+#   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 ```{r}
+formula_tom_no_na_q4 <- formula_tom_no_na_q4 %>%
+  mutate(log10_championship_points_bin = cut(
+    log10_championship_points,
+    breaks = quantile(log10_championship_points, probs = seq(0, 1, by = 0.1)),
+    include.lowest = TRUE,
+    labels = paste0(seq(10, 100, by = 10), "%")
+  )
+)
 ggplot(
   formula_tom_no_na_q4,
-  aes(x = q1_in_seconds*championship_points_in_log10, y = q3_in_seconds)) +
+  aes(x = q1_in_seconds + q1_in_seconds*championship_points_in_log10, y = q3_in_seconds)) +
   geom_point(alpha = 0.25) +
-  geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  # geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
   labs(
-    title = "loess fit of q3 against q1",
-    x = "q1 (seconds)",
-    y = "q3 (seconds)",
-    subtitle = "excluding missing data"
+    title = "LOESS fit of q3 Against q1",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
   ) +
   theme(legend.position = "bottom") 
 ```
@@ -359,7 +373,10 @@ Create a new variable `qmin` that gives the minimum time each competitor set acr
 
 ```{r,message=FALSE}
 # Your code answer here
-qmin <- pmin(formula_tom$q1_in_seconds, formula_tom$q2_in_seconds, formula_tom$q3_in_seconds)
+qmin <- formula_tom %>% select(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
+  drop_na(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>% 
+  mutate(qmin = pmin(q1_in_seconds, q2_in_seconds, q3_in_seconds, na.rm = TRUE)) %>%
+  select(qmin)
 ```
 
 What model have you fitted, what conclusions can you draw?
