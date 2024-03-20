@@ -119,6 +119,28 @@ Produce a scatter plot of `q1` against `q3`. In the same plot, add an overlay of
 
 $$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
 ```{r, message=FALSE}
+# EDA Code
+ggplot(
+  formula_tom,
+  aes(x = q1_in_seconds, y = q3_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "Scatterplot of q1 against q3",
+    x = "q1 (seconds)",
+    y = "q3 (seconds)",
+    subtitle = "Excluding an extreme outlier"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
+  )
+```
+
+```{r, message=FALSE}
+# EDA Code
 # Filtering out an extreme outlier (datum no. 2568 that has a lap time of 16min), this is done by setting a threshold of 180 seconds filter
 formula_tom_q1_outlier_filtered <- formula_tom %>% filter(q1_in_seconds < 180)
 ggplot(
@@ -140,6 +162,7 @@ ggplot(
   )
 ```
 ```{r, message=FALSE}
+# EDA Code
 formula_tom_q1_extreme_filtering  <- formula_tom %>% filter(q1_in_seconds < 135)
 ggplot(
   formula_tom_q1_extreme_filtering,
@@ -148,7 +171,7 @@ ggplot(
   geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
   labs(
-    title = "Scatterplot of q1 against q3",
+    title = "Scatterplot of q1 Against q3",
     x = "q1 (seconds)",
     y = "q3 (seconds)",
     subtitle = "Extreme filtering"
@@ -161,6 +184,7 @@ ggplot(
 ```
 
 ```{r, message=FALSE}
+# EDA Code
 unfitted_data_points <- formula_tom %>% filter(q1_in_seconds > 135) %>% select(q1_in_seconds, q3_in_seconds)
 kable(
   unfitted_data_points,
@@ -170,6 +194,14 @@ kable(
 ) %>%
   kable_styling("striped", full_width = F, position = "c")
 ```
+
+
+What can you say about each fit, is there any agreement between them?
+
+---
+
+# TODO
+<ul>Answer</ul>
 
 ```{r,message=FALSE}
 # The reason why there are some data points that aren't being shown is due to presence of missing data
@@ -195,12 +227,6 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
-What can you say about each fit, is there any agreement between them?
-
----
-
-<ul>Answer</ul>
-
 
 ---
 
@@ -210,8 +236,8 @@ Fit the LOESS empirical estimate (joint with interaction) of the regression func
 
 $$E[\verb|q3||\verb|q1|,\verb|championship_points|]=s(\verb|q1|,log_{10}(\verb|championship_points|))$$
 ```{r}
+# EDA Code
 # Check for relationship between q1 and championship_points
-# formula_tom_no_na_q4 <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3_in_seconds) %>% filter(q1_in_seconds < 180)
 formula_test <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3_in_seconds) %>%  filter(q1_in_seconds < 180)
 log10_championship_points <- log10(formula_test$championship_points + 1)
 ggplot(
@@ -292,24 +318,19 @@ formula_tom_no_na_q4 <- formula_tom %>% drop_na(championship_points, q1_in_secon
 # Transform the championship_points variable to log10 scale
 championship_points_in_log10 <- log10(formula_tom_no_na_q4$championship_points + 1)
 
-# Plot the LOESS fit
-# ggplot(
-#   formula_tom_no_na_q4,
-#   aes(x = q1_in_seconds, y = q3_in_seconds, col = championship_points_in_log10)) +
-#   geom_point(alpha = 0.25) +
-#   geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
-#   labs(
-#     title = "LOESS on q3 against q1 with non log-transformed championship points",
-#     x = "q1",
-#     y = "q3",
-#     subtitle = "Excluded missing data"
-#   ) +
-#   theme(legend.position = "bottom") +
-#   scale_x_continuous(labels = function(x) paste0(x, "s")) +
-#   scale_y_continuous(labels = function(y) paste0(y, "s"))
+# Transform championship_points_in_log10 to discrete deciles from 0 to 2.7
+formula_tom_no_na_q4 <- formula_tom_no_na_q4 %>% mutate(
+  championship_points_in_log10 = championship_points_in_log10,
+  championship_points_in_log10_bin = cut(
+    championship_points_in_log10,
+    br
+  )
+)
+
 ```
 
 ```{r}
+# EDA Code
 formula_tom_no_na_q4 <- formula_tom_no_na_q4 %>%
   mutate(log10_championship_points_bin = cut(
     log10_championship_points,
@@ -332,9 +353,11 @@ ggplot(
   theme(legend.position = "bottom") 
 ```
 
+```{r}
+# EDA Code
 
 
-
+```
 
 
 
