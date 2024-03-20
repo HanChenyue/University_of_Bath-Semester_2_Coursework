@@ -314,10 +314,34 @@ ggplot(
 # EDA Code
 # Fit the linear model with interaction
 formula_tom_no_na_q4 <- formula_tom %>% drop_na(q1_in_seconds, q3_in_seconds, championship_points) # %>% filter(q1_in_seconds < 180)
-lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = formula_tom_no_na_q4)
 
+# Add +1 to avoid log(0) error
+formula_tom_no_na_q4_log10_championship_points <- log10(formula_tom_no_na_q4$championship_points + 1)
+lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
+
+# Create the table
+kable(
+  summary(lm_model_q4)$coefficients %>% 
+    as.data.frame() %>% 
+    select(Estimate, `Std. Error`),
+  caption = "Summary of the Linear Model Fit",
+  digits = 2,
+  align = "c"
+) %>%
+  kable_styling("striped", full_width = F, position = "center")
+```
+
+```{r}
 # Fit the LOESS model with interaction
-loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + log10_championship_points, data = formula_tom_no_na_q4)
+loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
+
+# Create the table
+# TODO: Tidy up the loess output
+summary(loess_model_q4)
+```
+
+```{r}
+mid_decile_points <- quantile(log10)
 ```
 
 
