@@ -238,10 +238,10 @@ $$E[\verb|q3||\verb|q1|,\verb|championship_points|]=s(\verb|q1|,log_{10}(\verb|c
 ```{r}
 # EDA Code
 # Check for relationship between q1 and championship_points
-formula_test <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3_in_seconds) %>%  filter(q1_in_seconds < 180)
-log10_championship_points <- log10(formula_test$championship_points + 1)
+formula_eda_q4 <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3_in_seconds) %>%  filter(q1_in_seconds < 180)
+log10_championship_points <- log10(formula_eda_q4$championship_points + 1)
 ggplot(
-  formula_test,
+  formula_eda_q4,
   # aes(x = q1_in_seconds, y = q3_in_seconds, col = log10_championship_points)) +
   aes(x = q1_in_seconds, y = q3_in_seconds, col = championship_points)) +
   geom_point(alpha = 0.25) +
@@ -257,14 +257,14 @@ ggplot(
     low = "blue",
     mid = "green",
     high = "red",
-    midpoint = median(max(formula_test$championship_points)/2, na.rm = TRUE)
+    midpoint = median(max(formula_eda_q4$championship_points)/2, na.rm = TRUE)
   ) +
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 
 
 ggplot(
-  formula_test,
+  formula_eda_q4,
   aes(x = q1_in_seconds, y = q3_in_seconds, col = log10_championship_points)) +
   geom_point(alpha = 0.25) +
   labs(
@@ -284,7 +284,7 @@ ggplot(
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 
 # Include the deciles (Breaking up log10_championship_points into deciles)
-formula_test_break_points <- formula_test %>%
+formula_eda_q4_break_points <- formula_eda_q4 %>%
   mutate(decile = cut(log10_championship_points,
                       breaks = quantile(log10_championship_points,
                                         probs = seq(0, 1, by = 0.1)),
@@ -292,7 +292,7 @@ formula_test_break_points <- formula_test %>%
                       labels = paste0(seq(10, 100, by = 10), "%")))  # Label the deciles
 
 ggplot(
-  formula_test_break_points,
+  formula_eda_q4_break_points,
   aes(x = q1_in_seconds, y = q3_in_seconds, col = log10_championship_points)) +
   geom_point(alpha = 0.25) +
   labs(
@@ -310,56 +310,37 @@ ggplot(
   ) +
   facet_wrap(~decile, scales = "free", ncol = 4)
 ```
-```{r}
-# Your code answer here
-# Ignore all data points with missing values
-formula_tom_no_na_q4 <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3_in_seconds) # %>% filter(q1_in_seconds < 180)
-
-# Transform the championship_points variable to log10 scale
-championship_points_in_log10 <- log10(formula_tom_no_na_q4$championship_points + 1)
-
-# Transform championship_points_in_log10 to discrete deciles from 0 to 2.7
-formula_tom_no_na_q4 <- formula_tom_no_na_q4 %>% mutate(
-  championship_points_in_log10 = championship_points_in_log10,
-  championship_points_in_log10_bin = cut(
-    championship_points_in_log10,
-    br
-  )
-)
-
-```
 
 ```{r}
 # EDA Code
+# Fit the linear model with interaction
+formula_tom_no_na_q4 <- formula_tom %>% drop_na(q1_in_seconds, q3_in_seconds, championship_points) # %>% filter(q1_in_seconds < 180)
+lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = formula_tom_no_na_q4)
+
+# Fit the LOESS model with interaction
+loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + log10_championship_points, data = formula_tom_no_na_q4)
+```
+
+```{r}
+# Add a new column for the decile groups
 formula_tom_no_na_q4 <- formula_tom_no_na_q4 %>%
-  mutate(log10_championship_points_bin = cut(
-    log10_championship_points,
-    breaks = quantile(log10_championship_points, probs = seq(0, 1, by = 0.1)),
-    include.lowest = TRUE,
-    labels = paste0(seq(10, 100, by = 10), "%")
+  mutate(
+    decile_group = cut(log10_championship_points, 
+                       breaks = quantile(log10_championship_points, probs = seq(0, 1, by = 0.1)),
+                       include.lowest = TRUE, 
+                       labels = FALSE)
   )
-)
-ggplot(
-  formula_tom_no_na_q4,
-  aes(x = q1_in_seconds + q1_in_seconds*championship_points_in_log10, y = q3_in_seconds)) +
-  geom_point(alpha = 0.25) +
-  # geom_smooth(aes(col = "loess smoothing"), method = "loess", se = F, linewidth = 0.5) +
-  labs(
-    title = "LOESS fit of q3 Against q1",
-    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
-    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
-  ) +
-  theme(legend.position = "bottom") 
+
+# Plotting the LOESS fit for each decile
+ggplot(formula_tom_no_na_q4, aes(x = q1_in_seconds, y = q3_in_seconds)) +
+  geom_point(aes(color = log10_championship_points), alpha = 0.25) +
+  # geom_smooth(method = "loess", se = FALSE, aes(color = log10_championship_points)) +
+  facet_wrap(~decile_group) +
+  labs(title = "LOESS fit of q3 against q1 across Deciles of Championship Points",
+       x = "q1 in Seconds", y = "q3 in Seconds") +
+  theme(legend.position = "bottom") +
+  scale_color_gradient2(low = "blue", mid = "green", high = "red", midpoint = median(max(log10_championship_points)/2, na.rm = TRUE))
 ```
-
-```{r}
-# EDA Code
-
-
-```
-
-
 
 also, fit the following linear regression model:
 
@@ -371,7 +352,6 @@ e[\verb|q3||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
 $$
 
 ```{r}
-# Your code answer here
 ```
 
 For both the linear model and the LOESS model:
