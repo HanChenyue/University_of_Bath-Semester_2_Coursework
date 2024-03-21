@@ -1015,7 +1015,17 @@ formula_tom_q10 %>%
                   y = log10_race_time,
                   col = log10_championship_points),
               data = pred_grid_q10_lm)
-)
+
+formula_tom_q10 %>%
+  ggplot(
+    aes(x = q1_in_seconds,
+        y = log10_race_time)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = log10_race_time,
+                  col = log10_championship_points),
+              data = pred_grid_q10_lm) +
+  ylim(3.5, 4.25) # Filter out the outlier concentration
 ```
 
 ## Question 11
@@ -1027,15 +1037,6 @@ Suppose someone wishes for you to investigate the effect of `circuit_Id` why mig
 Choosing a subset of 5 observations of `circuit_Id` investigate the impact of `circuit_Id` by incorporating it into your linear model from Question 9.
 
 ```{r,message=FALSE}
-set.seed(37)
-formula_tom_q12 <- formula_tom %>%
-  drop_na(formula_tom_q12)#%>%  # Exclude all missing data
-  # filter(q1_in_seconds < 180) %>%  # Filtering out the 16min outlier
-  # mutate(
-  #   log10_championship_points = log10(championship_points + 1)
-  # ) %>%
-  # select(q1_in_seconds, log10_championship_points, race_time, circuit_Id)
-  
 ```
 
 What do you conclude about the impact of circuit?
