@@ -235,6 +235,17 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
 Fit the LOESS empirical estimate (joint with interaction) of the regression function $s$ in the model:
 
 $$E[\verb|q3||\verb|q1|,\verb|championship_points|]=s(\verb|q1|,log_{10}(\verb|championship_points|))$$
+
+
+also, fit the following linear regression model:
+
+$$
+\begin{multline}
+e[\verb|q3||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
+\delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
+\end{multline}
+$$
+
 ```{r}
 # EDA Code
 # Check for relationship between q1 and championship_points
@@ -312,19 +323,39 @@ ggplot(
 ```{r}
 # EDA Code
 # Fit the linear model with interaction
+formula_tom_no_na_q4 <- formula_tom %>% drop_na(q1_in_seconds, q3_in_seconds, championship_points) # %>% filter(q1_in_seconds < 180)
+
+# Add +1 to avoid log(0) error
+formula_tom_no_na_q4_log10_championship_points <- log10(formula_tom_no_na_q4$championship_points + 1)
+
 ggplot(
   formula_eda_q4,
   aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
       y = q3_in_seconds)) +
   geom_point(alpha = 0.25) 
+
+# Make x-axis to be the log-transformed championship points
+ggplot(
+  formula_tom_no_na_q4,
+  aes(x = log10_championship_points,
+      y = q3_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "q3 Against log10(championship_points)",
+    x = "log10(championship_points)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
 ```
 ```{r}
 # EDA Code
 # Fit the linear model with interaction
-formula_tom_no_na_q4 <- formula_tom %>% drop_na(q1_in_seconds, q3_in_seconds, championship_points) # %>% filter(q1_in_seconds < 180)
-
-# Add +1 to avoid log(0) error
-formula_tom_no_na_q4_log10_championship_points <- log10(formula_tom_no_na_q4$championship_points + 1)
 lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
 
 # Create the table
@@ -345,17 +376,14 @@ loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log
 loess_model_without_interaction_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
 
 # Create the table
-# TODO: Tidy up the loess output
 summary(loess_model_q4)
 ```
 
 ```{r}
 library(modelr) # For using add_prediction and data_grid functions
-# mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0, 2.75, by = 1)/3)
-mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0, 1, by = 0.05))#/3)
+mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
+mid_decile_points <- signif(mid_decile_points, digits = 3)
 kable(mid_decile_points, caption = "Mid-Decile Points", align = "c")
-# mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(1, 19, by = 2)/20)
-# mid_decile_points <- signif(mid_decile_points, digits = 2)
 
 # Add the decile information with interaction to formula_tom_no_na_q4 dataframe
 pred_grid <- 
@@ -385,7 +413,13 @@ formula_tom_no_na_q4 %>%
     aes(x = q1_in_seconds, y = q3_in_seconds)) +
     geom_point(alpha = 0.25) +
     geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom") +
+  labs(
+    title = "q3 Against q1 with Championship Points (Log-Transformed)",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  )
 
 formula_tom_no_na_q4 %>%
   ggplot(
@@ -486,35 +520,239 @@ formula_tom_no_na_q4 %>%
     ylim(70, 130)
 ```
 
-```{r}
-```
-
-also, fit the following linear regression model:
-
-$$
-\begin{multline}
-e[\verb|q3||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
-\delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
-\end{multline}
-$$
-
-```{r}
-```
-
 For both the linear model and the LOESS model:
 
 -   Plot the effect of `championship_points` on `q3`.
 
 -   Plot the effect of `q1` on `q3` for mid-deciles (eg percentiles of order 5%, 15%, 25%, …, 95%) of `championship_points.`
 
+```{r}
+# Plot the effect of championship points on q3
+ggplot(
+  formula_tom_no_na_q4,
+  aes(x = log10_championship_points,
+      y = q3_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "q3 Against log10(championship_points)",
+    x = "log10(championship_points)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
+
+# Fit the linear model with interaction
+lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
+
+# Create the table
+kable(
+  summary(lm_model_q4)$coefficients %>% 
+    as.data.frame() %>% 
+    select(Estimate, `Std. Error`),
+  caption = "Summary of the Linear Model Fit",
+  digits = 2,
+  align = "c"
+) %>%
+  kable_styling("striped", full_width = F, position = "center")
+
+
+loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
+loess_model_without_interaction_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
+
+# Create the table
+# TODO: Tidy up the loess output
+summary(loess_model_q4)
+
+
+pred_grid_lm <-  formula_tom_no_na_q4 %>%
+  data_grid(
+    formula_tom_no_na_q4_log10_championship_points = mid_decile_points,
+    q1_in_seconds = seq(min(formula_tom_no_na_q4$q1_in_seconds), max(formula_tom_no_na_q4$q1_in_seconds))) %>% 
+  add_predictions(lm_model_q4, var = "q3_in_seconds", type = "response") %>%
+  mutate(
+    formula_tom_no_na_q4_log10_championship_points = factor(formula_tom_no_na_q4_log10_championship_points)
+  )
+
+pred_grid_loess <-   formula_tom_no_na_q4 %>%
+  data_grid(
+    formula_tom_no_na_q4_log10_championship_points = mid_decile_points,
+    q1_in_seconds = seq(min(formula_tom_no_na_q4$q1_in_seconds), max(formula_tom_no_na_q4$q1_in_seconds))) %>% 
+  add_predictions(loess_model_q4, var = "q3_in_seconds", type = "response") %>%
+  mutate(
+    formula_tom_no_na_q4_log10_championship_points = factor(formula_tom_no_na_q4_log10_championship_points)
+  )
+
+# LM plot: The effect of championship points on q3 with championship points' mid-deciles
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = q3_in_seconds,
+                  col = formula_tom_no_na_q4_log10_championship_points),
+              data = pred_grid_lm) +
+  labs(
+    title = "q3 Against log10(championship_points)",
+    x = "log10(championship_points)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  )
+  
+# LOESS plot: The effect of q1 on q3 with championship points' mid-deciles
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = q3_in_seconds,
+                  col = formula_tom_no_na_q4_log10_championship_points),
+              data = pred_grid_loess) +
+  labs(
+    title = "q3 Against q1 with Championship Points (Log-Transformed)",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  )
+```
+
 Interpret both effect plots and comment on the fit the transformed linear model to the data. Also, give an interpretation of the estimated parameters in this model (apart from the intercept).
+
+---
+
+<ul>Answer</ul>
+
+---
 
 ## Question 5
 
-The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this had.
+The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this ha
 
 ```{r}
 # Your code answer here
+# Update the missing_q3_data to include all necessary variables for the model
+missing_q3_data <- formula_tom %>%
+  mutate(
+    log10_championship_points = log10(championship_points + 1),
+    q1_in_seconds = q1_in_seconds,  # assuming this variable is already correct in your dataset
+    interaction_term = q1_in_seconds * log10(championship_points + 1)  # create interaction term as per model
+  ) %>% 
+  filter(is.na(q3_in_seconds)) %>%  # filter only missing q3_in_second %>% s
+  filter(!is.na(interaction_term)) %>%  # filter only missing interaction term))
+  select(q1_in_seconds, q3_in_seconds, log10_championship_points, interaction_term)
+
+
+# Save missing_q3_data to a csv file
+# write.csv(missing_q3_data, "missing_q3_data.csv")
+
+# Rename the columns in missing_q3_data to match the model's names
+names(missing_q3_data) <- c("q1_in_seconds", "q3_in_seconds", "formula_tom_no_na_q4_log10_championship_points", "interaction_term")
+
+# Predict q3_in_seconds using the linear model
+missing_q3_data$predicted_q3_lm <- predict(lm_model_q4, newdata = missing_q3_data)
+
+# Predict q3_in_seconds using the loess model
+missing_q3_data$predicted_q3_loess <- predict(loess_model_q4, newdata = missing_q3_data)
+
+# Summary of the predicted q3_in_seconds
+# Missing data in LOESS model
+kable(
+  missing_q3_data %>% 
+    select(q3_in_seconds, predicted_q3_lm, predicted_q3_loess) %>% 
+    summary(),
+  caption = "Summary of the Predicted q3_in_seconds",
+  digits = 2,
+  align = "c"
+) %>%
+  kable_styling("striped", full_width = F, position = "center")
+```
+
+```{r}
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = q3_in_seconds,
+                  col = formula_tom_no_na_q4_log10_championship_points),
+              data = pred_grid_lm) +
+  labs(
+    title = "q3 Against log10(championship_points)",
+    x = "log10(championship_points)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  ) 
+```
+
+```{r}
+ggplot() +
+  geom_point(data = formula_tom_no_na_q4, aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
+  geom_point(data = missing_q3_data, aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
+  geom_point(data = missing_q3_data, aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
+  labs(
+    title = "Overlay of Original and Predicted q3 Times",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "Original Data (black), LM Predictions (red), LOESS Predictions (blue)"
+  )
+```
+
+```{r}
+# Filter out the extreme outlier
+ggplot() +
+  geom_point(data = formula_tom_no_na_q4 %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
+  geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
+  geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
+  labs(
+    title = "Overlay of Original and Predicted q3 Times",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "Original Data (black), LM Predictions (red), LOESS Predictions (blue)"
+  )
+```
+```{r}
+# Overlay with LM prediction
+ggplot() +
+  geom_point(data = formula_tom_no_na_q4 %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
+  geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
+  labs(
+    title = "Overlay of Original and Predicted q3 Times",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "Original Data (black), LM Predictions (red)"
+  )
+```
+```{r}
+# Overlay with LOESS prediction
+ggplot() +
+  geom_point(data = formula_tom_no_na_q4 %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
+  geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
+  labs(
+    title = "Overlay of Original and Predicted q3 Times",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "Original Data (black), LOESS Predictions (blue)"
+  )
+```
+
+```{r}
+# Overlay LM and LOESS predictions
+ggplot() +
+  geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
+  geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
+  labs(
+    title = "Overlay of LM and LOESS Predictions",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "LM Predictions (red), LOESS Predictions (blue)"
+  )
+```
+
+```{r}
 ```
 
 ## Question 6
@@ -523,10 +761,34 @@ Create a new variable `qmin` that gives the minimum time each competitor set acr
 
 ```{r,message=FALSE}
 # Your code answer here
+formula_tom_q6 <- formula_tom %>% select(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
+  drop_na(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
+  mutate(qmin = pmin(q1_in_seconds, q2_in_seconds, q3_in_seconds, na.rm = TRUE))
+
 qmin <- formula_tom %>% select(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
   drop_na(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>% 
   mutate(qmin = pmin(q1_in_seconds, q2_in_seconds, q3_in_seconds, na.rm = TRUE)) %>%
   select(qmin)
+
+formula_tom_q6 <- cbind(formula_tom_q6, qmin)
+
+ggplot(
+  formula_tom_q6,
+  aes(x = q1_in_seconds, y = qmin)) +
+  geom_point(alpha = 0.25)
+  # geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  # geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  # labs(
+  #   title = "Scatterplot of q1 Against qmin",
+  #   x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+  #   y = "Minimum Lap Time Across q1, q2, and q3 (qmin)",
+  #   subtitle = "Excluded missing data"
+  # ) +
+  # theme(legend.position = "bottom") +
+  # scale_color_manual(
+  #   name = "Fits",
+  #   values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
+  # )
 ```
 
 What model have you fitted, what conclusions can you draw?
