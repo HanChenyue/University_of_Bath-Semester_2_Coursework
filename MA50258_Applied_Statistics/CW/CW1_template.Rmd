@@ -105,19 +105,20 @@ kable(
 
 What conclusions can you draw from your summaries?
 
----
+------------------------------------------------------------------------
 
 <u> Answer </u>
 
 The summary statistics for the four lap time variables are presented in the table above. The minimum, mean, median and maximum times are calculated for each of the four variables.
 
----
+------------------------------------------------------------------------
 
 ## Question 3
 
 Produce a scatter plot of `q1` against `q3`. In the same plot, add an overlay of the fit of the corresponding LOESS fit as well as the fit of the following linear regression model:
 
 $$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
+
 ```{r, message=FALSE}
 # EDA Code
 ggplot(
@@ -161,6 +162,7 @@ ggplot(
     values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
   )
 ```
+
 ```{r, message=FALSE}
 # EDA Code
 formula_tom_q1_extreme_filtering  <- formula_tom %>% filter(q1_in_seconds < 135)
@@ -195,12 +197,12 @@ kable(
   kable_styling("striped", full_width = F, position = "c")
 ```
 
-
 What can you say about each fit, is there any agreement between them?
 
----
+------------------------------------------------------------------------
 
 # TODO
+
 <ul>Answer</ul>
 
 ```{r,message=FALSE}
@@ -227,15 +229,13 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
-
----
+------------------------------------------------------------------------
 
 ## Question 4
 
 Fit the LOESS empirical estimate (joint with interaction) of the regression function $s$ in the model:
 
 $$E[\verb|q3||\verb|q1|,\verb|championship_points|]=s(\verb|q1|,log_{10}(\verb|championship_points|))$$
-
 
 also, fit the following linear regression model:
 
@@ -320,6 +320,7 @@ ggplot(
   ) +
   facet_wrap(~decile, scales = "free", ncol = 4)
 ```
+
 ```{r}
 # EDA Code
 # Fit the linear model with interaction
@@ -353,6 +354,7 @@ ggplot(
     name = "Fits",
     values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
 ```
+
 ```{r}
 # EDA Code
 # Fit the linear model with interaction
@@ -622,11 +624,11 @@ formula_tom_no_na_q4 %>%
 
 Interpret both effect plots and comment on the fit the transformed linear model to the data. Also, give an interpretation of the estimated parameters in this model (apart from the intercept).
 
----
+------------------------------------------------------------------------
 
 <ul>Answer</ul>
 
----
+------------------------------------------------------------------------
 
 ## Question 5
 
@@ -710,6 +712,7 @@ ggplot() +
     subtitle = "Original Data (black), LM Predictions (red), LOESS Predictions (blue)"
   )
 ```
+
 ```{r}
 # Overlay with LM prediction
 ggplot() +
@@ -722,6 +725,7 @@ ggplot() +
     subtitle = "Original Data (black), LM Predictions (red)"
   )
 ```
+
 ```{r}
 # Overlay with LOESS prediction
 ggplot() +
@@ -797,19 +801,24 @@ formula_tom_q7 <- formula_tom %>%
   drop_na(q1_in_seconds, fastest_lap_in_seconds) %>% 
   filter(q1_in_seconds < 180)  # Filtering out the 16min outlier)
 
+# TODO: Do I need to manually define a lm model and plot it separately
+
 ggplot(
   formula_tom_q7,
   aes(x = q1_in_seconds,
       y = fastest_lap_in_seconds)) +
   geom_point(alpha = 0.25) +
-  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F) +
   labs(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time",
     subtitle = "Excluded an outlier data"
-  )
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("Linear Model Fit" = "blue"))
 ```
 
 ```{r}
@@ -823,37 +832,158 @@ For your plot produced in Question 7 add the corresponding LOESS fit. Does this 
 
 ```{r,message=FALSE}
 # Your code answer here
+ggplot(
+  formula_tom_q7,
+  aes(x = q1_in_seconds,
+      y = fastest_lap_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "Fastest Lap Against q1",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time",
+    subtitle = "Excluded an outlier data"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
 ```
 
 ## Question 9
 
-Now we consider the impact of qualifying time (in particular `q1`) on `race_time`. Fit and compare the linear regression model 
-$$
+Now we consider the impact of qualifying time (in particular `q1`) on `race_time`. Fit and compare the linear regression model $$
 \begin{multline}
 E[\verb|race_time||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
 \delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
 \end{multline}
-$$
-with the generalised additive model fitting the regression function (including an interaction of the explanatory variables).
+$$ with the generalised additive model fitting the regression function (including an interaction of the explanatory variables).
 
 $$
 E[\verb|race_time||\verb|q1|,log_{10}(\verb|championship_points|)]= s(\verb|q1|,log_{10}(\verb|championship_points|))
 $$
+
 ```{r,message=FALSE}
-# Your code answer here
+library(mgcv)
+
+formula_tom_q9 <- formula_tom %>%
+  drop_na(q1_in_seconds, championship_points, race_time) %>%
+  filter(q1_in_seconds < 180) %>%  # Filtering out the 16min outlier
+  mutate(
+    log10_championship_points = log10(championship_points + 1),
+  ) %>%
+  select(q1_in_seconds, log10_championship_points, race_time)
+
+# Write formula_tom_q9 to csv
+write.csv(formula_tom_q9, "formula_tom_q9.csv", row.names = FALSE)
+
+# Fit the linear regression model with interaction
+lm_model_q9 <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = formula_tom_q9)
+
+# Fit the generalised additive model with interaction
+gam_model_q9 <- gam(race_time ~ s(q1_in_seconds, log10_championship_points), data = formula_tom_q9)
+
+# Create the table
+kable(
+  summary(lm_model_q9)$coefficients %>% 
+    as.data.frame() %>% 
+    select(Estimate, `Std. Error`),
+  caption = "Summary of the Linear Model Fit",
+  digits = 2,
+  align = "c"
+) %>%
+  kable_styling("striped", full_width = F, position = "center")
+
+# TODO kable for gam_model_q9
+summary(gam_model_q9)
 ```
 
+```{r}
+ggplot(
+  formula_tom_q9,
+  aes(x = q1_in_seconds,
+      y = race_time)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "GAM Model Fit"), method = "gam", se = F, linewidth = 0.5) +
+  labs(
+    title = "Effect of q1 and Championship Points on Race Time",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Race Time"
+)
+```
+```{r}
+mid_decile_points_q9 <- quantile(formula_tom_q9$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
+mid_decile_points_q9 <- signif(mid_decile_points, digits = 3)
+kable(mid_decile_points_q9, caption = "Mid-Decile Points", align = "c")
+
+pred_grid_q9_lm <-  formula_tom_q9 %>%
+  data_grid(
+    q1_in_seconds = seq(min(formula_tom_q9$q1_in_seconds), max(formula_tom_q9$q1_in_seconds),
+    log10_championship_points = seq(min(formula_tom_q9$log10_championship_points), max(formula_tom_q9$log10_championship_points)))) %>% 
+  add_predictions(lm_model_q9,
+                  var = "race_time",
+                  type = "response") %>%
+  mutate(
+    log10_championship_points = factor(log10_championship_points)
+  )
+  
+    
+    
+```
+
+```{r}
+# Sample
+mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
+mid_decile_points <- signif(mid_decile_points, digits = 3)
+kable(mid_decile_points, caption = "Mid-Decile Points", align = "c")
+
+# Add the decile information with interaction to formula_tom_no_na_q4 dataframe
+pred_grid <- 
+  formula_tom_no_na_q4 %>%
+  data_grid(
+    formula_tom_no_na_q4_log10_championship_points = mid_decile_points,
+    q1_in_seconds = seq(min(formula_tom_no_na_q4$q1_in_seconds), max(formula_tom_no_na_q4$q1_in_seconds))) %>% 
+  add_predictions(loess_model_q4, var = "q3_in_seconds", type = "response") %>%
+  mutate(
+    formula_tom_no_na_q4_log10_championship_points = factor(formula_tom_no_na_q4_log10_championship_points)
+  )
+
+# Add the decile information without interaction to formula_tom_no_na_q4 dataframe
+pred_grid_without_interaction <- 
+  formula_tom_no_na_q4 %>%
+  data_grid(
+    formula_tom_no_na_q4_log10_championship_points = mid_decile_points,
+    q1_in_seconds = seq(min(formula_tom_no_na_q4$q1_in_seconds), max(formula_tom_no_na_q4$q1_in_seconds))) %>% 
+  add_predictions(loess_model_without_interaction_q4, var = "q3_in_seconds", type = "response") %>%
+  mutate(
+    formula_tom_no_na_q4_log10_championship_points = factor(formula_tom_no_na_q4_log10_championship_points)
+  )
+
+# With interaction
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
+    theme(legend.position = "bottom") +
+  labs(
+    title = "q3 Against q1 with Championship Points (Log-Transformed)",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+    subtitle = "Excluded missing data"
+  )
+```
+  
 ## Question 10
 
-Suppose we modify the linear model used in Question 9 such that we fit
-$$
+Suppose we modify the linear model used in Question 9 such that we fit $$
 \begin{multline}
 E[log_{10}(\verb|race_time|)|\verb|q1|,log_{10}(\verb|championship_points|)]=\\
 \delta_0 +  \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)
 \end{multline}
-$$
-Discuss how this would modify the interpretation of model.
-
+$$ Discuss how this would modify the interpretation of model.
 
 ## Question 11
 
