@@ -871,12 +871,9 @@ formula_tom_q9 <- formula_tom %>%
   drop_na(q1_in_seconds, championship_points, race_time) %>%
   filter(q1_in_seconds < 180) %>%  # Filtering out the 16min outlier
   mutate(
-    log10_championship_points = log10(championship_points + 1),
+    log10_championship_points = log10(championship_points + 1)
   ) %>%
   select(q1_in_seconds, log10_championship_points, race_time)
-
-# Write formula_tom_q9 to csv
-write.csv(formula_tom_q9, "formula_tom_q9.csv", row.names = FALSE)
 
 # Fit the linear regression model with interaction
 lm_model_q9 <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = formula_tom_q9)
@@ -920,61 +917,54 @@ kable(mid_decile_points_q9, caption = "Mid-Decile Points", align = "c")
 
 pred_grid_q9_lm <-  formula_tom_q9 %>%
   data_grid(
-    q1_in_seconds = seq(min(formula_tom_q9$q1_in_seconds), max(formula_tom_q9$q1_in_seconds),
-    log10_championship_points = seq(min(formula_tom_q9$log10_championship_points), max(formula_tom_q9$log10_championship_points)))) %>% 
-  add_predictions(lm_model_q9,
-                  var = "race_time",
-                  type = "response") %>%
+    log10_championship_points = mid_decile_points_q9,
+    q1_in_seconds = seq(min(formula_tom_q9$q1_in_seconds), max(formula_tom_q9$q1_in_seconds))) %>%
+  add_predictions(
+    lm_model_q9,
+    var = "race_time",
+    type = "response"
+  ) %>% 
   mutate(
     log10_championship_points = factor(log10_championship_points)
   )
-  
-    
-    
-```
 
-```{r}
-# Sample
-mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
-mid_decile_points <- signif(mid_decile_points, digits = 3)
-kable(mid_decile_points, caption = "Mid-Decile Points", align = "c")
-
-# Add the decile information with interaction to formula_tom_no_na_q4 dataframe
-pred_grid <- 
-  formula_tom_no_na_q4 %>%
+pred_grid_q9_gam <-  formula_tom_q9 %>%
   data_grid(
-    formula_tom_no_na_q4_log10_championship_points = mid_decile_points,
-    q1_in_seconds = seq(min(formula_tom_no_na_q4$q1_in_seconds), max(formula_tom_no_na_q4$q1_in_seconds))) %>% 
-  add_predictions(loess_model_q4, var = "q3_in_seconds", type = "response") %>%
+    log10_championship_points = mid_decile_points_q9,
+    q1_in_seconds = seq(min(formula_tom_q9$q1_in_seconds), max(formula_tom_q9$q1_in_seconds))) %>%
+  add_predictions(
+    gam_model_q9,
+    var = "race_time",
+    type = "response"
+  ) %>% 
   mutate(
-    formula_tom_no_na_q4_log10_championship_points = factor(formula_tom_no_na_q4_log10_championship_points)
+    log10_championship_points = factor(log10_championship_points)
   )
 
-# Add the decile information without interaction to formula_tom_no_na_q4 dataframe
-pred_grid_without_interaction <- 
-  formula_tom_no_na_q4 %>%
-  data_grid(
-    formula_tom_no_na_q4_log10_championship_points = mid_decile_points,
-    q1_in_seconds = seq(min(formula_tom_no_na_q4$q1_in_seconds), max(formula_tom_no_na_q4$q1_in_seconds))) %>% 
-  add_predictions(loess_model_without_interaction_q4, var = "q3_in_seconds", type = "response") %>%
-  mutate(
-    formula_tom_no_na_q4_log10_championship_points = factor(formula_tom_no_na_q4_log10_championship_points)
-  )
-
-# With interaction
-formula_tom_no_na_q4 %>% 
+# Plot for LM with interaction
+formula_tom_q9 %>%
   ggplot(
-    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    aes(x = q1_in_seconds,
+        y = race_time)) +
     geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-  labs(
-    title = "q3 Against q1 with Championship Points (Log-Transformed)",
-    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
-    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
-  )
+    geom_line(aes(x = q1_in_seconds,
+                  y = race_time,
+                  col = log10_championship_points),
+              data = pred_grid_q9_lm)
+
+# Plot for GAM with interaction
+formula_tom_q9 %>%
+  ggplot(
+    aes(x = q1_in_seconds,
+        y = race_time)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = race_time,
+                  col = log10_championship_points),
+              data = pred_grid_q9_gam)
+)
 ```
+
   
 ## Question 10
 
@@ -985,6 +975,49 @@ E[log_{10}(\verb|race_time|)|\verb|q1|,log_{10}(\verb|championship_points|)]=\\
 \end{multline}
 $$ Discuss how this would modify the interpretation of model.
 
+```{r}
+formula_tom_q10 <- formula_tom %>%
+  drop_na(q1_in_seconds, championship_points, race_time) %>%
+  # filter(q1_in_seconds < 180) %>%  # Filtering out the 16min outlier
+  mutate(
+    log10_championship_points = log10(championship_points + 1),
+    log10_race_time = log10(race_time)
+  ) %>%
+  select(q1_in_seconds, log10_championship_points, log10_race_time)
+
+# Fit the linear regression model with interaction
+lm_model_q10 <- lm(log10_race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = formula_tom_q10)
+
+mid_decile_points_q10 <- quantile(formula_tom_q10$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
+mid_decile_points_q10 <- signif(mid_decile_points, digits = 3)
+kable(mid_decile_points_q10, caption = "Mid-Decile Points", align = "c")
+
+pred_grid_q10_lm <-  formula_tom_q10 %>%
+  data_grid(
+    log10_championship_points = mid_decile_points_q10,
+    q1_in_seconds = seq(min(formula_tom_q10$q1_in_seconds), max(formula_tom_q10$q1_in_seconds))) %>%
+  add_predictions(
+    lm_model_q10,
+    var = "log10_race_time",
+    type = "response"
+  ) %>% 
+  mutate(
+    log10_championship_points = factor(log10_championship_points)
+  )
+
+# Plot for LM with interaction
+formula_tom_q10 %>%
+  ggplot(
+    aes(x = q1_in_seconds,
+        y = log10_race_time)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = log10_race_time,
+                  col = log10_championship_points),
+              data = pred_grid_q10_lm)
+)
+```
+
 ## Question 11
 
 Suppose someone wishes for you to investigate the effect of `circuit_Id` why might this be problematic?
@@ -994,7 +1027,15 @@ Suppose someone wishes for you to investigate the effect of `circuit_Id` why mig
 Choosing a subset of 5 observations of `circuit_Id` investigate the impact of `circuit_Id` by incorporating it into your linear model from Question 9.
 
 ```{r,message=FALSE}
-# Your code answer here
+set.seed(37)
+formula_tom_q12 <- formula_tom %>%
+  drop_na(formula_tom_q12)#%>%  # Exclude all missing data
+  # filter(q1_in_seconds < 180) %>%  # Filtering out the 16min outlier
+  # mutate(
+  #   log10_championship_points = log10(championship_points + 1)
+  # ) %>%
+  # select(q1_in_seconds, log10_championship_points, race_time, circuit_Id)
+  
 ```
 
 What do you conclude about the impact of circuit?
