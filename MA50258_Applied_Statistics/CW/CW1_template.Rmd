@@ -645,10 +645,6 @@ missing_q3_data <- formula_tom %>%
   filter(!is.na(interaction_term)) %>%  # filter only missing interaction term))
   select(q1_in_seconds, q3_in_seconds, log10_championship_points, interaction_term)
 
-
-# Save missing_q3_data to a csv file
-# write.csv(missing_q3_data, "missing_q3_data.csv")
-
 # Rename the columns in missing_q3_data to match the model's names
 names(missing_q3_data) <- c("q1_in_seconds", "q3_in_seconds", "formula_tom_no_na_q4_log10_championship_points", "interaction_term")
 
@@ -765,30 +761,23 @@ formula_tom_q6 <- formula_tom %>% select(q1_in_seconds, q2_in_seconds, q3_in_sec
   drop_na(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
   mutate(qmin = pmin(q1_in_seconds, q2_in_seconds, q3_in_seconds, na.rm = TRUE))
 
-qmin <- formula_tom %>% select(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
-  drop_na(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>% 
-  mutate(qmin = pmin(q1_in_seconds, q2_in_seconds, q3_in_seconds, na.rm = TRUE)) %>%
-  select(qmin)
-
-formula_tom_q6 <- cbind(formula_tom_q6, qmin)
-
 ggplot(
   formula_tom_q6,
-  aes(x = q1_in_seconds, y = qmin)) +
-  geom_point(alpha = 0.25)
-  # geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
-  # geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
-  # labs(
-  #   title = "Scatterplot of q1 Against qmin",
-  #   x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
-  #   y = "Minimum Lap Time Across q1, q2, and q3 (qmin)",
-  #   subtitle = "Excluded missing data"
-  # ) +
-  # theme(legend.position = "bottom") +
-  # scale_color_manual(
-  #   name = "Fits",
-  #   values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")
-  # )
+  aes(x = q1_in_seconds,
+      y = qmin)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  labs(
+    title = "qmin Against q1",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Minimum Fastest Lap Time Across q1, q2, and q3 (qmin)",
+    subtitle = "Excluded missing data"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
 ```
 
 What model have you fitted, what conclusions can you draw?
@@ -800,7 +789,30 @@ Produce a scatterplot of `q1` and `fastest_lap`, write down and then fit a linea
 $$Your theory answer here$$
 
 ```{r,message=FALSE}
-# Your code answer here
+# Convert fastest_lap to seconds
+
+
+formula_tom_q7 <- formula_tom %>%
+  select(q1_in_seconds, fastest_lap_in_seconds) %>%
+  drop_na(q1_in_seconds, fastest_lap_in_seconds) %>% 
+  filter(q1_in_seconds < 180)  # Filtering out the 16min outlier)
+
+ggplot(
+  formula_tom_q7,
+  aes(x = q1_in_seconds,
+      y = fastest_lap_in_seconds)) +
+  geom_point(alpha = 0.25) +
+  geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F) +
+  geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F) +
+  labs(
+    title = "Fastest Lap Against q1",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time",
+    subtitle = "Excluded an outlier data"
+  )
+```
+
+```{r}
 ```
 
 Which of these times would you expect to be faster based on this model? (Hint you may wish to examine the parameter estimates of the linear model).
