@@ -424,8 +424,6 @@ kable(
 loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
 loess_model_without_interaction_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
 
-# Create the table
-summary(loess_model_q4)
 ```
 
 ```{r, message=FALSE}
@@ -824,6 +822,8 @@ ggplot() +
 
 Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly which the linear model's limitation doesn't allow it to capture this trend.
 
+In conclusion, using the models from Question 4 to predict the missing values for `q3` has shown us that the predicted values are close to the original values, thus there won't be a significant impact on the summaries as the predicted values are close to the original values.
+
 ---
 
 ## Question 6
@@ -878,14 +878,24 @@ Which of these times would you expect to be faster based on this model? (Hint yo
 ## Answer
 
 ```{r,message=FALSE}
-# Convert fastest_lap to seconds
-
-
 formula_tom_q7 <- formula_tom %>%
   select(q1_in_seconds, fastest_lap_in_seconds) %>%
   drop_na(q1_in_seconds, fastest_lap_in_seconds) %>% 
   filter(q1_in_seconds < 180)  # Filtering out the 16min outlier)
 
+
+
+
+lm_fit <- lm(fastest_lap_in_seconds ~ q1_in_seconds, data = formula_tom_q7)
+
+# Get the coefficients of the linear model
+coefficients <- coef(lm_fit)
+
+# Calculate the intersection point
+intersection_q1 <- coefficients[1] / (1 - coefficients[2])
+
+# Output the intersection point
+cat("The intersection point between the linear model and the theoretical line is:", round(intersection_q1, 1), "seconds\n")
 
 ggplot(
   formula_tom_q7,
@@ -893,7 +903,8 @@ ggplot(
       y = fastest_lap_in_seconds)) +
   geom_point(alpha = 0.25) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F) +
-  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dotted", color = "red") +
+  geom_vline(xintercept = intersection_q1, linetype = "dashed", color = "black") +
   labs(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
@@ -915,7 +926,8 @@ and the red line is the theoretical line where `qmin` = `q1` where we assume a s
 
 $$E[\verb|qmin||\verb|q1|]=\verb|q1|$$
 
-Based on the graph, when `q1` < 100s, the theoretical time is faster than the actual time. However, when `q1` > 100s, the actual time is faster than the theoretical time. 
+Based on the graph, when `q1` < 106.9s, the theoretical time is faster than the actual time. However, when `q1` > 106.9s, the actual time is faster than the theoretical time. 
+
 
 ---
 
@@ -1365,6 +1377,7 @@ ggplot(
   geom_smooth(
     data = pred_grid_for_australia,
     se = FALSE,
+    alpha = 0.5,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
@@ -1372,6 +1385,7 @@ ggplot(
   geom_smooth(
     data = pred_grid_for_british,
     se = FALSE,
+    alpha = 0.5,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
@@ -1379,6 +1393,7 @@ ggplot(
   geom_smooth(
     data = pred_grid_for_belgian,
     se = FALSE,
+    alpha = 0.5,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID,
@@ -1387,6 +1402,7 @@ ggplot(
   geom_smooth(
     data = pred_grid_for_italian,
     se = FALSE,
+    alpha = 0.5,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
@@ -1394,6 +1410,7 @@ ggplot(
   geom_smooth(
     data = pred_grid_for_japanese,
     se = FALSE,
+    alpha = 0.5,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
