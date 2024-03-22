@@ -14,7 +14,7 @@ output:
 
 ### Disclaimer:
 
-GPT4 and CoPilot used for code and discussion suggestions, debugging purpose, and to check the correctness of the code.
+ChatGPT and GitHub CoPilot used for code and discussion suggestions, debugging purpose, and to check the correctness of the code.
 
 ---
 
@@ -98,18 +98,6 @@ summary_df <- data.frame(
   Fastest_Lap = summary_fastest_lap
 )
 
-kable(
-  summary_df,
-      caption = "Summary of Fastest Lap Times of Each Competitor",
-      digits = 2,
-      align = "c",
-      col.names = c(
-        "From 1st Qualifying Session",
-        "From 2nd Qualifying Session",
-        "From 3rd Qualifying Session",
-        "Set Over The Race")
-      ) %>%
-  kable_styling("striped", full_width = F, position = "c")
 ```
 
 What conclusions can you draw from your summaries?
@@ -644,10 +632,10 @@ formula_tom_no_na_q4 %>%
       y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
       col = "log10(Championship Points)"
     ) +
-    scale_x_continuous(labels = function(x) paste0(x, "s")) +
-    scale_y_continuous(labels = function(y) paste0(y, "s")) +
     xlim(90, 130) +
-    ylim(70, 130)
+    ylim(70, 130) +
+    scale_x_continuous(labels = function(x) paste0(x, "s")) +
+    scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 
@@ -850,7 +838,7 @@ ggplot() +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
-Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly which the linear model's limitation doesn't allow it to capture this trend.
+Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly which the linear model's limitation doesn't allow it to capture this trend. Therefore, the two predicted models are close to the previous LOESS and linear model fit.
 
 In conclusion, using the models from Question 4 to predict the missing values for `q3` has shown us that the predicted values are close to the original values, thus there won't be a significant impact on the summaries as the predicted values are close to the original values.
 
@@ -936,7 +924,7 @@ ggplot(
   geom_point(alpha = 0.25) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
-  geom_vline(xintercept = intersection_q1, linetype = "dotted", color = "orange") +
+  geom_vline(xintercept = intersection_q1, linetype = "dotted", color = "purple") +
   labs(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
@@ -980,7 +968,7 @@ ggplot(
   geom_point(alpha = 0.25) +
   geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
-  geom_vline(xintercept = intersection_q1, linetype = "dotted", color = "orange") +
+  geom_vline(xintercept = intersection_q1, linetype = "dotted", color = "purple") +
   labs(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
