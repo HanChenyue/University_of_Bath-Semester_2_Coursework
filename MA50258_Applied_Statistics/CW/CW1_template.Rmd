@@ -108,7 +108,7 @@ What conclusions can you draw from your summaries?
 
 ------------------------------------------------------------------------
 
-<u> Answer </u>
+## Answer
 
 ```{r}
 kable(
@@ -159,7 +159,6 @@ ggplot(
     title = "Scatterplot of q1 against q3",
     x = "q1 (seconds)",
     y = "q3 (seconds)",
-    subtitle = "Excluding an extreme outlier"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -182,7 +181,6 @@ ggplot(
     title = "Scatterplot of q1 against q3",
     x = "q1 (seconds)",
     y = "q3 (seconds)",
-    subtitle = "Excluding an extreme outlier"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -204,7 +202,6 @@ ggplot(
     title = "Scatterplot of q1 Against q3",
     x = "q1 (seconds)",
     y = "q3 (seconds)",
-    subtitle = "Extreme filtering"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -229,7 +226,7 @@ What can you say about each fit, is there any agreement between them?
 
 ------------------------------------------------------------------------
 
-<ul>Answer</ul>
+## Answer
 
 For this question, we produced a scatter plot of the fastest lap time from the 1st qualifying session (`q1`) against the fastest lap time from the 3rd qualifying session (`q3`). We also added an overlay of the fit of the corresponding LOESS fit and the fit of the linear regression model. We excluded an extreme outlier from the data set by setting a threshold of 180 seconds for the fastest lap time.
 
@@ -246,7 +243,6 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
     title = "Scatterplot of q1 Against q3 with LOESS and Linear Model Fits",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data and an extreme outlier"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -315,7 +311,6 @@ ggplot(
     title = "q3 Against q1 with Championship Points (Non Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data and an extreme outlier"
   ) + 
   theme(legend.position = "bottom") +
   scale_colour_gradient2(
@@ -336,7 +331,6 @@ ggplot(
     title = "q3 Against q1 with Championship Points (Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
   ) + 
   theme(legend.position = "bottom") +
   scale_colour_gradient2(
@@ -364,7 +358,6 @@ ggplot(
     title = "q3 Against q1 with Championship Points (Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
   ) +
   theme(legend.position = "bottom") +
   scale_colour_gradient2(
@@ -402,7 +395,6 @@ ggplot(
     title = "q3 Against log10(championship_points)",
     x = "log10(championship_points)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -475,7 +467,6 @@ formula_tom_no_na_q4 %>%
     title = "q3 Against q1 with Championship Points (Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
   )
 
 formula_tom_no_na_q4 %>%
@@ -523,7 +514,7 @@ Interpret both effect plots and comment on the fit the transformed linear model 
 
 ------------------------------------------------------------------------
 
-<ul>Answer</ul>
+## Answer
 
 ```{r}
 # Plot the effect of championship points on q3
@@ -538,7 +529,6 @@ ggplot(
     title = "q3 Against log10(Championship Points)",
     x = "log10(Championship Points)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -593,7 +583,6 @@ formula_tom_no_na_q4 %>%
     title = "Linear Model Fit: q3 Against q1 with Championship Points (Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data",
     col = "log10(Championship Points)"
   ) +
   theme(legend.position = "bottom") +
@@ -613,7 +602,6 @@ formula_tom_no_na_q4 %>%
     title = "LOESS Model Fit: q3 Against q1 with Championship Points (Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data",
     col = "log10(Championship Points)"
   ) +
   theme(legend.position = "bottom") +
@@ -653,7 +641,6 @@ formula_tom_no_na_q4 %>%
       title = "LOESS Model Fit: q3 Against q1 with Championship Points (Log-Transformed)",
       x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
       y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-      subtitle = "Excluded missing data",
       col = "log10(Championship Points)"
     ) +
     scale_x_continuous(labels = function(x) paste0(x, "s")) +
@@ -671,7 +658,6 @@ Overall, the linear model fit with the interaction term provides a comprehensive
 The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this had?
 
 ```{r}
-# Your code answer here
 # Update the missing_q3_data to include all necessary variables for the model
 missing_q3_data <- formula_tom %>%
   mutate(
@@ -718,7 +704,6 @@ formula_tom_no_na_q4 %>%
     title = "q3 Against log10(championship_points)",
     x = "log10(championship_points)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
   ) 
 ```
 
@@ -765,7 +750,7 @@ kable(
 
 ---
 
-<ul>Answer</ul>
+## Answer
 
 ```{r}
 # Combine the tables for comparison between predicted lm, loess, and original q3 values
@@ -837,7 +822,7 @@ ggplot() +
   )
 ```
 
-Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly.
+Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly which the linear model's limitation doesn't allow it to capture this trend.
 
 ---
 
@@ -845,8 +830,15 @@ Based at the table, we can see that the predicted `q3` values using the linear m
 
 Create a new variable `qmin` that gives the minimum time each competitor set across `q1`, `q2` and `q3`. Produce a scatterplot of `q1`against `qmin`, fitting a suitable model to these data.
 
+
+
+What model have you fitted, what conclusions can you draw?
+
+---
+
+## Answer
+
 ```{r,message=FALSE}
-# Your code answer here
 formula_tom_q6 <- formula_tom %>% select(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
   drop_na(q1_in_seconds, q2_in_seconds, q3_in_seconds) %>%
   mutate(qmin = pmin(q1_in_seconds, q2_in_seconds, q3_in_seconds, na.rm = TRUE))
@@ -862,7 +854,6 @@ ggplot(
     title = "qmin Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Minimum Fastest Lap Time Across q1, q2, and q3 (qmin)",
-    subtitle = "Excluded missing data"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
@@ -870,13 +861,21 @@ ggplot(
     values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
 ```
 
-What model have you fitted, what conclusions can you draw?
+I fitted both a linear model and a LOESS model to the data.
+
+Based on the dataset, LOESS model is a better fit here given that it is much more accurate in capturing the tail end of the datapoints.
+
+---
 
 ## Question 7
 
 Produce a scatterplot of `q1` and `fastest_lap`, write down and then fit a linear regression model that could be fitted to these data.
 
-$$Your theory answer here$$
+Which of these times would you expect to be faster based on this model? (Hint you may wish to examine the parameter estimates of the linear model).
+
+---
+
+## Answer
 
 ```{r,message=FALSE}
 # Convert fastest_lap to seconds
@@ -887,7 +886,6 @@ formula_tom_q7 <- formula_tom %>%
   drop_na(q1_in_seconds, fastest_lap_in_seconds) %>% 
   filter(q1_in_seconds < 180)  # Filtering out the 16min outlier)
 
-# TODO: Do I need to manually define a lm model and plot it separately
 
 ggplot(
   formula_tom_q7,
@@ -895,29 +893,41 @@ ggplot(
       y = fastest_lap_in_seconds)) +
   geom_point(alpha = 0.25) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "red") +
   labs(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time",
-    subtitle = "Excluded an outlier data"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
     name = "Fits",
-    values = c("Linear Model Fit" = "blue"))
+    values = c("Linear Model Fit" = "blue", "Theoretical Line" = "red")) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
-```{r}
-```
+The linear model fit in blue is given by the equation:
 
-Which of these times would you expect to be faster based on this model? (Hint you may wish to examine the parameter estimates of the linear model).
+$$E[\verb|qmin||\verb|q1|]=\xi_0 + \xi_1\,\verb|q1|$$
+
+and the red line is the theoretical line where `qmin` = `q1` where we assume a scenario where `q1` always dominates across all qualifying sessions.
+
+$$E[\verb|qmin||\verb|q1|]=\verb|q1|$$
+
+Based on the graph, when `q1` < 100s, the theoretical time is faster than the actual time. However, when `q1` > 100s, the actual time is faster than the theoretical time. 
+
+---
 
 ## Question 8
 
 For your plot produced in Question 7 add the corresponding LOESS fit. Does this change the conclusions?
 
+---
+
+## Answer
+
 ```{r,message=FALSE}
-# Your code answer here
 ggplot(
   formula_tom_q7,
   aes(x = q1_in_seconds,
@@ -929,13 +939,18 @@ ggplot(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time",
-    subtitle = "Excluded an outlier data"
   ) +
   theme(legend.position = "bottom") +
   scale_color_manual(
     name = "Fits",
-    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
+
+As shown by the red LOESS fit, the actual time is faster than the theoretical time when `q1` > 100s. This indicates that the LOESS fit provides a better representation of the relationship between `q1` and `fastest_lap` compared to the linear model fit. The LOESS fit captures the non-linear relationship between the variables and provides a more accurate representation of the data.
+
+---
 
 ## Question 9
 
@@ -949,6 +964,9 @@ $$ with the generalised additive model fitting the regression function (includin
 $$
 E[\verb|race_time||\verb|q1|,log_{10}(\verb|championship_points|)]= s(\verb|q1|,log_{10}(\verb|championship_points|))
 $$
+---
+
+## Answer
 
 ```{r,message=FALSE}
 library(mgcv)
@@ -978,8 +996,6 @@ kable(
 ) %>%
   kable_styling("striped", full_width = F, position = "center")
 
-# TODO kable for gam_model_q9
-summary(gam_model_q9)
 ```
 
 ```{r}
@@ -1004,7 +1020,6 @@ ggplot(
 ```{r}
 mid_decile_points_q9 <- quantile(formula_tom_q9$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
 mid_decile_points_q9 <- signif(mid_decile_points, digits = 3)
-kable(mid_decile_points_q9, caption = "Mid-Decile Points", align = "c")
 
 pred_grid_q9_lm <-  formula_tom_q9 %>%
   data_grid(
@@ -1041,7 +1056,16 @@ formula_tom_q9 %>%
     geom_line(aes(x = q1_in_seconds,
                   y = race_time,
                   col = log10_championship_points),
-              data = pred_grid_q9_lm)
+              data = pred_grid_q9_lm) +
+  labs(
+    title = "Linear Model Fit: q1 Against Race Time",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Race Time",
+    col = "log10(Championship Points)"
+  ) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
+
 
 # Plot for GAM with interaction
 formula_tom_q9 %>%
@@ -1052,9 +1076,43 @@ formula_tom_q9 %>%
     geom_line(aes(x = q1_in_seconds,
                   y = race_time,
                   col = log10_championship_points),
-              data = pred_grid_q9_gam)
+              data = pred_grid_q9_gam) +
+  labs(
+    title = "GAM Model Fit: q1 Against Race Time",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Race Time",
+    col = "log10(Championship Points)"
+  ) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
+When comparing the linear model and the generalised additive model (GAM) fit, the linear model provides a simpler representation of the relationship between `q1`, `log10(championship_points)`, and `race_time`. While the GAM fit is a much more complex fit but does not provide a significant improvement in the model fit compared to the linear model given that it is heavily influenced by the type of data and will display overfitting bias if the data is not well distributed. See the plot below when we zoom in on the data, the GAM model is heavily influenced by an extreme cluster of data points that has `race_time` values closer to 0s which is not ideal for the model. Therefore, the simpler linear regression model is preferred in this case.
+
+
+```{r}
+# Plot for GAM with interaction
+formula_tom_q9 %>%
+  ggplot(
+    aes(x = q1_in_seconds,
+        y = race_time)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = race_time,
+                  col = log10_championship_points),
+              data = pred_grid_q9_gam) +
+  labs(
+    title = "GAM Model Fit: q1 Against Race Time",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Race Time",
+    col = "log10(Championship Points)"
+  ) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s")) +
+  xlim(100, 150)
+```
+
+---
   
 ## Question 10
 
@@ -1080,7 +1138,6 @@ lm_model_q10 <- lm(log10_race_time ~ q1_in_seconds + log10_championship_points +
 
 mid_decile_points_q10 <- quantile(formula_tom_q10$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
 mid_decile_points_q10 <- signif(mid_decile_points, digits = 3)
-kable(mid_decile_points_q10, caption = "Mid-Decile Points", align = "c")
 
 pred_grid_q10_lm <-  formula_tom_q10 %>%
   data_grid(
