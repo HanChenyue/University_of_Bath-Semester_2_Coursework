@@ -276,7 +276,7 @@ The formula for the linear model fit is:
 
 $$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
 
-where $\alpha_0$ is the intercept and $\alpha_1$ is the slope of the line. The estimated values of $\alpha_0$ and $\alpha_1$ are 3.48 and 0.99, respectively. This means that the expected value of `q3` increases by 0.99 seconds for every one-second increase in `q1`.
+where $\alpha_0$ is the intercept and $\alpha_1$ is the slope of the line. The estimated values of $\alpha_0$ and $\alpha_1$ are 3.48 and 0.96, respectively. This means that the expected value of `q3` increases by 0.96 seconds for every one-second increase in `q1`.
 
 ------------------------------------------------------------------------
 
@@ -616,13 +616,17 @@ where $\delta_0$, $\delta_1$, $\delta_2$, and $\delta_3$ are the estimated coeff
 -   $\delta_2 = 1.51$, and
 -   $\delta_3 = -0.03$.
 
-The estimated value of $\delta_1$ is 1.00 and $\delta_3$ is -0.03.
 
 Therefore, looking only on the variable `q1`, the expected value of `q3` increases by $1.00 + (-0.03) = 0.97$ seconds for every one-second increase in `q1`.
 
 Looking only on the variable `log10(championship_points)`, the expected value of `q3` increases by $log_{10}(2) \times (\delta_2 + \delta_3) = log_{10}(2) \times (1.51 + (-0.03)) = 0.46$ for every twofold increase in `championship_points`.
 
-The linear model and loess capture the relationship between `q1`, `championship_points`, and `q3` by considering the interaction between `q1` and `championship_points`. The models provided a good fit to the data for different mid-deciles of `championship_points` to provide us a comprehensive understanding of how `q1` and `championship_points` influence `q3`. As we can see, we observed that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown below).
+The linear model and loess capture the relationship between `q1`, `championship_points`, and `q3` by considering the interaction between `q1` and `championship_points`. The models provided a good fit to the data for different mid-deciles of `championship_points` to provide us a comprehensive understanding of how `q1` and `championship_points` influence `q3`. 
+
+However, when looking at the LOESS plot, we observed that the linear model fail to capture a fact that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session at when `q1` is approximately more than 100s, but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown below). This indicate that championship points might have a slight effect on the relationship between `q1` and `q3` but it is not significant as captured by the LOESS model.
+
+In other words, assuming that all competitors did 'badly' on the 1st qualifying session (when `q1` is approximately more than 100s), we expect that the competitors with higher `championship_points` will have a slight edge in the 3rd qualifying session relative to the competitors with lower `championship_points`.
+
 
 ```{r, message=FALSE}
 formula_tom_no_na_q4 %>% 
