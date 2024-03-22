@@ -28,6 +28,7 @@ library(ggplot2)
 library(kableExtra)
 library(patchwork)
 library(viridis) # Increase the number of colours available
+library(broom)
 ```
 
 ```{r data-load}
@@ -89,7 +90,6 @@ summary_df <- data.frame(
   Fastest_Lap = summary_fastest_lap
 )
 
-# Use kable for a nice table format
 kable(
   summary_df,
       caption = "Summary of Fastest Lap Times of Each Competitor",
@@ -110,7 +110,32 @@ What conclusions can you draw from your summaries?
 
 <u> Answer </u>
 
-The summary statistics for the four lap time variables are presented in the table above. The minimum, mean, median and maximum times are calculated for each of the four variables.
+```{r}
+kable(
+  summary_df,
+      caption = "Summary of Fastest Lap Times of Each Competitor",
+      digits = 2,
+      align = "c",
+      col.names = c(
+        "From 1st Qualifying Session",
+        "From 2nd Qualifying Session",
+        "From 3rd Qualifying Session",
+        "Set Over The Race")
+      ) %>%
+  kable_styling("striped", full_width = F, position = "c")
+```
+
+From the summary statistics, we can see that the minimum lap times of:
+
+i. q1: 53.90s
+
+ii. q2: 53.65s
+
+iii. q3: 53.38s
+
+across the qualifying sessions are remarkably close. This tight clustering suggesting a high level of competitiveness to achieve the fastest possible laps across all three qualifying sessions.
+
+The range between the minimum (55.40s) and maximum (202.30s) fastest lap times is broader in the race, suggesting that the maximum time of 202.30s is an outlier, as it is significantly higher than the mean and median times set over the race. This is further supported by the fact that the mean and median times are relatively close to each other, and the delta of mean/median time from the minimum deviates around 35s instead of 112s when looking at the delta between mean/median and the maximum time. Taking the difference between the mean/median and minimum times,the 35s time range indicate the presence of diverse performances influenced by race dynamics, strategies, and driver decision-making.
 
 ------------------------------------------------------------------------
 
@@ -202,9 +227,9 @@ What can you say about each fit, is there any agreement between them?
 
 ------------------------------------------------------------------------
 
-# TODO
-
 <ul>Answer</ul>
+
+For this question, we produced a scatter plot of the fastest lap time from the 1st qualifying session (`q1`) against the fastest lap time from the 3rd qualifying session (`q3`). We also added an overlay of the fit of the corresponding LOESS fit and the fit of the linear regression model. We excluded an extreme outlier from the data set by setting a threshold of 180 seconds for the fastest lap time.
 
 ```{r,message=FALSE}
 # The reason why there are some data points that aren't being shown is due to presence of missing data
@@ -229,6 +254,37 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
+
+The LOESS smoothing fit is a non-parametric regression method that fits multiple local linear regressions to the data. The linear model fit is a parametric regression method that fits a single linear regression to the data. The LOESS smoothing fit is more flexible and can capture non-linear relationships between the variables. The linear model fit is less flexible and can only capture linear relationships between the variables.
+
+There is a general agreement between the two fits that there is a positive correlation between q1 and q3 lap times although the LOESS smoothing fit is able to better capture the local fluctuations in the data. The closeness of the two lines suggests that the linear model approximates the relationship well, although the LOESS fit indicates some deviation from linearity, especially at the lower and higher ends of the q1 time range.
+
+
+```{r}
+# Run the linear model
+lm_fit <- lm(q3_in_seconds ~ q1_in_seconds, data = formula_tom_no_na_q3)
+
+# Tidy the linear model fit
+lm_summary <- broom::tidy(lm_fit) %>% as.data.frame()#%>% select(term, estimate)
+
+# Rename the rows and columns of the data frame
+lm_summary_custom <- data.frame(
+  term = c("Intercept", "q1"),
+  estimate = lm_summary$estimate,
+)
+
+# Create the table with kable
+kable(lm_summary,
+  caption = "Summary of the Linear Model Fit",
+  digits = 2,
+  align = "c",
+) %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+```
+
+The formula for the linear model fit is:
+
+$$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
 
 ------------------------------------------------------------------------
 
@@ -1045,12 +1101,6 @@ formula_tom_q11 <- formula_tom %>%
   ) %>%
   select(q1_in_seconds, circuit_ID, race_time, championship_points)
 
-# ggplot(
-#   formula_tom_q11,
-#   aes(x = q1_in_seconds,
-#       y = q3_in_seconds, col = circuit_ID)) +
-#   geom_point(alpha = 0.25) +
-#   theme(legend.position = "bottom") + facet_wrap(~circuit_ID, ncol = 3)
 ggplot(formula_tom_q11, aes(x = q1_in_seconds, y = race_time, col = circuit_ID)) +
   geom_point(alpha = 0.25) +
   theme(legend.position = "bottom") +
@@ -1094,7 +1144,7 @@ formula_tom_q12 <- formula_tom %>%
   select(q1_in_seconds, log10_championship_points, circuit_ID, race_time)
 
 # Fit the linear regression model with interaction
-lm_model_q12 <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points + circuit_ID, data = formula_tom_q12)
+lm_model_q12 <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = formula_tom_q12)
 
 # Create the lm table
 kable(
@@ -1114,28 +1164,182 @@ gam_model_q12 <- gam(race_time ~ s(q1_in_seconds, log10_championship_points) + c
 summary(gam_model_q12)
 ```
 
-
 ```{r}
-circuit_id_colors <- viridis::viridis(n = length(circuit_id_levels), option = "C")
+# mid_decile_points_q12 <- quantile(formula_tom_q12$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
+# mid_decile_points_q12 <- signif(mid_decile_points, digits = 3)
+# kable(mid_decile_points_q12, caption = "Mid-Decile Points", align = "c")
+# 
+# lm_pred_grid_q12 <-  formula_tom_q12 %>%
+#   data_grid(
+#     log10_championship_points = mid_decile_points_q12,
+#     circuit_ID = unique(formula_tom_q12$circuit_ID),
+#     q1_in_seconds = seq(min(formula_tom_q12$q1_in_seconds), max(formula_tom_q12$q1_in_seconds))) %>%
+#   add_predictions(
+#     lm_model_q12,
+#     var = "race_time",
+#     type = "response") %>% 
+#   mutate(
+#     log10_championship_points = factor(log10_championship_points)
+  # )
 
-# Your ggplot call
-ggplot(formula_tom_q12, aes(x = q1_in_seconds, y = race_time)) +
-  geom_point(aes(color = circuit_ID), alpha = 0.25) +
-  geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.8) +
-  geom_smooth(method = "gam", se = FALSE, color = "blue", size = 0.8) +
+# Generate a color for each circuit_ID
+# circuit_id_colors <- viridis::viridis(length(unique(formula_tom_q12$circuit_ID)))
+
+# Generate a color for each level of log10_championship_points
+# mid_decile_colors <- viridis::viridis(length(unique(lm_pred_grid_q12$log10_championship_points)))
+
+# Create the plot
+# ggplot() +
+#   # Add the actual data points
+#   geom_point(
+#     data = formula_tom_q12,
+#     aes(x = q1_in_seconds, y = race_time, color = circuit_ID),
+#     alpha = 0.25
+#   ) +
+#   geom_line(
+#     data = lm_pred_grid_q12,
+#     aes(x = q1_in_seconds, y = race_time, color = circuit_ID))
+
+australia <- formula_tom_q12 %>% filter(circuit_ID == "Australian Grand Prix")
+british <- formula_tom_q12 %>% filter(circuit_ID == "British Grand Prix")
+belgian <- formula_tom_q12 %>% filter(circuit_ID == "Belgian Grand Prix")
+italian <- formula_tom_q12 %>% filter(circuit_ID == "Italian Grand Prix")
+japanese <- formula_tom_q12 %>% filter(circuit_ID == "Japanese Grand Prix")
+
+australia_lm <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = australia)
+british_lm <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = british)
+belgian_lm <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = belgian)
+italian_lm <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = italian)
+japanese_lm <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points, data = japanese)
+
+australia_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = australia)
+british_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = british)
+belgian_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = belgian)
+italian_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = italian)
+japanese_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = japanese)
+
+
+
+# pred_grid_for_q12 <- formula_tom_q12 %>% 
+#   data_grid(
+#     q1_in_seconds = seq(min(formula_tom_q12$q1_in_seconds), max(formula_tom_q12$q1_in_seconds)),
+#     log10_championship_points = seq(min(formula_tom_q12$log10_championship_points), max(formula_tom_q12$log10_championship_points)),
+#     circuit_ID = unique(formula_tom_q12$circuit_ID)) %>% 
+#   add_predictions(
+#     gam_model_q12,
+#     var = "race_time",
+#     type = "response") %>% 
+#   mutate(
+#     circuit_ID = factor(circuit_ID)
+#   )
+
+pred_grid_for_australia <- australia %>% 
+  data_grid(
+    q1_in_seconds = seq(min(australia$q1_in_seconds), max(australia$q1_in_seconds)),
+    log10_championship_points = seq(min(australia$log10_championship_points), max(australia$log10_championship_points))) %>% 
+  add_predictions(
+    australia_gam,
+    var = "race_time",
+    type = "response") %>%
+  mutate(
+    circuit_ID = factor("Australian Grand Prix")
+  )
+
+pred_grid_for_british <- british %>%
+  data_grid(
+    q1_in_seconds = seq(min(british$q1_in_seconds), max(british$q1_in_seconds)),
+    log10_championship_points = seq(min(british$log10_championship_points), max(british$log10_championship_points))) %>% 
+  add_predictions(
+    british_gam,
+    var = "race_time",
+    type = "response") %>%
+  mutate(
+    circuit_ID = factor("British Grand Prix")
+  )
+
+pred_grid_for_belgian <- belgian %>%
+  data_grid(
+    q1_in_seconds = seq(min(belgian$q1_in_seconds), max(belgian$q1_in_seconds)),
+    log10_championship_points = seq(min(belgian$log10_championship_points), max(belgian$log10_championship_points))) %>% 
+  add_predictions(
+    belgian_gam,
+    var = "race_time",
+    type = "response") %>%
+  mutate(
+    circuit_ID = factor("Belgian Grand Prix")
+  )
+
+pred_grid_for_italian <- italian %>%
+  data_grid(
+    q1_in_seconds = seq(min(italian$q1_in_seconds), max(italian$q1_in_seconds)),
+    log10_championship_points = seq(min(italian$log10_championship_points), max(italian$log10_championship_points))) %>% 
+  add_predictions(
+    italian_gam,
+    var = "race_time",
+    type = "response") %>%
+  mutate(
+    circuit_ID = factor("Italian Grand Prix")
+  )
+
+pred_grid_for_japanese <- japanese %>%
+  data_grid(
+    q1_in_seconds = seq(min(japanese$q1_in_seconds), max(japanese$q1_in_seconds)),
+    log10_championship_points = seq(min(japanese$log10_championship_points), max(japanese$log10_championship_points))) %>% 
+  add_predictions(
+    japanese_gam,
+    var = "race_time",
+    type = "response") %>%
+  mutate(
+    circuit_ID = factor("Japanese Grand Prix")
+  )
+  
+ggplot(
+  data = formula_tom_q12,
+  aes(x = q1_in_seconds, y = race_time, col = circuit_ID)) +
+  geom_point(alpha = 0.25) +
+  geom_line(
+    data = pred_grid_for_australia,
+    aes(x = q1_in_seconds,
+        y = race_time,
+        col = circuit_ID)
+  ) +
+  geom_line(
+    data = pred_grid_for_british,
+    aes(x = q1_in_seconds,
+        y = race_time,
+        col = circuit_ID)
+  ) +
+  geom_line(
+    data = pred_grid_for_belgian,
+    aes(x = q1_in_seconds,
+        y = race_time,
+        col = circuit_ID)
+  ) +
+  geom_line(
+    data = pred_grid_for_italian,
+    aes(x = q1_in_seconds,
+        y = race_time,
+        col = circuit_ID)
+  ) +
+  geom_line(
+    data = pred_grid_for_japanese,
+    aes(x = q1_in_seconds,
+        y = race_time,
+        col = circuit_ID)
+  ) +
   labs(
-    title = "Effect of q1 and Championship Points",
+    title = "Effect of q1 and Championship Points on 5 selected circuits",
     x = "Fastest Lap Time From The 1st Qualifying Session",
     y = "Race Time",
-    subtitle = "Excluded missing data",
-    color = "Circuit ID"
+    colour = "Circuit ID"
   ) +
   theme(legend.position = "bottom") +
-  scale_color_manual(values = circuit_id_colors) +
+  scale_color_manual(
+    name = "Circuit ID",
+    values = c("Australian Grand Prix" = "red", "British Grand Prix" = "blue", "Belgian Grand Prix" = "green", "Italian Grand Prix" = "purple", "Japanese Grand Prix" = "orange")
+  ) +
   guides(col = guide_legend(ncol = 3)) +
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
-
 What do you conclude about the impact of circuit?
-
