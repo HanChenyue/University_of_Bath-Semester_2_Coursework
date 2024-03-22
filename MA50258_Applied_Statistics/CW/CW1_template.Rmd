@@ -623,7 +623,7 @@ Looking only on the variable `log10(championship_points)`, the expected value of
 
 The linear model and loess capture the relationship between `q1`, `championship_points`, and `q3` by considering the interaction between `q1` and `championship_points`. The models provided a good fit to the data for different mid-deciles of `championship_points` to provide us a comprehensive understanding of how `q1` and `championship_points` influence `q3`. 
 
-However, when looking at the LOESS plot, we observed that the linear model fail to capture a fact that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session at when `q1` is approximately more than 100s, but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown below). This indicate that championship points might have a slight effect on the relationship between `q1` and `q3` but it is not significant as captured by the LOESS model.
+However, when looking at the LOESS plot, we observed that the linear model fail to capture a fact that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session when `q1` is approximately more than 100s, but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown in the zoom in plot below). This indicate that `championship_points` variable might have a slight effect on the relationship between `q1` and `q3` as captured by the LOESS model.
 
 In other words, assuming that all competitors did 'badly' on the 1st qualifying session (when `q1` is approximately more than 100s), we expect that the competitors with higher `championship_points` will have a slight edge in the 3rd qualifying session relative to the competitors with lower `championship_points`.
 
@@ -650,7 +650,7 @@ formula_tom_no_na_q4 %>%
     ylim(70, 130)
 ```
 
-Overall, the linear model fit with the interaction term provides a comprehensive understanding of the relationship between `q1`, `championship_points`, and `q3`. The estimated coefficients of the model offer insights into how changes in the variables impact the outcome variable and provide a basis for further analysis and interpretation of the data.
+
 
 ------------------------------------------------------------------------
 
@@ -948,7 +948,7 @@ ggplot(
     values = c("Linear Model Fit" = "blue", "Theoretical Line" = "red")) +
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s")) +
-    annotate("text", x = Inf, y = Inf, label = "Theoretical Line, y = x", hjust = 1.1, vjust = 2, color = "red")
+    annotate("text", x = Inf, y = Inf, label = "Theoretical Line, y = x", hjust = 1.1, vjust = 2, color = "black")
 ```
 
 The linear model fit in blue is given by the equation:
@@ -980,6 +980,7 @@ ggplot(
   geom_point(alpha = 0.25) +
   geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
+  geom_vline(xintercept = intersection_q1, linetype = "dotted", color = "orange") +
   labs(
     title = "Fastest Lap Against q1",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
@@ -993,7 +994,7 @@ ggplot(
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
-As shown by the red LOESS fit, the actual time is faster than the theoretical time when `q1` > 100s. This indicates that the LOESS fit provides a better representation of the relationship between `q1` and `fastest_lap` compared to the linear model fit. The LOESS fit captures the non-linear relationship between the variables and provides a more accurate representation of the data.
+As shown by the red LOESS fit, the actual time is faster than the theoretical time when `q1` >= 106.9s. This indicates that the LOESS fit provides a better representation of the relationship between `q1` and `fastest_lap` compared to the linear model fit. The LOESS fit captures the non-linear relationship between the variables and provides a more accurate representation of the data.
 
 ---
 
@@ -1173,7 +1174,7 @@ $$ Discuss how this would modify the interpretation of model.
 
 ## Answer For Question 10
 
-The modified linear model with the log-transformed `race_time` and `championship_points` would change the interpretation of the model coefficients. The log-transformed variables would allow for a non-linear relationship between the variables and the outcome variable, providing a more flexible model fit. The interpretation of the coefficients would be in terms of the percentage change in the outcome variable for a one-unit change in the predictor variables. The log-transformed variables would also help to stabilise the variance of the residuals and improve the model's performance. The log-transformed model would provide a better fit to the data and capture the non-linear relationship between the variables more accurately.
+The modified linear model with the log-transformed `race_time` and `championship_points` would change the interpretation of the model coefficients. The log-transformed variables would allow for a non-linear relationship between the variables and the outcome variable, providing a more flexible model fit. The interpretation of the coefficients would be in terms of the percentage change in the outcome variable for a one-unit change in the predictor variables. The log-transformed variables would also help to stabilise the variance of the residuals and improve the model's performance (Generally, in a linear model, the more variables we consider, the less the variance will be). The log-transformed model would provide a better fit to the data and capture the non-linear relationship between the variables more accurately.
 
 ```{r, message=FALSE}
 formula_tom_q10 <- formula_tom %>%
@@ -1398,7 +1399,10 @@ What do you conclude about the impact of circuit?
 
 ## Answer For Question 12
 
-Based on the plots, we can see that the impact of the circuit on the relationship between `q1`, `log10(championship_points)`, and `race_time` is significant as each circuit has their own skill level and track characteristics that can affect the lap times. The plots show that the relationship between the variables varies across the different circuits, indicating that different circuit has a different impact on the lap times. Thus, the linear model and the generalised additive model (GAM) provide a good fit to the data for each circuit, capturing the non-linear relationship between the variables.
+Based on the plots, we can see significant variations in the relationship between `q1`, `log10(championship_points)`, and `race_time` across different circuits. Given this observed variability, it is evident that a one-size-fits-all model may not adequately capture the nuances of each circuit. Therefore, GAM models that allow for non-linear relationships between the variables may provide a better fit to this datasets due to its flexibility in capturing the non-linear relationships between the variables.
+
+From the plots below, we can observed that each circuit displays different performance characteristics. For example, the Japanese Grand Prix circuit has less variance compared to the other four circuits. Thus, the impact of the circuit on the relationship between `q1`, `log10(championship_points)`, and `race_time` is significant and should be considered when modelling the data.
+
 
 ```{r, message=FALSE}
 ggplot(
