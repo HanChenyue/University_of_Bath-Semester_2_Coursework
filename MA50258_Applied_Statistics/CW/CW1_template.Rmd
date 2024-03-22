@@ -27,6 +27,7 @@ library(dplyr)
 library(ggplot2)
 library(kableExtra)
 library(patchwork)
+library(viridis) # Increase the number of colours available
 ```
 
 ```{r data-load}
@@ -908,7 +909,12 @@ ggplot(
     title = "Effect of q1 and Championship Points on Race Time",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Race Time"
-)
+) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(
+    name = "Fits",
+    values = c("Linear Model Fit" = "blue", "GAM Model Fit" = "red"))
+
 ```
 ```{r}
 mid_decile_points_q9 <- quantile(formula_tom_q9$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
@@ -962,7 +968,6 @@ formula_tom_q9 %>%
                   y = race_time,
                   col = log10_championship_points),
               data = pred_grid_q9_gam)
-)
 ```
 
   
@@ -1032,11 +1037,105 @@ formula_tom_q10 %>%
 
 Suppose someone wishes for you to investigate the effect of `circuit_Id` why might this be problematic?
 
+```{r, fig.height=150, fig.width=8}
+formula_tom_q11 <- formula_tom %>%
+  drop_na(q1_in_seconds, circuit_ID, race_time, championship_points) %>%
+  mutate(
+    log10_championship_points = log10(championship_points + 1)
+  ) %>%
+  select(q1_in_seconds, circuit_ID, race_time, championship_points)
+
+# ggplot(
+#   formula_tom_q11,
+#   aes(x = q1_in_seconds,
+#       y = q3_in_seconds, col = circuit_ID)) +
+#   geom_point(alpha = 0.25) +
+#   theme(legend.position = "bottom") + facet_wrap(~circuit_ID, ncol = 3)
+ggplot(formula_tom_q11, aes(x = q1_in_seconds, y = race_time, col = circuit_ID)) +
+  geom_point(alpha = 0.25) +
+  theme(legend.position = "bottom") +
+  facet_wrap(~circuit_ID, ncol = 1) +
+  theme(
+    strip.text.x = element_text(size = 7), # Adjust size as needed
+    axis.text.x = element_text(angle = 45, hjust = 1) # Angle x axis text for space
+  ) +
+  labs(
+    title = "Lap Times by Circuit",
+    x = "Q1 Time in Seconds",
+    y = "Q3 Time in Seconds",
+    colour = "Circuit ID"
+  ) +
+  guides(col = guide_legend(ncol = 3)) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
+```
+
 ## Question 12
 
 Choosing a subset of 5 observations of `circuit_Id` investigate the impact of `circuit_Id` by incorporating it into your linear model from Question 9.
 
 ```{r,message=FALSE}
+# Select the top 5 circuits with the most observations
+circuit_counts <- formula_tom_q11 %>%
+  count(circuit_ID) %>%
+  arrange(desc(n)) %>%
+  slice(1:5) # Get the top 5
+
+kable(circuit_counts, caption = "Top 5 Circuits with the Most Observations", align = "c", col.names = c("Circuit ID", "Number of Observations"))
+
+```
+
+```{r}
+formula_tom_q12 <- formula_tom %>%
+  drop_na(q1_in_seconds, championship_points, race_time) %>%
+  filter(circuit_ID %in% circuit_counts$circuit_ID) %>%
+  mutate(
+    log10_championship_points = log10(championship_points + 1)) %>%
+  select(q1_in_seconds, log10_championship_points, circuit_ID, race_time)
+
+# Fit the linear regression model with interaction
+lm_model_q12 <- lm(race_time ~ q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points + circuit_ID, data = formula_tom_q12)
+
+# Create the lm table
+kable(
+  summary(lm_model_q12)$coefficients %>% 
+    as.data.frame() %>% 
+    select(Estimate, `Std. Error`),
+  caption = "Summary of the Linear Model Fit",
+  digits = 2,
+  align = "c"
+) %>%
+  kable_styling("striped", full_width = F, position = "center")
+
+# Fit the generalised additive model with interaction
+gam_model_q12 <- gam(race_time ~ s(q1_in_seconds, log10_championship_points) + circuit_ID, data = formula_tom_q12)
+
+# Create the gam table
+summary(gam_model_q12)
+```
+
+
+```{r}
+circuit_id_colors <- viridis::viridis(n = length(circuit_id_levels), option = "C")
+
+# Your ggplot call
+ggplot(formula_tom_q12, aes(x = q1_in_seconds, y = race_time)) +
+  geom_point(aes(color = circuit_ID), alpha = 0.25) +
+  geom_smooth(method = "lm", se = FALSE, color = "red", size = 0.8) +
+  geom_smooth(method = "gam", se = FALSE, color = "blue", size = 0.8) +
+  labs(
+    title = "Effect of q1 and Championship Points",
+    x = "Fastest Lap Time From The 1st Qualifying Session",
+    y = "Race Time",
+    subtitle = "Excluded missing data",
+    color = "Circuit ID"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_color_manual(values = circuit_id_colors) +
+  guides(col = guide_legend(ncol = 3)) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 What do you conclude about the impact of circuit?
+
