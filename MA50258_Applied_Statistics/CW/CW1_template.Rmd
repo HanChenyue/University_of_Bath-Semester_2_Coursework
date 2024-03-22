@@ -265,13 +265,7 @@ There is a general agreement between the two fits that there is a positive corre
 lm_fit <- lm(q3_in_seconds ~ q1_in_seconds, data = formula_tom_no_na_q3)
 
 # Tidy the linear model fit
-lm_summary <- broom::tidy(lm_fit) %>% as.data.frame()#%>% select(term, estimate)
-
-# Rename the rows and columns of the data frame
-lm_summary_custom <- data.frame(
-  term = c("Intercept", "q1"),
-  estimate = lm_summary$estimate,
-)
+lm_summary <- broom::tidy(lm_fit) %>% as.data.frame() %>% select(term, estimate)
 
 # Create the table with kable
 kable(lm_summary,
@@ -285,6 +279,8 @@ kable(lm_summary,
 The formula for the linear model fit is:
 
 $$E[\verb|q3||\verb|q1|]=\alpha_0 + \alpha_1 \,\verb|q1|$$
+
+where $\alpha_0$ is the intercept and $\alpha_1$ is the slope of the line. The estimated values of $\alpha_0$ and $\alpha_1$ are 3.48 and 0.99, respectively. This means that the expected value of `q3` increases by 0.99 seconds for every one-second increase in `q1`.
 
 ------------------------------------------------------------------------
 
