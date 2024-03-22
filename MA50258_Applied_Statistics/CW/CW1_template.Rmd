@@ -110,7 +110,7 @@ What conclusions can you draw from your summaries?
 
 ## Answer
 
-```{r}
+```{r, message=FALSE}
 kable(
   summary_df,
       caption = "Summary of Fastest Lap Times of Each Competitor",
@@ -258,7 +258,7 @@ The LOESS smoothing fit is a non-parametric regression method that fits multiple
 There is a general agreement between the two fits that there is a positive correlation between `q1` and `q3` lap times although the LOESS smoothing fit is able to better capture the local fluctuations in the data. The closeness of the two lines suggests that the linear model approximates the relationship well, although the LOESS fit indicates some deviation from linearity, especially at the lower and higher ends of the `q1` time range.
 
 
-```{r}
+```{r, message=FALSE}
 # Run the linear model
 lm_fit <- lm(q3_in_seconds ~ q1_in_seconds, data = formula_tom_no_na_q3)
 
@@ -297,7 +297,7 @@ e[\verb|q3||\verb|q1|,log_{10}(\verb|championship_points|)]=\\
 \end{multline}
 $$
 
-```{r}
+```{r, message=FALSE}
 # EDA Code
 # Check for relationship between q1 and championship_points
 formula_eda_q4 <- formula_tom %>% drop_na(championship_points, q1_in_seconds, q3_in_seconds) %>%  filter(q1_in_seconds < 180)
@@ -369,7 +369,7 @@ ggplot(
   facet_wrap(~decile, scales = "free", ncol = 4)
 ```
 
-```{r}
+```{r, message=FALSE}
 # EDA Code
 # Fit the linear model with interaction
 formula_tom_no_na_q4 <- formula_tom %>% drop_na(q1_in_seconds, q3_in_seconds, championship_points) # %>% filter(q1_in_seconds < 180)
@@ -402,7 +402,7 @@ ggplot(
     values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
 ```
 
-```{r}
+```{r, message=FALSE}
 # EDA Code
 # Fit the linear model with interaction
 lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
@@ -419,7 +419,7 @@ kable(
   kable_styling("striped", full_width = F, position = "center")
 ```
 
-```{r}
+```{r, message=FALSE}
 # Fit the LOESS model with interaction
 loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
 loess_model_without_interaction_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
@@ -428,7 +428,7 @@ loess_model_without_interaction_q4 <- loess(q3_in_seconds ~ q1_in_seconds + form
 summary(loess_model_q4)
 ```
 
-```{r}
+```{r, message=FALSE}
 library(modelr) # For using add_prediction and data_grid functions
 mid_decile_points <- quantile(formula_tom_no_na_q4_log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
 mid_decile_points <- signif(mid_decile_points, digits = 3)
@@ -516,7 +516,7 @@ Interpret both effect plots and comment on the fit the transformed linear model 
 
 ## Answer
 
-```{r}
+```{r, message=FALSE}
 # Plot the effect of championship points on q3
 ggplot(
   formula_tom_no_na_q4,
@@ -627,7 +627,7 @@ Looking only on the variable `log10(championship_points)`, the expected value of
 
 The linear model and loess capture the relationship between `q1`, `championship_points`, and `q3` by considering the interaction between `q1` and `championship_points`. The models provided a good fit to the data for different mid-deciles of `championship_points` to provide us a comprehensive understanding of how `q1` and `championship_points` influence `q3`. As we can see, we observed that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown below).
 
-```{r}
+```{r, message=FALSE}
 formula_tom_no_na_q4 %>% 
   ggplot(
     aes(x = q1_in_seconds, y = q3_in_seconds)) +
@@ -657,7 +657,7 @@ Overall, the linear model fit with the interaction term provides a comprehensive
 
 The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this had?
 
-```{r}
+```{r, message=FALSE}
 # Update the missing_q3_data to include all necessary variables for the model
 missing_q3_data <- formula_tom %>%
   mutate(
@@ -691,7 +691,7 @@ kable(
   kable_styling("striped", full_width = F, position = "center")
 ```
 
-```{r}
+```{r, message=FALSE}
 formula_tom_no_na_q4 %>% 
   ggplot(
     aes(x = q1_in_seconds, y = q3_in_seconds)) +
@@ -707,7 +707,7 @@ formula_tom_no_na_q4 %>%
   ) 
 ```
 
-```{r}
+```{r, message=FALSE}
 ggplot() +
   geom_point(data = formula_tom_no_na_q4, aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
   geom_point(data = missing_q3_data, aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
@@ -720,7 +720,7 @@ ggplot() +
   )
 ```
 
-```{r}
+```{r, message=FALSE}
 # Filter out the extreme outlier
 ggplot() +
   geom_point(data = formula_tom_no_na_q4 %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
@@ -736,7 +736,7 @@ ggplot() +
 
 
 
-```{r}
+```{r, message=FALSE}
 kable(
   missing_q3_data %>% filter(q1_in_seconds < 180) %>%
     select(q3_in_seconds, predicted_q3_lm, predicted_q3_loess) %>% 
@@ -752,7 +752,7 @@ kable(
 
 ## Answer
 
-```{r}
+```{r, message=FALSE}
 # Combine the tables for comparison between predicted lm, loess, and original q3 values
 # Calculate summary statistics
 summary_stats <- function(x) {
@@ -783,7 +783,7 @@ kable(combined_summary,
 ```
 
 
-```{r}
+```{r, message=FALSE}
 # Overlay with LM prediction
 ggplot() +
   geom_point(data = formula_tom_no_na_q4 %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
@@ -796,7 +796,7 @@ ggplot() +
   )
 ```
 
-```{r}
+```{r, message=FALSE}
 # Overlay with LOESS prediction
 ggplot() +
   geom_point(data = formula_tom_no_na_q4 %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
@@ -809,7 +809,7 @@ ggplot() +
   )
 ```
 
-```{r}
+```{r, message=FALSE}
 # Overlay LM and LOESS predictions
 ggplot() +
   geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
@@ -998,7 +998,7 @@ kable(
 
 ```
 
-```{r}
+```{r, message=FALSE}
 ggplot(
   formula_tom_q9,
   aes(x = q1_in_seconds,
@@ -1017,7 +1017,8 @@ ggplot(
     values = c("Linear Model Fit" = "blue", "GAM Model Fit" = "red"))
 
 ```
-```{r}
+
+```{r, message=FALSE}
 mid_decile_points_q9 <- quantile(formula_tom_q9$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
 mid_decile_points_q9 <- signif(mid_decile_points, digits = 3)
 
@@ -1090,7 +1091,7 @@ formula_tom_q9 %>%
 When comparing the linear model and the generalised additive model (GAM) fit, the linear model provides a simpler representation of the relationship between `q1`, `log10(championship_points)`, and `race_time`. While the GAM fit is a much more complex fit but does not provide a significant improvement in the model fit compared to the linear model given that it is heavily influenced by the type of data and will display overfitting bias if the data is not well distributed. See the plot below when we zoom in on the data, the GAM model is heavily influenced by an extreme cluster of data points that has `race_time` values closer to 0s which is not ideal for the model. Therefore, the simpler linear regression model is preferred in this case.
 
 
-```{r}
+```{r, message=FALSE}
 # Plot for GAM with interaction
 formula_tom_q9 %>%
   ggplot(
@@ -1123,7 +1124,13 @@ E[log_{10}(\verb|race_time|)|\verb|q1|,log_{10}(\verb|championship_points|)]=\\
 \end{multline}
 $$ Discuss how this would modify the interpretation of model.
 
-```{r}
+---
+
+## Answer
+
+The modified linear model with the log-transformed `race_time` and `championship_points` would change the interpretation of the model coefficients. The log-transformed variables would allow for a non-linear relationship between the variables and the outcome variable, providing a more flexible model fit. The interpretation of the coefficients would be in terms of the percentage change in the outcome variable for a one-unit change in the predictor variables. The log-transformed variables would also help to stabilise the variance of the residuals and improve the model's performance. The log-transformed model would provide a better fit to the data and capture the non-linear relationship between the variables more accurately.
+
+```{r, message=FALSE}
 formula_tom_q10 <- formula_tom %>%
   drop_na(q1_in_seconds, championship_points, race_time) %>%
   # filter(q1_in_seconds < 180) %>%  # Filtering out the 16min outlier
@@ -1175,9 +1182,17 @@ formula_tom_q10 %>%
   ylim(3.5, 4.25) # Filter out the outlier concentration
 ```
 
+---
+
 ## Question 11
 
 Suppose someone wishes for you to investigate the effect of `circuit_Id` why might this be problematic?
+
+---
+
+## Answer
+
+That is because the number of observations for each `circuit_Id` is not balanced (Refer the facet_wrap plots below where some plots has plenty of datapoints while others only have a few datapoints for us to work with). This can lead to biased results and inaccurate conclusions.
 
 ```{r, fig.height=150, fig.width=8}
 formula_tom_q11 <- formula_tom %>%
@@ -1206,6 +1221,8 @@ ggplot(formula_tom_q11, aes(x = q1_in_seconds, y = race_time, col = circuit_ID))
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
+---
+
 ## Question 12
 
 Choosing a subset of 5 observations of `circuit_Id` investigate the impact of `circuit_Id` by incorporating it into your linear model from Question 9.
@@ -1221,7 +1238,7 @@ kable(circuit_counts, caption = "Top 5 Circuits with the Most Observations", ali
 
 ```
 
-```{r}
+```{r, message=FALSE}
 formula_tom_q12 <- formula_tom %>%
   drop_na(q1_in_seconds, championship_points, race_time) %>%
   filter(circuit_ID %in% circuit_counts$circuit_ID) %>%
@@ -1250,41 +1267,8 @@ gam_model_q12 <- gam(race_time ~ s(q1_in_seconds, log10_championship_points) + c
 summary(gam_model_q12)
 ```
 
-```{r}
-# mid_decile_points_q12 <- quantile(formula_tom_q12$log10_championship_points, probs = seq(0.05, 0.95, by = 0.1))
-# mid_decile_points_q12 <- signif(mid_decile_points, digits = 3)
-# kable(mid_decile_points_q12, caption = "Mid-Decile Points", align = "c")
-# 
-# lm_pred_grid_q12 <-  formula_tom_q12 %>%
-#   data_grid(
-#     log10_championship_points = mid_decile_points_q12,
-#     circuit_ID = unique(formula_tom_q12$circuit_ID),
-#     q1_in_seconds = seq(min(formula_tom_q12$q1_in_seconds), max(formula_tom_q12$q1_in_seconds))) %>%
-#   add_predictions(
-#     lm_model_q12,
-#     var = "race_time",
-#     type = "response") %>% 
-#   mutate(
-#     log10_championship_points = factor(log10_championship_points)
-  # )
+```{r, message=FALSE}
 
-# Generate a color for each circuit_ID
-# circuit_id_colors <- viridis::viridis(length(unique(formula_tom_q12$circuit_ID)))
-
-# Generate a color for each level of log10_championship_points
-# mid_decile_colors <- viridis::viridis(length(unique(lm_pred_grid_q12$log10_championship_points)))
-
-# Create the plot
-# ggplot() +
-#   # Add the actual data points
-#   geom_point(
-#     data = formula_tom_q12,
-#     aes(x = q1_in_seconds, y = race_time, color = circuit_ID),
-#     alpha = 0.25
-#   ) +
-#   geom_line(
-#     data = lm_pred_grid_q12,
-#     aes(x = q1_in_seconds, y = race_time, color = circuit_ID))
 
 australia <- formula_tom_q12 %>% filter(circuit_ID == "Australian Grand Prix")
 british <- formula_tom_q12 %>% filter(circuit_ID == "British Grand Prix")
@@ -1304,20 +1288,6 @@ belgian_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), dat
 italian_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = italian)
 japanese_gam <- gam(race_time ~ te(q1_in_seconds, log10_championship_points), data = japanese)
 
-
-
-# pred_grid_for_q12 <- formula_tom_q12 %>% 
-#   data_grid(
-#     q1_in_seconds = seq(min(formula_tom_q12$q1_in_seconds), max(formula_tom_q12$q1_in_seconds)),
-#     log10_championship_points = seq(min(formula_tom_q12$log10_championship_points), max(formula_tom_q12$log10_championship_points)),
-#     circuit_ID = unique(formula_tom_q12$circuit_ID)) %>% 
-#   add_predictions(
-#     gam_model_q12,
-#     var = "race_time",
-#     type = "response") %>% 
-#   mutate(
-#     circuit_ID = factor(circuit_ID)
-#   )
 
 pred_grid_for_australia <- australia %>% 
   data_grid(
@@ -1378,37 +1348,52 @@ pred_grid_for_japanese <- japanese %>%
   mutate(
     circuit_ID = factor("Japanese Grand Prix")
   )
-  
+```
+What do you conclude about the impact of circuit?
+
+---
+
+## Answer
+
+Based on the plots, we can see that the impact of the circuit on the relationship between `q1`, `log10(championship_points)`, and `race_time` is significant as each circuit has their own skill level and track characteristics that can affect the lap times. The plots show that the relationship between the variables varies across the different circuits, indicating that different circuit has a different impact on the lap times. The linear model and the generalised additive model (GAM) provide a good fit to the data for each circuit, capturing the non-linear relationship between the variables.
+
+```{r, message=FALSE}
 ggplot(
   data = formula_tom_q12,
   aes(x = q1_in_seconds, y = race_time, col = circuit_ID)) +
   geom_point(alpha = 0.25) +
-  geom_line(
+  geom_smooth(
     data = pred_grid_for_australia,
+    se = FALSE,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
   ) +
-  geom_line(
+  geom_smooth(
     data = pred_grid_for_british,
+    se = FALSE,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
   ) +
-  geom_line(
+  geom_smooth(
     data = pred_grid_for_belgian,
+    se = FALSE,
     aes(x = q1_in_seconds,
         y = race_time,
-        col = circuit_ID)
+        col = circuit_ID,
+        )
   ) +
-  geom_line(
+  geom_smooth(
     data = pred_grid_for_italian,
+    se = FALSE,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
   ) +
-  geom_line(
+  geom_smooth(
     data = pred_grid_for_japanese,
+    se = FALSE,
     aes(x = q1_in_seconds,
         y = race_time,
         col = circuit_ID)
@@ -1428,4 +1413,4 @@ ggplot(
   scale_x_continuous(labels = function(x) paste0(x, "s")) +
   scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
-What do you conclude about the impact of circuit?
+---
