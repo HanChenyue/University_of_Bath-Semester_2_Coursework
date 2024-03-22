@@ -10,6 +10,14 @@ output:
     code_download: true
 ---
 
+---
+
+### Disclaimer:
+
+GPT4 and CoPilot used for code and discussion suggestions, debugging purpose, and to check the correctness of the code.
+
+---
+
 ```{r knit options, include=FALSE}
 # knitting options here
 knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,warning = FALSE,message= FALSE)
@@ -210,17 +218,7 @@ ggplot(
   )
 ```
 
-```{r, message=FALSE}
-# EDA Code
-unfitted_data_points <- formula_tom %>% filter(q1_in_seconds > 135) %>% select(q1_in_seconds, q3_in_seconds)
-kable(
-  unfitted_data_points,
-  caption = "Checking Unfitted Data Points",
-  digits = 2,
-  align = "c",
-) %>%
-  kable_styling("striped", full_width = F, position = "c")
-```
+
 
 What can you say about each fit, is there any agreement between them?
 
@@ -531,7 +529,8 @@ ggplot(
   theme(legend.position = "bottom") +
   scale_color_manual(
     name = "Fits",
-    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")) +
+  scale_y_continuous(labels = function(x) paste0(x, "s"))
 
 # Fit the linear model with interaction
 lm_model_q4 <- lm(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
@@ -621,7 +620,7 @@ The estimated value of $\delta_1$ is 1.00 and $\delta_3$ is -0.03.
 
 Therefore, looking only on the variable `q1`, the expected value of `q3` increases by $1.00 + (-0.03) = 0.97$ seconds for every one-second increase in `q1`.
 
-Looking only on the variable `log10(championship_points)`, the expected value of `q3` increases by $log_{10}(2) \times (\delta_2 + \delta_3) = log_{10}(2) \times (1.51 + (-0.03)) = 0.46$ for every twofolde increase in `championship_points`.
+Looking only on the variable `log10(championship_points)`, the expected value of `q3` increases by $log_{10}(2) \times (\delta_2 + \delta_3) = log_{10}(2) \times (1.51 + (-0.03)) = 0.46$ for every twofold increase in `championship_points`.
 
 The linear model and loess capture the relationship between `q1`, `championship_points`, and `q3` by considering the interaction between `q1` and `championship_points`. The models provided a good fit to the data for different mid-deciles of `championship_points` to provide us a comprehensive understanding of how `q1` and `championship_points` influence `q3`. As we can see, we observed that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown below).
 
@@ -643,7 +642,7 @@ formula_tom_no_na_q4 %>%
     ) +
     scale_x_continuous(labels = function(x) paste0(x, "s")) +
     scale_y_continuous(labels = function(y) paste0(y, "s")) +
-    xlim(110, 130) +
+    xlim(90, 130) +
     ylim(70, 130)
 ```
 
@@ -702,7 +701,9 @@ formula_tom_no_na_q4 %>%
     title = "q3 Against log10(championship_points)",
     x = "log10(championship_points)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-  ) 
+  ) +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(labels = function(x) paste0(x, "s"))
 ```
 
 ```{r, message=FALSE}
@@ -710,6 +711,15 @@ ggplot() +
   geom_point(data = formula_tom_no_na_q4, aes(x = q1_in_seconds, y = q3_in_seconds), colour = "black", alpha = 0.25) +
   geom_point(data = missing_q3_data, aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
   geom_point(data = missing_q3_data, aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
+  labs(
+    title = "Overlay of Original and Predicted q3 Times",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "Original Data (black), LM Predictions (red), LOESS Predictions (blue)"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s")) +
   labs(
     title = "Overlay of Original and Predicted q3 Times",
     x = "q1_in_seconds",
@@ -729,10 +739,17 @@ ggplot() +
     x = "q1_in_seconds",
     y = "q3_in_seconds",
     subtitle = "Original Data (black), LM Predictions (red), LOESS Predictions (blue)"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s")) +
+  labs(
+    title = "Overlay of Original and Predicted q3 Times",
+    x = "q1_in_seconds",
+    y = "q3_in_seconds",
+    subtitle = "Original Data (black), LM Predictions (red), LOESS Predictions (blue)"
   )
 ```
-
-
 
 ```{r, message=FALSE}
 kable(
@@ -788,10 +805,13 @@ ggplot() +
   geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_lm), colour = "red", alpha = 0.25) +
   labs(
     title = "Overlay of Original and Predicted q3 Times",
-    x = "q1_in_seconds",
-    y = "q3_in_seconds",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
     subtitle = "Original Data (black), LM Predictions (red)"
-  )
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 ```{r, message=FALSE}
@@ -801,10 +821,13 @@ ggplot() +
   geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
   labs(
     title = "Overlay of Original and Predicted q3 Times",
-    x = "q1_in_seconds",
-    y = "q3_in_seconds",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
     subtitle = "Original Data (black), LOESS Predictions (blue)"
-  )
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 ```{r, message=FALSE}
@@ -814,10 +837,13 @@ ggplot() +
   geom_point(data = missing_q3_data %>% filter(q1_in_seconds < 180), aes(x = q1_in_seconds, y = predicted_q3_loess), colour = "blue", alpha = 0.25) +
   labs(
     title = "Overlay of LM and LOESS Predictions",
-    x = "q1_in_seconds",
-    y = "q3_in_seconds",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+    y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
     subtitle = "LM Predictions (red), LOESS Predictions (blue)"
-  )
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly which the linear model's limitation doesn't allow it to capture this trend.
@@ -858,7 +884,9 @@ ggplot(
   theme(legend.position = "bottom") +
   scale_color_manual(
     name = "Fits",
-    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue"))
+    values = c("LOESS Smoothing" = "red", "Linear Model Fit" = "blue")) +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
 I fitted both a linear model and a LOESS model to the data.
