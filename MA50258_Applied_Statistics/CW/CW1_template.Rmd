@@ -267,10 +267,10 @@ There is a general agreement between the two fits that there is a positive corre
 lm_fit <- lm(q3_in_seconds ~ q1_in_seconds, data = formula_tom_no_na_q3)
 
 # Tidy the linear model fit
-lm_summary <- broom::tidy(lm_fit) %>% as.data.frame() %>% select(term, estimate)
+lm_summary_q3 <- broom::tidy(lm_fit) %>% as.data.frame() %>% select(term, estimate)
 
 # Create the table with kable
-kable(lm_summary,
+kable(lm_summary_q3,
   caption = "Summary of the Linear Model Fit",
   digits = 2,
   align = "c",
@@ -510,71 +510,6 @@ formula_tom_no_na_q4 %>%
     geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
     theme(legend.position = "bottom")
 
-formula_tom_no_na_q4 %>% 
-  ggplot(
-    aes(x = q1_in_seconds, y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(60, 70) +
-    ylim(60, 75)
-
-formula_tom_no_na_q4 %>%
-  ggplot(
-    aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
-        y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(70, 80) +
-    ylim(60, 110)
-
-formula_tom_no_na_q4 %>% 
-  ggplot(
-    aes(x = q1_in_seconds, y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(80, 90) +
-    ylim(60, 110)
-
-formula_tom_no_na_q4 %>%
-  ggplot(
-    aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
-        y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(90, 100) +
-    ylim(60, 130)
-
-formula_tom_no_na_q4 %>%
-  ggplot(
-    aes(x = q1_in_seconds, y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(100, 110) +
-    ylim(70, 130)
-
-formula_tom_no_na_q4 %>%
-  ggplot(
-    aes(x = q1_in_seconds + log10_championship_points + q1_in_seconds*log10_championship_points,
-        y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, colour = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(110, 120) +
-    ylim(70, 130)
-
-formula_tom_no_na_q4 %>%
-  ggplot(
-    aes(x = q1_in_seconds, y = q3_in_seconds)) +
-    geom_point(alpha = 0.25) +
-    geom_line(aes(x = q1_in_seconds, y = q3_in_seconds, col = formula_tom_no_na_q4_log10_championship_points), data = pred_grid) +
-    theme(legend.position = "bottom") +
-    xlim(120, 130) +
-    ylim(70, 130)
 ```
 
 For both the linear model and the LOESS model:
@@ -715,7 +650,7 @@ formula_tom_no_na_q4 %>%
               data = pred_grid_loess) +
     theme(legend.position = "bottom") +
     labs(
-      title = "LOESS Model Fit: q3 Against q1 with Championship Points (Log-Transformed) when q1 > 100s",
+      title = "LOESS Model Fit: q3 Against q1 with Championship Points (Log-Transformed)",
       x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
       y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
       subtitle = "Excluded missing data",
@@ -733,7 +668,7 @@ Overall, the linear model fit with the interaction term provides a comprehensive
 
 ## Question 5
 
-The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this ha
+The original data contains missing values for `q3`, some due to the current structure of a qualifying session some due to changes in rules for qualifying. Using the models from Question 4 predict the missing values. If you now produce the same summaries as you did in Question 1 what impact has this had?
 
 ```{r}
 # Your code answer here
@@ -814,6 +749,55 @@ ggplot() +
   )
 ```
 
+
+
+```{r}
+kable(
+  missing_q3_data %>% filter(q1_in_seconds < 180) %>%
+    select(q3_in_seconds, predicted_q3_lm, predicted_q3_loess) %>% 
+    summary(),
+  caption = "Summary of the Predicted q3_in_seconds",
+  digits = 2,
+  align = "c"
+) %>%
+  kable_styling("striped", full_width = F, position = "center")
+```
+
+---
+
+<ul>Answer</ul>
+
+```{r}
+# Combine the tables for comparison between predicted lm, loess, and original q3 values
+# Calculate summary statistics
+summary_stats <- function(x) {
+  c(Min = min(x, na.rm = TRUE), 
+    Median = median(x, na.rm = TRUE), 
+    Mean = mean(x, na.rm = TRUE), 
+    Max = max(x, na.rm = TRUE))
+}
+
+predicted_q3_summary <- missing_q3_data %>% filter(q1_in_seconds < 180) %>%
+  summarise(across(c(predicted_q3_lm, predicted_q3_loess), summary_stats)) %>% 
+  round(2)
+
+original_q3_summary <- summary_df %>% 
+  summarise(Q3 = summary_stats(Q3)) %>% 
+  round(2)
+
+# Combine summaries
+combined_summary <- bind_cols(predicted_q3_summary, original_q3_summary)
+
+# Create the kable
+kable(combined_summary, 
+      caption = "Comparison of Original and Predicted q3", 
+      col.names = c("Predicted Q3 (LM)", "Predicted Q3 (Loess)", "Original Q3"),
+      digits = 2, 
+      align = "c") %>%
+  kable_styling("striped", full_width = F, position = "center")
+```
+
+
 ```{r}
 # Overlay with LM prediction
 ggplot() +
@@ -853,8 +837,9 @@ ggplot() +
   )
 ```
 
-```{r}
-```
+Based at the table, we can see that the predicted `q3` values using the linear model and LOESS model are similar to the original `q3` values. The summary statistics of the predicted `q3` values show that the mean, median, and standard deviation are close to the original `q3` values. The overlay of the original and predicted `q3` values shows that the predicted values are close to the original values, indicating that the models provide a good fit to the data. However, when comparing across the maximum, LOESS model gives a slightly better fit than the linear model due to the tail end of the dataset will eventually drop slightly.
+
+---
 
 ## Question 6
 
