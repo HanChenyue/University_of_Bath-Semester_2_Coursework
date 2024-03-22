@@ -127,15 +127,17 @@ kable(
 
 From the summary statistics, we can see that the minimum lap times of:
 
-i. q1: 53.90s
+i. `q1`: 53.90s
 
-ii. q2: 53.65s
+ii. `q2`: 53.65s
 
-iii. q3: 53.38s
+iii. `q3`: 53.38s
 
 across the qualifying sessions are remarkably close. This tight clustering suggesting a high level of competitiveness to achieve the fastest possible laps across all three qualifying sessions.
 
-The range between the minimum (55.40s) and maximum (202.30s) fastest lap times is broader in the race, suggesting that the maximum time of 202.30s is an outlier, as it is significantly higher than the mean and median times set over the race. This is further supported by the fact that the mean and median times are relatively close to each other, and the delta of mean/median time from the minimum deviates around 35s instead of 112s when looking at the delta between mean/median and the maximum time. Taking the difference between the mean/median and minimum times,the 35s time range indicate the presence of diverse performances influenced by race dynamics, strategies, and driver decision-making.
+The range between the minimum (55.40s) and maximum (202.30s) fastest lap times is broader in the race, suggesting that the maximum time of 202.30s is an outlier, as it is significantly higher than the mean and median times set over the race. This is further supported by the fact that the mean and median times are relatively close to each other, and the delta of mean/median time from the minimum deviates around 35s ($90\text{ seconds} - 55\text{ seconds} = 35\text{ seconds}$) instead of 112s ($202\text{ seconds} - 90\text{ seconds} = 112\text{ seconds}$) when looking at the delta between mean/median and the maximum time. 
+
+Furthermore, by looking into the difference between the mean/median and minimum times on the fastest lap time of each competitor over the race, the 35s time range indicate the presence of diverse performances influenced by race dynamics, strategies, and driver decision-making.
 
 ------------------------------------------------------------------------
 
@@ -257,7 +259,7 @@ ggplot(formula_tom_no_na_q3, aes(x = q1_in_seconds, y = q3_in_seconds)) +
 
 The LOESS smoothing fit is a non-parametric regression method that fits multiple local linear regressions to the data. The linear model fit is a parametric regression method that fits a single linear regression to the data. The LOESS smoothing fit is more flexible and can capture non-linear relationships between the variables. The linear model fit is less flexible and can only capture linear relationships between the variables.
 
-There is a general agreement between the two fits that there is a positive correlation between q1 and q3 lap times although the LOESS smoothing fit is able to better capture the local fluctuations in the data. The closeness of the two lines suggests that the linear model approximates the relationship well, although the LOESS fit indicates some deviation from linearity, especially at the lower and higher ends of the q1 time range.
+There is a general agreement between the two fits that there is a positive correlation between `q1` and `q3` lap times although the LOESS smoothing fit is able to better capture the local fluctuations in the data. The closeness of the two lines suggests that the linear model approximates the relationship well, although the LOESS fit indicates some deviation from linearity, especially at the lower and higher ends of the `q1` time range.
 
 
 ```{r}
@@ -581,6 +583,13 @@ For both the linear model and the LOESS model:
 
 -   Plot the effect of `q1` on `q3` for mid-deciles (eg percentiles of order 5%, 15%, 25%, …, 95%) of `championship_points.`
 
+
+Interpret both effect plots and comment on the fit the transformed linear model to the data. Also, give an interpretation of the estimated parameters in this model (apart from the intercept).
+
+------------------------------------------------------------------------
+
+<ul>Answer</ul>
+
 ```{r}
 # Plot the effect of championship points on q3
 ggplot(
@@ -591,8 +600,8 @@ ggplot(
   geom_smooth(aes(col = "LOESS Smoothing"), method = "loess", se = F, linewidth = 0.5) +
   geom_smooth(aes(col = "Linear Model Fit"), method = "lm", se = F, linewidth = 0.5) +
   labs(
-    title = "q3 Against log10(championship_points)",
-    x = "log10(championship_points)",
+    title = "q3 Against log10(Championship Points)",
+    x = "log10(Championship Points)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
     subtitle = "Excluded missing data"
   ) +
@@ -615,14 +624,8 @@ kable(
 ) %>%
   kable_styling("striped", full_width = F, position = "center")
 
-
 loess_model_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points + q1_in_seconds*formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
 loess_model_without_interaction_q4 <- loess(q3_in_seconds ~ q1_in_seconds + formula_tom_no_na_q4_log10_championship_points, data = formula_tom_no_na_q4)
-
-# Create the table
-# TODO: Tidy up the loess output
-summary(loess_model_q4)
-
 
 pred_grid_lm <-  formula_tom_no_na_q4 %>%
   data_grid(
@@ -652,11 +655,15 @@ formula_tom_no_na_q4 %>%
                   col = formula_tom_no_na_q4_log10_championship_points),
               data = pred_grid_lm) +
   labs(
-    title = "q3 Against log10(championship_points)",
-    x = "log10(championship_points)",
+    title = "Linear Model Fit: q3 Against q1 with Championship Points (Log-Transformed)",
+    x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
-  )
+    subtitle = "Excluded missing data",
+    col = "log10(Championship Points)"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
   
 # LOESS plot: The effect of q1 on q3 with championship points' mid-deciles
 formula_tom_no_na_q4 %>% 
@@ -668,18 +675,59 @@ formula_tom_no_na_q4 %>%
                   col = formula_tom_no_na_q4_log10_championship_points),
               data = pred_grid_loess) +
   labs(
-    title = "q3 Against q1 with Championship Points (Log-Transformed)",
+    title = "LOESS Model Fit: q3 Against q1 with Championship Points (Log-Transformed)",
     x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
     y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
-    subtitle = "Excluded missing data"
-  )
+    subtitle = "Excluded missing data",
+    col = "log10(Championship Points)"
+  ) +
+  theme(legend.position = "bottom") +
+  scale_x_continuous(labels = function(x) paste0(x, "s")) +
+  scale_y_continuous(labels = function(y) paste0(y, "s"))
 ```
 
-Interpret both effect plots and comment on the fit the transformed linear model to the data. Also, give an interpretation of the estimated parameters in this model (apart from the intercept).
+The linear model fit for the relationship between `q1` and `q3` with the interaction term `q1*log10(championship_points)` is given by the equation:
 
-------------------------------------------------------------------------
+$$E[\verb|q3||\verb|q1|,\verb|championship_points|]=\delta_0 + \delta_1\,\verb|q1| +\delta_2 \,log_{10}(\verb|championship_points|) + \delta_3\,\verb|q1|\,\times\,log_{10}(\verb|championship_points|)$$
 
-<ul>Answer</ul>
+where $\delta_0$, $\delta_1$, $\delta_2$, and $\delta_3$ are the estimated coefficients of the model. The estimated values of the coefficients are as follows:
+
+-   $\delta_1 = 1.00$,
+-   $\delta_2 = 1.51$, and
+-   $\delta_3 = -0.03$.
+
+The estimated value of $\delta_1$ is 1.00 and $\delta_3$ is -0.03.
+
+Therefore, looking only on the variable `q1`, the expected value of `q3` increases by $1.00 + (-0.03) = 0.97$ seconds for every one-second increase in `q1`.
+
+Looking only on the variable `log10(championship_points)`, the expected value of `q3` increases by $log_{10}(2) \times (\delta_2 + \delta_3) = log_{10}(2) \times (1.51 + (-0.03)) = 0.46$ for every twofolde increase in `championship_points`.
+
+The linear model and loess capture the relationship between `q1`, `championship_points`, and `q3` by considering the interaction between `q1` and `championship_points`. The models provided a good fit to the data for different mid-deciles of `championship_points` to provide us a comprehensive understanding of how `q1` and `championship_points` influence `q3`. As we can see, we observed that competitors with a higher `championship_points` tend to have faster lap times in the 3rd qualifying session but it is very minor. When `q1` > 100, the effect of `championship_points` on `q3` became slight more pronounced in the LOESS fit showing us that competitors with higher `championship_points` will have a more pronounced edge by having better performance in `q3` relative to the performer having average `championship_points` (as shown below).
+
+```{r}
+formula_tom_no_na_q4 %>% 
+  ggplot(
+    aes(x = q1_in_seconds, y = q3_in_seconds)) +
+    geom_point(alpha = 0.25) +
+    geom_line(aes(x = q1_in_seconds,
+                  y = q3_in_seconds,
+                  col = formula_tom_no_na_q4_log10_championship_points),
+              data = pred_grid_loess) +
+    theme(legend.position = "bottom") +
+    labs(
+      title = "LOESS Model Fit: q3 Against q1 with Championship Points (Log-Transformed) when q1 > 100s",
+      x = "Fastest Lap Time From The 1st Qualifying Session (q1)",
+      y = "Fastest Lap Time From The 3rd Qualifying Session (q3)",
+      subtitle = "Excluded missing data",
+      col = "log10(Championship Points)"
+    ) +
+    scale_x_continuous(labels = function(x) paste0(x, "s")) +
+    scale_y_continuous(labels = function(y) paste0(y, "s")) +
+    xlim(110, 130) +
+    ylim(70, 130)
+```
+
+Overall, the linear model fit with the interaction term provides a comprehensive understanding of the relationship between `q1`, `championship_points`, and `q3`. The estimated coefficients of the model offer insights into how changes in the variables impact the outcome variable and provide a basis for further analysis and interpretation of the data.
 
 ------------------------------------------------------------------------
 
