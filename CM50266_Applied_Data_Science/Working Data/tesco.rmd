@@ -1,0 +1,97 @@
+---
+title: "Tesco"
+author: "HanChenyue"
+date: "2024-04-07"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,
+                      warning = TRUE, message= TRUE)
+```
+
+```{r packages, echo = FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(lubridate)
+library(ggthemes)
+library(patchwork)
+library(viridis)
+library(broom)
+library(corrplot)
+```
+
+
+```{r data-load, echo = FALSE, message=FALSE, warning=TRUE}
+# Load the data
+food_categories <- read.csv("food_categories.csv")
+
+# Load LSOA (Lower Super Output Area), MSOA (Medium Super Output Area), Ward, and borough data
+lsoa_year <- read.csv("year_lsoa_grocery.csv")
+lsoa_jan <- read.csv("Jan_lsoa_grocery.csv")
+lsoa_feb <- read.csv("Feb_lsoa_grocery.csv")
+lsoa_mar <- read.csv("Mar_lsoa_grocery.csv")
+lsoa_apr <- read.csv("Apr_lsoa_grocery.csv")
+lsoa_may <- read.csv("May_lsoa_grocery.csv")
+lsoa_jun <- read.csv("Jun_lsoa_grocery.csv")
+lsoa_jul <- read.csv("Jul_lsoa_grocery.csv")
+lsoa_aug <- read.csv("Aug_lsoa_grocery.csv")
+lsoa_sep <- read.csv("Sep_lsoa_grocery.csv")
+lsoa_oct <- read.csv("Oct_lsoa_grocery.csv")
+lsoa_nov <- read.csv("Nov_lsoa_grocery.csv")
+lsoa_dec <- read.csv("Dec_lsoa_grocery.csv")
+msoa_year <- read.csv("year_msoa_grocery.csv")
+msoa_jan <- read.csv("Jan_msoa_grocery.csv")
+msoa_feb <- read.csv("Feb_msoa_grocery.csv")
+msoa_mar <- read.csv("Mar_msoa_grocery.csv")
+msoa_apr <- read.csv("Apr_msoa_grocery.csv")
+msoa_may <- read.csv("May_msoa_grocery.csv")
+msoa_jun <- read.csv("Jun_msoa_grocery.csv")
+msoa_jul <- read.csv("Jul_msoa_grocery.csv")
+msoa_aug <- read.csv("Aug_msoa_grocery.csv")
+msoa_sep <- read.csv("Sep_msoa_grocery.csv")
+msoa_oct <- read.csv("Oct_msoa_grocery.csv")
+msoa_nov <- read.csv("Nov_msoa_grocery.csv")
+msoa_dec <- read.csv("Dec_msoa_grocery.csv")
+osward_year <- read.csv("year_osward_grocery.csv")
+osward_jan <- read.csv("Jan_osward_grocery.csv")
+osward_feb <- read.csv("Feb_osward_grocery.csv")
+osward_mar <- read.csv("Mar_osward_grocery.csv")
+osward_apr <- read.csv("Apr_osward_grocery.csv")
+osward_may <- read.csv("May_osward_grocery.csv")
+osward_jun <- read.csv("Jun_osward_grocery.csv")
+osward_jul <- read.csv("Jul_osward_grocery.csv")
+osward_aug <- read.csv("Aug_osward_grocery.csv")
+osward_sep <- read.csv("Sep_osward_grocery.csv")
+osward_oct <- read.csv("Oct_osward_grocery.csv")
+osward_nov <- read.csv("Nov_osward_grocery.csv")
+osward_dec <- read.csv("Dec_osward_grocery.csv")
+borough_year <- read.csv("year_borough_grocery.csv")
+borough_jan <- read.csv("Jan_borough_grocery.csv")
+borough_feb <- read.csv("Feb_borough_grocery.csv")
+borough_mar <- read.csv("Mar_borough_grocery.csv")
+borough_apr <- read.csv("Apr_borough_grocery.csv")
+borough_may <- read.csv("May_borough_grocery.csv")
+borough_jun <- read.csv("Jun_borough_grocery.csv")
+borough_jul <- read.csv("Jul_borough_grocery.csv")
+borough_aug <- read.csv("Aug_borough_grocery.csv")
+borough_sep <- read.csv("Sep_borough_grocery.csv")
+borough_oct <- read.csv("Oct_borough_grocery.csv")
+borough_nov <- read.csv("Nov_borough_grocery.csv")
+borough_dec <- read.csv("Dec_borough_grocery.csv")
+```
+
+EDA
+```{r}
+# Check the type of food categories that are available to us
+food_categories_unique <- unique(food_categories$category)
+kable(food_categories_unique, col.names = "Food Categories")
+```
+
+```{r}
+#
