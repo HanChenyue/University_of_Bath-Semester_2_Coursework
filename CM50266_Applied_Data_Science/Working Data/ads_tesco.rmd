@@ -858,28 +858,24 @@ levenes_lsoa_kable <- create_levenes_df(levenes_lsoa_test_results)
 
 kable(levenes_borough_kable, 
       col.names = c("Product", "Test Statistic", "P-value"), 
-      format = "html", # Change to "latex" if you're knitting to PDF
       digits = 3,
       caption = "Levene's Test (Borough)") %>%
   kable_styling("striped", full_width = FALSE, position = "center")
 
 kable(levenes_osward_kable, 
       col.names = c("Product", "Test Statistic", "P-value"), 
-      format = "html", # Change to "latex" if you're knitting to PDF
       digits = 3,
       caption = "Levene's Test (Osward)") %>%
   kable_styling("striped", full_width = FALSE, position = "center")
 
 kable(levenes_msoa_kable, 
       col.names = c("Product", "Test Statistic", "P-value"), 
-      format = "html", # Change to "latex" if you're knitting to PDF
       digits = 3,
       caption = "Levene's Test (Msoa)") %>%
   kable_styling("striped", full_width = FALSE, position = "center")
 
 kable(levenes_lsoa_kable, 
       col.names = c("Product", "Test Statistic", "P-value"), 
-      format = "html", # Change to "latex" if you're knitting to PDF
       digits = 3,
       caption = "Levene's Test (Lsoa)") %>%
   kable_styling("striped", full_width = FALSE, position = "center")
@@ -889,3 +885,80 @@ kable(levenes_lsoa_kable,
 # If Levene's test indicates that variances are not equal (the p-value is below the significance threshold, 0.05), we would use a version of the t-test that does not assume equal variances, such as Welch's t-test.
 # Levene's tests: None of the product categories show a statistically significant difference in variance between the purchasing fractions of males and females (all p-values are greater than 0.05). We will use a standard t-test
 # At the granular level, more variations in purchasing patterns occurs as p-values starts failing the threshold of 0.05. We will use Welch's t-test for these cases.
+
+
+
+
+
+```{r}
+t_test <- function(data, product_categories) {
+  results_df <- data.frame(Product = character(),
+                           Levene_Test_Statistic = numeric(),
+                           Levene_P_Value = numeric(),
+                           T_Test_Statistic = numeric(),
+                           T_Test_P_Value = numeric(),
+                           Welch_Test_Statistic = numeric(),
+                           Welch_Test_P_Value = numeric(),
+                           stringsAsFactors = FALSE)
+
+  for (product in product_categories) {
+    male_data <- data[[product]] * data$male / sum(data$male, na.rm = TRUE)
+    female_data <- data[[product]] * data$female / sum(data$female, na.rm = TRUE)
+    
+    # Perform Levene's test for homogeneity of variances
+    levenes_result <- levene.test(c(male_data, female_data), 
+                                 group = factor(rep(1:2, each = length(male_data))))
+
+    # Initialize new_row with NA for t-tests
+    new_row <- data.frame(Product = product,
+                          Levene_Test_Statistic = levenes_result$statistic,
+                          Levene_P_Value = levenes_result$p.value,
+                          T_Test_Statistic = NA,
+                          T_Test_P_Value = NA,
+                          Welch_Test_Statistic = NA,
+                          Welch_Test_P_Value = NA)
+    
+    if (levenes_result$p.value > 0.05) {
+      # Variances are equal, perform standard t-test
+      t_test_result <- t.test(male_data, female_data, var.equal = TRUE)
+      # Update the row for the standard t-test results
+      new_row$T_Test_Statistic <- t_test_result$statistic
+      new_row$T_Test_P_Value <- t_test_result$p.value
+    } else {
+      # Variances are not equal, perform Welch's t-test
+      t_test_result <- t.test(male_data, female_data, var.equal = FALSE)
+      # Update the row for the Welch's t-test results
+      new_row$Welch_Test_Statistic <- t_test_result$statistic
+      new_row$Welch_Test_P_Value <- t_test_result$p.value
+    }
+    
+    # Append to results dataframe
+    results_df <- rbind(results_df, new_row)
+  }
+  
+  return(results_df)
+}
+
+# Apply the function to create a data frame of results
+t_test_borough_results <- t_test(borough_year, product_categories)
+t_test_osward_results <- t_test(osward_year, product_categories)
+t_test_msoa_results <- t_test(msoa_year, product_categories)
+t_test_lsoa_results <- t_test(lsoa_year, product_categories)
+
+generate_table <- function(results_df) {
+  kable(results_df, 
+        col.names = c("Product", "Levene's Test Statistic", "Levene's P-Value", 
+                      "Standard t-test Statistic", "Standard t-test P-Value",
+                      "Welch Test Statistic", "Welch Test P-Value"),
+        row.names = FALSE,
+        digits = 3,
+        caption = "Combined Test Results for Product Categories") %>%
+    kable_styling("striped", full_width = FALSE, position = "center")
+}
+
+# Apply function to create and print the table
+generate_table(t_test_borough_results)
+generate_table(t_test_osward_results)
+generate_table(t_test_msoa_results)
+generate_table(t_test_lsoa_results)
+```
