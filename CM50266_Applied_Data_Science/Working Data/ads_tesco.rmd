@@ -966,82 +966,143 @@ generate_table(t_test_lsoa_results)
 ```
 
 ```{r}
+# Old code for reference
+# # Function to perform ANOVA and Tukey's HSD test
+# perform_anova_tukey <- function(data, product_categories) {
+#   # Create a long format data frame for ANOVA
+#   long_format_data <- data %>% 
+#     pivot_longer(cols = all_of(product_categories), names_to = "Category", values_to = "Fraction") %>% 
+#     mutate(across(all_of(age_columns), ~ .x / data$population, .names = "norm_{.col}")) %>%
+#     pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Normalized_Fraction") %>%
+#     mutate(Age_Group = sub("norm_", "", Age_Group))
+# 
+#   # Initialize an empty list to store results
+#   results <- list()
+# 
+#   # Perform ANOVA for each category
+#   for (category in product_categories) {
+#     category_data <- filter(long_format_data, Category == category)
+#     
+#     # Perform ANOVA
+#     anova_result <- aov(Normalized_Fraction ~ Age_Group, data = category_data)
+#     summary_anova <- summary(anova_result)
+#     
+#     # Check if ANOVA is significant before performing Tukey's HSD test
+#     if (summary_anova[[1]]$'Pr(>F)'[1] < 0.05) {
+#       tukey_result <- TukeyHSD(anova_result)
+#       results[[category]] <- list(ANOVA = summary_anova, Tukey = tukey_result)
+#     } else {
+#       results[[category]] <- list(ANOVA = summary_anova, Tukey = "ANOVA not significant, no post hoc test performed")
+#     }
+#   }
+# 
+#   return(results)
+# }
+# 
+# 
+# # Perform ANOVA and Tukey's HSD test for each dataset
+# anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories)
+# anova_tukey_borough
+```
+
+```{r}
+# Old EDA code for reference (converted to a function)
+# data <- borough_year %>%
+#   mutate(across(all_of(age_columns), ~ .x / population)) 
+# 
+# # Reshape the data into a long format for ANOVA, creating fractions for each category and age group
+# long_format_data <- pivot_longer(
+#   data,
+#   cols = product_categories,
+#   names_to = "Category",
+#   values_to = "Fraction"
+# )
+# 
+# # We need to create separate observations for each age group within each category
+# long_format_data <- long_format_data %>%
+#   gather(key = "Age_Group", value = "Fraction_Age", all_of(age_columns)) %>%
+#   mutate(Fraction_Age = Fraction * Fraction_Age) %>% 
+#   filter(!is.na(Fraction_Age))
+# 
+# # Now we can proceed with ANOVA and Tukey's HSD as per your Python code
+# anova_tukey_results <- list()
+# 
+# for (category in product_categories) {
+#   cat_data <- filter(long_format_data, Category == category)
+#   mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+#   anova_summary <- summary(mod)
+#   
+#   if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+#     tukey_result <- TukeyHSD(mod)
+#     anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
+#   } else {
+#     anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
+#   }
+# }
+# 
+# # Review results
+# anova_tukey_results
+```
+
+```{r}
 # Running ANOVA and Tukey's HSD test to check for significant differences between age groups in purchasing patterns
 # ANOVA can be used to test whether there are any statistically significant differences between the means of three or more independent groups.
 # Tukey's HSD test can be used to determine which specific groups differ from each other when the ANOVA test is significant.
+perform_anova_tukey <- function(data, product_categories, age_columns) {
+  # Normalizing the age columns by total population
+  data <- data %>%
+    mutate(across(all_of(age_columns), ~ .x / population, .names = "norm_{.col}")) 
 
-# Function to perform ANOVA and Tukey's HSD test
-perform_anova_tukey <- function(data, product_categories) {
-  # Create a long format data frame for ANOVA
-  long_format_data <- data %>% 
-    pivot_longer(cols = all_of(product_categories), names_to = "Category", values_to = "Fraction") %>% 
-    mutate(across(all_of(age_columns), ~ .x / data$population, .names = "norm_{.col}")) %>%
-    pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Normalized_Fraction") %>%
-    mutate(Age_Group = sub("norm_", "", Age_Group))
+  # Reshaping the data into a long format for ANOVA, creating fractions for each category and age group
+  long_format_data <- data %>%
+    pivot_longer(cols = product_categories, names_to = "Category", values_to = "Fraction") %>%
+    pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Age_Fraction") %>%
+    mutate(Age_Group = sub("norm_", "", Age_Group),
+           Fraction_Age = Fraction * Age_Fraction) %>%
+    filter(!is.na(Fraction_Age)) 
 
-  # Initialize an empty list to store results
-  results <- list()
+  # Performing ANOVA and Tukey's HSD for each product category
+  anova_tukey_results <- list()
 
-  # Perform ANOVA for each category
   for (category in product_categories) {
-    category_data <- filter(long_format_data, Category == category)
-    
-    # Perform ANOVA
-    anova_result <- aov(Normalized_Fraction ~ Age_Group, data = category_data)
-    summary_anova <- summary(anova_result)
-    
-    # Check if ANOVA is significant before performing Tukey's HSD test
-    if (summary_anova[[1]]$'Pr(>F)'[1] < 0.05) {
-      tukey_result <- TukeyHSD(anova_result)
-      results[[category]] <- list(ANOVA = summary_anova, Tukey = tukey_result)
+    cat_data <- filter(long_format_data, Category == category)
+    mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+    anova_summary <- summary(mod)
+
+    # Store results only if ANOVA is significant, otherwise store a message
+    if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+      tukey_result <- TukeyHSD(mod)
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
     } else {
-      results[[category]] <- list(ANOVA = summary_anova, Tukey = "ANOVA not significant, no post hoc test performed")
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
     }
   }
 
-  return(results)
+  return(anova_tukey_results)
 }
 
+# Apply the function to perform ANOVA and Tukey's HSD test
+anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories, age_columns)
+anova_tukey_osward <- perform_anova_tukey(osward_year, product_categories, age_columns)
+anova_tukey_msoa <- perform_anova_tukey(msoa_year, product_categories, age_columns)
+anova_tukey_lsoa <- perform_anova_tukey(lsoa_year, product_categories, age_columns)
+```
 
-# Perform ANOVA and Tukey's HSD test for each dataset
-anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories)
+```{r}
 anova_tukey_borough
 ```
 
 ```{r}
-data <- borough_year %>%
-  mutate(across(all_of(age_columns), ~ .x / population)) 
+anova_tukey_osward
+```
 
-# Reshape the data into a long format for ANOVA, creating fractions for each category and age group
-long_format_data <- pivot_longer(
-  data,
-  cols = product_categories,
-  names_to = "Category",
-  values_to = "Fraction"
-)
+```{r}
+anova_tukey_msoa
+```
 
-# We need to create separate observations for each age group within each category
-long_format_data <- long_format_data %>%
-  gather(key = "Age_Group", value = "Fraction_Age", all_of(age_columns)) %>%
-  mutate(Fraction_Age = Fraction * Fraction_Age) %>% 
-  filter(!is.na(Fraction_Age))
+```{r}
+anova_tukey_lsoa
+```
 
-# Now we can proceed with ANOVA and Tukey's HSD as per your Python code
-anova_tukey_results <- list()
-
-for (category in product_categories) {
-  cat_data <- filter(long_format_data, Category == category)
-  mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
-  anova_summary <- summary(mod)
-  
-  if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
-    tukey_result <- TukeyHSD(mod)
-    anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
-  } else {
-    anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
-  }
-}
-
-# Review results
-anova_tukey_results
+```{r}
 ```
