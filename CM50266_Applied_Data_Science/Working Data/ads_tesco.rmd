@@ -3,10 +3,9 @@ title: "Tesco"
 author: "HanChenyue"
 date: "2024-04-07"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  beamer_presentation: default
-  pdf_document: default
 ---
 
 Limitations:
@@ -1069,7 +1068,7 @@ mean_income_lm <- lm(mean_income_pound ~ year, data = income_data)
 kable(summary(mean_income_lm)$coefficients, digits = 2, caption = "Linear Regression Results for Mean Income") %>% 
   kable_styling("striped", full_width = FALSE, position = "center")
 
-ggplot(income_data, aes(x = year, y = mean_income_pound)) +
+ggplot(income_data, aes(x = year, y = mean_income_pound, colour = area_id_name)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, colour = "red") +
   geom_smooth(method = "loess", se = FALSE, colour = "blue") +
@@ -1085,7 +1084,7 @@ median_income_lm <- lm(median_income_pound ~ year, data = income_data)
 kable(summary(median_income_lm)$coefficients, digits = 1, caption = "Linear Regression Results for Median Income") %>% 
   kable_styling("striped", full_width = FALSE, position = "center")
 
-ggplot(income_data, aes(x = year, y = median_income_pound)) +
+ggplot(income_data, aes(x = year, y = median_income_pound, colour = area_id_name)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, colour = "red") +
   geom_smooth(method = "loess", se = FALSE, colour = "blue") +
@@ -1123,7 +1122,7 @@ Looks like the top earners in 2015 were from the boroughs of Kensington and Chel
 
 Let's investigate how these income levels correlate with the purchasing patterns of different food categories across boroughs.
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=10, fig.height=10}
 # Merge the income data with the borough data
 borough_with_2015_income_data <- left_join(borough_year, income_data_2015, by = c("area_id" = "area_id"))
 
@@ -1158,8 +1157,6 @@ The correlations matches research outcomes of existing literature on the relatio
 - https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-019-6546-2
 - https://www.york.ac.uk/news-and-events/news/2021/research/awareness-healthy-eating-struggle-access-good-food/
 
-Let's determine the strength of the relationship between income levels and food purchase categories while controlling for other variables. A multiple regression could be particularly insightful if you suspect that other demographic or regional factors may influence purchasing patterns.
-```{r}
 
 
 
