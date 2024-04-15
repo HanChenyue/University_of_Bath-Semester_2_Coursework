@@ -1,0 +1,1115 @@
+---
+title: "Tesco"
+author: "HanChenyue"
+date: "2024-04-07"
+output:
+  pdf_document: default
+  beamer_presentation: default
+---
+
+Limitations:
+- The dataset represents purchases by loyalty cardholders only. This may not be representative of the entire population' purchasing patterns.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,
+                      warning = TRUE, message = TRUE)
+```
+
+```{r packages, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(lubridate)
+library(ggthemes)
+library(patchwork)
+library(viridis)
+library(broom)
+library(corrplot)
+library(scales)
+library(cluster)
+library(factoextra)
+library(lawstat)
+library(multcomp)
+library(stats)
+```
+
+
+```{r data-load, echo = FALSE, message=FALSE, warning=TRUE}
+# Load the data
+# Set check.names = FALSE to avoid changing the column names
+food_categories <- read.csv("food_categories.csv", check.names = FALSE)
+
+# Load LSOA (Lower Super Output Area), MSOA (Medium Super Output Area), Ward, and borough data
+lsoa_year <- read.csv("year_lsoa_grocery.csv", check.names = FALSE)
+lsoa_jan <- read.csv("Jan_lsoa_grocery.csv", check.names = FALSE)
+lsoa_feb <- read.csv("Feb_lsoa_grocery.csv", check.names = FALSE)
+lsoa_mar <- read.csv("Mar_lsoa_grocery.csv", check.names = FALSE)
+lsoa_apr <- read.csv("Apr_lsoa_grocery.csv", check.names = FALSE)
+lsoa_may <- read.csv("May_lsoa_grocery.csv", check.names = FALSE)
+lsoa_jun <- read.csv("Jun_lsoa_grocery.csv", check.names = FALSE)
+lsoa_jul <- read.csv("Jul_lsoa_grocery.csv", check.names = FALSE)
+lsoa_aug <- read.csv("Aug_lsoa_grocery.csv", check.names = FALSE)
+lsoa_sep <- read.csv("Sep_lsoa_grocery.csv", check.names = FALSE)
+lsoa_oct <- read.csv("Oct_lsoa_grocery.csv", check.names = FALSE)
+lsoa_nov <- read.csv("Nov_lsoa_grocery.csv", check.names = FALSE)
+lsoa_dec <- read.csv("Dec_lsoa_grocery.csv", check.names = FALSE)
+msoa_year <- read.csv("year_msoa_grocery.csv", check.names = FALSE)
+msoa_jan <- read.csv("Jan_msoa_grocery.csv", check.names = FALSE)
+msoa_feb <- read.csv("Feb_msoa_grocery.csv", check.names = FALSE)
+msoa_mar <- read.csv("Mar_msoa_grocery.csv", check.names = FALSE)
+msoa_apr <- read.csv("Apr_msoa_grocery.csv", check.names = FALSE)
+msoa_may <- read.csv("May_msoa_grocery.csv", check.names = FALSE)
+msoa_jun <- read.csv("Jun_msoa_grocery.csv", check.names = FALSE)
+msoa_jul <- read.csv("Jul_msoa_grocery.csv", check.names = FALSE)
+msoa_aug <- read.csv("Aug_msoa_grocery.csv", check.names = FALSE)
+msoa_sep <- read.csv("Sep_msoa_grocery.csv", check.names = FALSE)
+msoa_oct <- read.csv("Oct_msoa_grocery.csv", check.names = FALSE)
+msoa_nov <- read.csv("Nov_msoa_grocery.csv", check.names = FALSE)
+msoa_dec <- read.csv("Dec_msoa_grocery.csv", check.names = FALSE)
+osward_year <- read.csv("year_osward_grocery.csv", check.names = FALSE)
+osward_jan <- read.csv("Jan_osward_grocery.csv", check.names = FALSE)
+osward_feb <- read.csv("Feb_osward_grocery.csv", check.names = FALSE)
+osward_mar <- read.csv("Mar_osward_grocery.csv", check.names = FALSE)
+osward_apr <- read.csv("Apr_osward_grocery.csv", check.names = FALSE)
+osward_may <- read.csv("May_osward_grocery.csv", check.names = FALSE)
+osward_jun <- read.csv("Jun_osward_grocery.csv", check.names = FALSE)
+osward_jul <- read.csv("Jul_osward_grocery.csv", check.names = FALSE)
+osward_aug <- read.csv("Aug_osward_grocery.csv", check.names = FALSE)
+osward_sep <- read.csv("Sep_osward_grocery.csv", check.names = FALSE)
+osward_oct <- read.csv("Oct_osward_grocery.csv", check.names = FALSE)
+osward_nov <- read.csv("Nov_osward_grocery.csv", check.names = FALSE)
+osward_dec <- read.csv("Dec_osward_grocery.csv", check.names = FALSE)
+borough_year <- read.csv("year_borough_grocery.csv", check.names = FALSE)
+borough_jan <- read.csv("Jan_borough_grocery.csv", check.names = FALSE)
+borough_feb <- read.csv("Feb_borough_grocery.csv", check.names = FALSE)
+borough_mar <- read.csv("Mar_borough_grocery.csv", check.names = FALSE)
+borough_apr <- read.csv("Apr_borough_grocery.csv", check.names = FALSE)
+borough_may <- read.csv("May_borough_grocery.csv", check.names = FALSE)
+borough_jun <- read.csv("Jun_borough_grocery.csv", check.names = FALSE)
+borough_jul <- read.csv("Jul_borough_grocery.csv", check.names = FALSE)
+borough_aug <- read.csv("Aug_borough_grocery.csv", check.names = FALSE)
+borough_sep <- read.csv("Sep_borough_grocery.csv", check.names = FALSE)
+borough_oct <- read.csv("Oct_borough_grocery.csv", check.names = FALSE)
+borough_nov <- read.csv("Nov_borough_grocery.csv", check.names = FALSE)
+borough_dec <- read.csv("Dec_borough_grocery.csv", check.names = FALSE)
+```
+
+EDA
+```{r}
+# Check the type of food categories that are available to us
+food_categories_unique <- unique(food_categories$category)
+kable(food_categories_unique,
+      col.names = "Food Categories",
+      caption = "Food Categories Available",
+      ) %>% 
+  kable_styling("striped", full_width = F, position = "center")
+```
+```{r}
+product_categories <- c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish',
+                        'f_fruit_veg', 'f_grains','f_meat_red', 'f_poultry',
+                        'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits',
+                        'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')
+
+age_columns <- c('age_0_17', 'age_18_64', 'age_65+')
+gender_columns <- c('male', 'female')
+```
+
+```{r}
+# Use k-means cluster analysis to identify possible purchasing pattern worth exploring
+# Elbow method allows us to determine the optimal number of clusters
+# If it matches the number of age groups/gender, it could indicate distinct purchasing patterns for each group that are worth exploring further
+
+# Function to check elbow method
+purchasing_patterns_cluster_function <- function(data, hand_picked_features){
+  # Selecting the specific age group and purchasing patterns
+  features <- data %>% dplyr::select(hand_picked_features, 'f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains',
+                'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits',
+                'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')
+  scaled_data <- scale(features)
+  
+  # Determine the optimal number of clusters using the elbow method
+  set.seed(0)  # Ensure reproducibility
+  wcss <- map_dbl(1:10, function(k) {
+    kmeans(scaled_data, centers = k, iter.max = 50, nstart = 25)$tot.withinss
+})
+
+  fviz_nbclust(scaled_data, kmeans, method = "wss") + labs(title = 'Elbow Method')
+}
+```
+
+```{r, WARNING=FALSE}
+purchasing_patterns_cluster_function(borough_year, age_columns)
+purchasing_patterns_cluster_function(osward_year, age_columns)
+purchasing_patterns_cluster_function(msoa_year, age_columns)
+purchasing_patterns_cluster_function(lsoa_year, age_columns)
+```
+```{r, WARNING=FALSE}
+purchasing_patterns_cluster_function(borough_year, gender_columns)
+purchasing_patterns_cluster_function(osward_year, gender_columns)
+purchasing_patterns_cluster_function(msoa_year, gender_columns)
+purchasing_patterns_cluster_function(lsoa_year, gender_columns)
+```
+```{r}
+# Function to visualise the clustering results using fviz_cluster
+visualise_cluster <- function(data, hand_picked_features, n_clusters) {
+  # Selecting the specific age group and purchasing patterns
+  features <- data %>% dplyr::select(hand_picked_features, 'f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains',
+                'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits',
+                'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')
+  # scaled_data <- scale(data[, features])
+  scaled_data <- scale(features)
+  
+  # Applying k-means clustering
+  set.seed(0)
+  kmeans_result <- kmeans(scaled_data, centers = n_clusters, iter.max = 50, nstart = 25)
+  
+  # Visualizing the clustering results
+  fviz_cluster(kmeans_result, data = scaled_data, geom = "point", stand = FALSE, ellipse.type = "convex")
+}
+
+visualise_cluster(borough_year, age_columns, 3)
+visualise_cluster(osward_year, age_columns, 3)
+visualise_cluster(msoa_year, age_columns, 3)
+visualise_cluster(lsoa_year, age_columns, 3)
+visualise_cluster(borough_year, gender_columns, 3)
+visualise_cluster(osward_year, gender_columns, 3)
+visualise_cluster(msoa_year, gender_columns, 3)
+visualise_cluster(lsoa_year, gender_columns, 3)
+visualise_cluster(borough_year, gender_columns, 2)
+visualise_cluster(osward_year, gender_columns, 2)
+visualise_cluster(msoa_year, gender_columns, 2)
+visualise_cluster(lsoa_year, gender_columns, 2)
+```
+
+Analysis:
+- Cluster seems to shows it is worth investigating as there are distinct purchasing patterns shown for each age groups as well as gender. Elbow analysis shows that 3 clusters might be optimal for age groups, while 2 or 3 clusters might be optimal for gender (we will choose 2 in this analysis).
+- We will then investigate the purchasing patterns using normalisation to understand the preferences of each group to produce insights from this approach.
+
+```{r fig.width=10, fig.height=10}
+# Check the correlation between demographics and purchasing patterns
+# Borough level
+borough_year_cor <- borough_year[c('population', 'male', 'female', 'age_0_17', 'age_18_64', 'age_65+', 'avg_age', 'area_sq_km', 'people_per_sq_km', 'weight', 'volume')]
+osward_year_cor <- osward_year[c('population', 'male', 'female', 'age_0_17', 'age_18_64', 'age_65+', 'avg_age', 'area_sq_km', 'people_per_sq_km', 'weight', 'volume')]
+msoa_year_cor <- msoa_year[c('population', 'male', 'female', 'age_0_17', 'age_18_64', 'age_65+', 'avg_age', 'area_sq_km', 'people_per_sq_km', 'weight', 'volume')]
+lsoa_year_cor <- lsoa_year[c('population', 'male', 'female', 'age_0_17', 'age_18_64', 'age_65+', 'avg_age', 'area_sq_km', 'people_per_sq_km', 'weight', 'volume')]
+borough_correlation_matrix <- cor(borough_year_cor, use = "pairwise.complete.obs")
+osward_correlation_matrix <- cor(osward_year_cor, use = "pairwise.complete.obs")
+msoa_correlation_matrix <- cor(msoa_year_cor, use = "pairwise.complete.obs")
+lsoa_correlation_matrix <- cor(lsoa_year_cor, use = "pairwise.complete.obs")
+corrplot(borough_correlation_matrix, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label colour
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.6, # Text label size
+         addCoef.col = "black", # Add coefficient colour
+         title = "Correlation Matrix of Demographic Factors and Purchasing Patterns (Borough Level)",
+         cl.cex = 0.7, # Colour legend text size
+         number.cex = 0.7, # Correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(200)) # Change colour scheme
+corrplot(osward_correlation_matrix, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.6, # Text label size
+         addCoef.col = "black", # Add coefficient colour
+         title = "Correlation Matrix of Demographic Factors and Purchasing Patterns (Osward Level)",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.7, # Correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(200)) # Change colour scheme
+corrplot(msoa_correlation_matrix, method = "color",
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.6, # Text label size
+         addCoef.col = "black", # Add coefficient colour
+         title = "Correlation Matrix of Demographic Factors and Purchasing Patterns (MSOA)",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.7, # Correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(200)) # Change colour scheme
+corrplot(lsoa_correlation_matrix, method = "color",
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.6, # Text label size
+         addCoef.col = "black", # Add coefficient colour
+         title = "Correlation Matrix of Demographic Factors and Purchasing Patterns (LSOA)",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.7, # Correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(200)) # Change colour scheme
+```
+
+```{r}
+kable(borough_correlation_matrix,
+      digits = 2,
+      caption = "Correlation Matrix of Demographic Factors and Purchasing Patterns (Borough)") %>% 
+  kable_styling("striped", full_width = F, position = "center")
+
+kable(osward_correlation_matrix,
+      digits = 2,
+      caption = "Correlation Matrix of Demographic Factors and Purchasing Patterns (Osward)") %>%
+  kable_styling("striped", full_width = F, position = "center")
+
+kable(msoa_correlation_matrix,
+      digits = 2,
+      caption = "Correlation Matrix of Demographic Factors and Purchasing Patterns (MSOA)") %>%
+  kable_styling("striped", full_width = F, position = "center")
+
+kable(lsoa_correlation_matrix,
+      digits = 2,
+      caption = "Correlation Matrix of Demographic Factors and Purchasing Patterns (LSOA)") %>%
+  kable_styling("striped", full_width = F, position = "center")
+```
+Borough Level Correlation Matrix
+- Population and Purchasing Volume/Weight: There's a correlation between the population size of a borough and both the weight and volume of purchases. This is expected as larger populations would naturally lead to more purchases.
+- Age Groups and Purchases: Different age groups (0-17, 18-64, 65+) show varying degrees of correlation with purchasing patterns. This could suggest that the age composition of a borough influences the types and amounts of groceries purchased.
+- Area Size and Density: The area of the borough (area_sq_km) and the population density (people_per_sq_km) also show interesting correlations with purchasing patterns.
+
+Details
+Population Size
+- Weight: Correlation coefficient of 0.44, indicating a moderate positive correlation. As the population size increases, the weight of purchases also increases.
+- Volume: Correlation coefficient of 0.42, indicating a moderate positive correlation. As the population size increases, the volume of purchases also increases.
+
+Gender Distribution
+- Male has a slightly higher correlation compare to female in terms of weight and volume of purchases.
+- This make sense given that usually male tend to consume more food compare to female
+
+Age Groups
+- Age 0-17: Strong positive correlation with weight (0.50) and volume (0.55), indicating that areas with a higher proportion of children and teenagers tend to have higher purchase volumes.
+- Age 18-64: Moderate positive correlation with weight (0.44) and volume (0.42), suggesting that the working-age population contributes significantly to the weight and volume of purchases.
+- Age 65+: Weak negative correlation with weight (-0.02) and weak positive correlation with volume (0.17), indicating that the elderly population has a smaller impact on purchasing patterns.
+
+Average Age
+- There is a strong negative correlation between average age and weight (-0.60) and volume (-0.44), suggesting that younger populations tend to purchase more groceries (in terms of weight and volume).
+
+Area Size and Density
+- Area_sq_km: Weak negative correlation with weight (-0.18) and weak positive correlation with volume (0.08), indicating that the size of the borough has a small impact on purchasing patterns.
+- People_per_sq_km: Shows a moderate positive correlation with weight (0.32) and negligible correlation with volume (-0.01), suggesting that population density has a moderate impact on the weight of purchases and population density doesn't significantly affect the volume of purchases.
+
+```{r fig.width=10, fig.height=10}
+# Use localised fit to explore the relationship between demographics and purchasing patterns
+demographics_borough_year <- borough_year[c('avg_age', 'people_per_sq_km')]
+demographics_osward_year <- osward_year[c('avg_age', 'people_per_sq_km')]
+demographics_msoa_year <- msoa_year[c('avg_age', 'people_per_sq_km')]
+demographics_lsoa_year <- lsoa_year[c('avg_age', 'people_per_sq_km')]
+
+# Borough Level
+# Scatter plot for Weight vs. Population Density
+ggplot(borough_year, aes(x = people_per_sq_km, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Weight vs. Population Density (Borough Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Weight of Purchases")
+
+ggplot(borough_year, aes(x = avg_age, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Weight vs. Average Age (Borough Level)",
+       x = "Average Age",
+       y = "Weight of Purchases")
+
+ggplot(borough_year, aes(x = people_per_sq_km, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Volume vs. Population Density (Borough Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Volume of Purchases")
+
+ggplot(borough_year, aes(x = avg_age, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Volume vs. Average Age (Borough Level)",
+       x = "Average Age",
+       y = "Volume of Purchases")
+
+# Osward Level
+# Scatter plot for Weight vs. Population Density
+ggplot(osward_year, aes(x = people_per_sq_km, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Weight vs. Population Density (Osward Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Weight of Purchases")
+
+ggplot(osward_year, aes(x = avg_age, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Weight vs. Average Age (Osward Level)",
+       x = "Average Age",
+       y = "Weight of Purchases")
+
+ggplot(osward_year, aes(x = people_per_sq_km, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Volume vs. Population Density (Osward Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Volume of Purchases")
+
+ggplot(osward_year, aes(x = avg_age, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Volume vs. Average Age (Osward Level)",
+       x = "Average Age",
+       y = "Volume of Purchases")
+
+# MSOA Level
+# Scatter plot for Weight vs. Population Density
+ggplot(msoa_year, aes(x = people_per_sq_km, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Weight vs. Population Density (MSOA Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Weight of Purchases")
+
+ggplot(msoa_year, aes(x = avg_age, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Weight vs. Average Age (MSOA Level)",
+       x = "Average Age",
+       y = "Weight of Purchases")
+
+ggplot(msoa_year, aes(x = people_per_sq_km, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Volume vs. Population Density (MSOA Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Volume of Purchases")
+
+ggplot(msoa_year, aes(x = avg_age, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Volume vs. Average Age (MSOA Level)",
+       x = "Average Age",
+       y = "Volume of Purchases")
+
+# LSOA Level
+# Scatter plot for Weight vs. Population Density
+ggplot(lsoa_year, aes(x = people_per_sq_km, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Weight vs. Population Density (LSOA Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Weight of Purchases")
+
+# Removing the outlier in Scatter Plot of Weight vs. Population Density (LSOA Level)
+lsoa_year_outlier <- lsoa_year %>% filter(people_per_sq_km < 75000)
+ggplot(lsoa_year_outlier, aes(x = people_per_sq_km, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Weight vs. Population Density (LSOA Level - Outlier Removed)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_year, aes(x = avg_age, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Weight vs. Average Age (LSOA Level)",
+       x = "Average Age",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_year, aes(x = people_per_sq_km, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Volume vs. Population Density (LSOA Level)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Volume of Purchases")
+
+# Removing the outlier in Scatter Plot of Weight vs. Population Density (LSOA Level)
+ggplot(lsoa_year_outlier, aes(x = people_per_sq_km, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Weight vs. Population Density (LSOA Level - Outlier Removed)",
+       x = "Population Density (People per Sq. Km)",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_year, aes(x = avg_age, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Volume vs. Average Age (LSOA Level)",
+       x = "Average Age",
+       y = "Volume of Purchases")
+
+```
+
+
+```{r fig.width=10, fig.height=10}
+# Use localised fit to explore the relationship between genders and purchasing patterns
+demographics_borough_year <- borough_year[c('male', 'female')]
+
+# Borough Level
+ggplot(borough_year, aes(x = male, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Male vs. Weight (Borough Level)",
+       x = "Male",
+       y = "Weight of Purchases")
+
+ggplot(borough_year, aes(x = female, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Female vs. Weight (Borough Level)",
+       x = "Female",
+       y = "Weight of Purchases")
+
+ggplot(borough_year, aes(x = male, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Male vs. Volume (Borough Level)",
+       x = "Male",
+       y = "Volume of Purchases")
+
+ggplot(borough_year, aes(x = female, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  labs(title = "Scatter Plot of Female vs. Volume (Borough Level)",
+       x = "Female",
+       y = "Volume of Purchases")
+
+# Osward Level
+ggplot(osward_year, aes(x = male, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Male vs. Weight (Osward Level)",
+       x = "Male",
+       y = "Weight of Purchases")
+
+ggplot(osward_year, aes(x = female, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Female vs. Weight (Osward Level)",
+       x = "Female",
+       y = "Weight of Purchases")
+
+ggplot(osward_year, aes(x = male, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Male vs. Volume (Osward Level)",
+       x = "Male",
+       y = "Volume of Purchases")
+
+ggplot(osward_year, aes(x = female, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "orange") +
+  labs(title = "Scatter Plot of Female vs. Volume (Osward Level)",
+       x = "Female",
+       y = "Volume of Purchases")
+
+# MSOA Level
+ggplot(msoa_year, aes(x = male, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Male vs. Weight (MSOA Level)",
+       x = "Male",
+       y = "Weight of Purchases")
+
+ggplot(msoa_year, aes(x = female, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Female vs. Weight (MSOA Level)",
+       x = "Female",
+       y = "Weight of Purchases")
+
+ggplot(msoa_year, aes(x = male, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Male vs. Volume (MSOA Level)",
+       x= "Male",
+       y = "Volume of Purchases")
+
+ggplot(msoa_year, aes(x = female, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "purple") +
+  labs(title = "Scatter Plot of Female vs. Volume (MSOA Level)",
+       x= "Female",
+       y = "Volume of Purchases")
+
+# LSOA Level
+ggplot(lsoa_year, aes(x = male, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Male vs. Weight (LSOA Level)",
+       x = "Male",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_year, aes(x = female, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Female vs. Weight (LSOA Level)",
+       x = "Female",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_year, aes(x = male, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Male vs. Volume (LSOA Level)",
+       x= "Male",
+       y = "Volume of Purchases")
+
+ggplot(lsoa_year, aes(x = female, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Female vs. Volume (LSOA Level)",
+       x= "Female",
+       y = "Volume of Purchases")
+
+# Removing the outlier(s) in LSOA
+lsoa_male_outlier_year <- lsoa_year %>% filter(male < 2500)
+lsoa_female_outlier_year <- lsoa_year %>% filter(female < 3000)
+
+ggplot(lsoa_male_outlier_year, aes(x = male, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Male vs. Weight (LSOA Level - Outlier Removed)",
+       x = "Male",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_female_outlier_year, aes(x = female, y = weight)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Female vs. Weight (LSOA Level - Outlier Removed)",
+       x = "Female",
+       y = "Weight of Purchases")
+
+ggplot(lsoa_male_outlier_year, aes(x = male, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Male vs. Volume (LSOA Level - Outlier Removed)",
+       x= "Male",
+       y = "Volume of Purchases")
+
+ggplot(lsoa_female_outlier_year, aes(x = female, y = volume)) +
+  geom_point(alpha = 0.6, size = 3) +
+  geom_smooth(method = "loess", se = FALSE, color = "blue") +
+  labs(title = "Scatter Plot of Female vs. Volume (LSOA Level - Outlier Removed)",
+       x= "Female",
+       y = "Volume of Purchases")
+```
+
+Explore the relationship between food category purchases and socio-economic indicators
+
+```{r fig.width=10, fig.height=10}
+# Check the correlation between food category purchases and socio-economic indicators
+# Borough level
+borough_socio_economic_indicators <- borough_year[c('avg_age', 'people_per_sq_km')]
+borough_food_categories_year <- borough_year[c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains', 'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits', 'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')]
+borough_data_for_correlation <- cbind(borough_food_categories_year, borough_socio_economic_indicators)
+borough_correlation_matrix_food <- cor(borough_data_for_correlation, use = "pairwise.complete.obs")
+corrplot(borough_correlation_matrix_food, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.5, # Reduce text label size for space
+         addCoef.col = "black", # Add coefficient color
+         title = "Correlation Matrix of Food Category Purchases and Socio-Economic Indicators",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.5, # Reduce correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         sig.level = 0.05, # Only show significant correlations
+         diag = FALSE, # Do not show diagonal
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(10))
+
+# Osward level
+osward_socio_economic_indicators <- osward_year[c('avg_age', 'people_per_sq_km')]
+osward_food_categories_year <- osward_year[c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains', 'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits', 'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')]
+osward_data_for_correlation <- cbind(osward_food_categories_year, osward_socio_economic_indicators)
+osward_correlation_matrix_food <- cor(osward_data_for_correlation, use = "pairwise.complete.obs")
+corrplot(osward_correlation_matrix_food, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.5, # Reduce text label size for space
+         addCoef.col = "black", # Add coefficient color
+         title = "Correlation Matrix of Food Category Purchases and Socio-Economic Indicators",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.5, # Reduce correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         sig.level = 0.05, # Only show significant correlations
+         diag = FALSE, # Do not show diagonal
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(10))
+
+# MSOA level
+msoa_socio_economic_indicators <- msoa_year[c('avg_age', 'people_per_sq_km')]
+msoa_food_categories_year <- msoa_year[c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains', 'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits', 'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')]
+msoa_data_for_correlation <- cbind(msoa_food_categories_year, msoa_socio_economic_indicators)
+msoa_correlation_matrix_food <- cor(msoa_data_for_correlation, use = "pairwise.complete.obs")
+corrplot(msoa_correlation_matrix_food, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.5, # Reduce text label size for space
+         addCoef.col = "black", # Add coefficient color
+         title = "Correlation Matrix of Food Category Purchases and Socio-Economic Indicators",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.5, # Reduce correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         sig.level = 0.05, # Only show significant correlations
+         diag = FALSE, # Do not show diagonal
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(10))
+
+# LSOA level
+lsoa_socio_economic_indicators <- lsoa_year[c('avg_age', 'people_per_sq_km')]
+lsoa_food_categories_year <- lsoa_year[c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains', 'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits', 'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')]
+lsoa_data_for_correlation <- cbind(lsoa_food_categories_year, lsoa_socio_economic_indicators)
+lsoa_correlation_matrix_food <- cor(lsoa_data_for_correlation, use = "pairwise.complete.obs")
+corrplot(lsoa_correlation_matrix_food, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.5, # Reduce text label size for space
+         addCoef.col = "black", # Add coefficient color
+         title = "Correlation Matrix of Food Category Purchases and Socio-Economic Indicators",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.5, # Reduce correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         sig.level = 0.05, # Only show significant correlations
+         diag = FALSE, # Do not show diagonal
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(10))
+```
+
+Average Age:
+- Positive correlations are observed with f_beer (0.45), f_readymade (0.42), and f_wine (0.45), suggesting these items are more popular in areas with an older population.
+- Strong negative correlations with f_fats_oils (-0.61), f_sauces (-0.55), and f_water (-0.57) indicate these items are less frequently purchased in older populations.
+
+Population Density:
+- f_fish shows a strong positive correlation (0.72), suggesting higher purchases in densely populated areas.
+- f_eggs also has a high positive correlation (0.65) with population density.
+- f_readymade exhibits a strong negative correlation (-0.57), suggesting lower purchases in denser areas.
+- f_grains and f_sweets also show negative correlations (-0.45 and -0.48 respectively), indicating lower purchases in more densely populated areas.
+
+```{r}
+# Purchase preference for each age group
+# Function to calculate normalized purchase sums by age group and plot the data
+calculate_and_plot_purchases <- function(data, product_categories, age_columns) {
+  # Calculating the sum of purchases for each product category by age group
+  purchase_sums_by_age <- lapply(age_columns, function(age) {
+    colSums(data[product_categories] * data[[age]], na.rm = TRUE)
+  })
+  names(purchase_sums_by_age) <- age_columns
+  
+  # Normalizing these sums by the total count for each age group
+  normalized_purchases <- lapply(names(purchase_sums_by_age), function(age) {
+    purchase_sums_by_age[[age]] / sum(data[[age]], na.rm = TRUE)
+  })
+  
+  # Transforming the data for visualization
+  normalized_purchases_df <- as.data.frame(normalized_purchases)
+  rownames(normalized_purchases_df) <- product_categories
+  normalized_purchases_df <- normalized_purchases_df %>%
+    tibble::rownames_to_column(var = "Product")
+  
+  melted_data_age <- normalized_purchases_df %>%
+    pivot_longer(cols = -Product, names_to = "Age_Group", values_to = "Fraction")
+  
+  # Plotting the data
+  ggplot(melted_data_age, aes(x = Product, y = Fraction, fill = Age_Group)) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6)) +
+    labs(x = "Product Categories", y = "Normalized Fraction of Purchases", fill = "Age Group") +
+    ggtitle("Normalized Purchasing Patterns by Age Group Across Product Categories") +
+    guides(fill = FALSE)
+}
+
+# Function to calculate and plot normalized purchase sums by gender
+calculate_and_plot_purchases_gender <- function(data, product_categories) {
+  # Calculating the sum of purchases for each product category by gender
+  purchase_sums_by_gender <- list(
+    male = colSums(data[product_categories] * data[['male']], na.rm = TRUE),
+    female = colSums(data[product_categories] * data[['female']], na.rm = TRUE)
+  )
+  
+  # Normalizing these sums by the total count for each gender
+  normalized_purchases_gender <- list(
+    male = purchase_sums_by_gender$male / sum(data$male, na.rm = TRUE),
+    female = purchase_sums_by_gender$female / sum(data$female, na.rm = TRUE)
+  )
+  
+  # Transforming the data for visualization
+  normalized_purchases_gender_df <- as.data.frame(normalized_purchases_gender)
+  rownames(normalized_purchases_gender_df) <- product_categories
+  normalized_purchases_gender_df <- normalized_purchases_gender_df %>%
+    tibble::rownames_to_column(var = "Product")
+  
+  melted_data_gender <- normalized_purchases_gender_df %>%
+    pivot_longer(cols = -Product, names_to = "Gender", values_to = "Fraction")
+  
+  # Plotting the data
+  ggplot(melted_data_gender, aes(x = Product, y = Fraction, fill = Gender)) +
+    geom_bar(stat = "identity", position = position_dodge()) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    labs(title = "Normalized Purchasing Patterns by Gender Across Product Categories",
+         x = "Product Categories", y = "Normalized Fraction of Purchases",
+         fill = "Gender") +
+    guides(fill = FALSE)
+}
+
+calculate_and_plot_purchases(borough_year, product_categories, age_columns)
+calculate_and_plot_purchases(osward_year, product_categories, age_columns)
+calculate_and_plot_purchases(msoa_year, product_categories, age_columns)
+calculate_and_plot_purchases(lsoa_year, product_categories, age_columns)
+calculate_and_plot_purchases_gender(borough_year, product_categories)
+calculate_and_plot_purchases_gender(osward_year, product_categories)
+calculate_and_plot_purchases_gender(msoa_year, product_categories)
+calculate_and_plot_purchases_gender(lsoa_year, product_categories)
+
+```
+
+Key Observations:
+Age Group Differences:
+- Younger Age Group (0-17 years): This group shows relatively lower purchasing fractions across most categories, likely reflecting their lesser purchasing power or dependence on adults for buying decisions. Noticeable interests might be in categories like f_sweets and f_soft_drinks.
+- Middle Age Group (18-64 years): Dominates most categories, reflecting their broader economic activity and varied preferences. This group shows higher fractions in categories like f_beer, f_wine, and f_spirits, which are adult-oriented products.
+- Older Age Group (65+ years): Shows interest in categories that might be considered necessities or health-oriented, such as f_fruit_veg and f_dairy. There's also a noticeable fraction in f_tea_coffee.
+
+Key Observations:
+Gender Differences:
+- Certain categories like beer, spirits, and wine show a higher purchasing fraction among male customers compared to female customers.
+- Female customers tend to have a higher fraction of purchases in categories like f_fruit_veg, f_dairy, and f_sweets, indicating possible preferences for these items.
+- Shared Interests: Some categories such as f_soft_drinks and f_tea_coffee appear to have relatively balanced fractions between genders, suggesting these items are universally popular.
+
+
+
+```{r}
+# Perform t-test and Levene's test to check for significant differences between genders in purchasing patterns
+levenes_test <- function(data, product_categories) {
+  levenes_test_results <- list()
+  
+  for (product in product_categories) {
+    male_data <- data[[product]] * data$male / sum(data$male, na.rm = TRUE)
+    female_data <- data[[product]] * data$female / sum(data$female, na.rm = TRUE)
+    
+    # Perform Levene's test for homogeneity of variances
+    levenes_result <- levene.test(c(male_data, female_data),
+                                  group = factor(rep(1:2, each = length(male_data))),
+                                  location = "mean")
+    levenes_test_results[[product]] <- levenes_result
+  }
+  
+  return(levenes_test_results)  # Ensure the results are returned from the function
+}
+
+
+levenes_borough_test_results <- levenes_test(borough_year, product_categories)
+levenes_osward_test_results <- levenes_test(osward_year, product_categories)
+levenes_msoa_test_results <- levenes_test(msoa_year, product_categories)
+levenes_lsoa_test_results <- levenes_test(lsoa_year, product_categories)
+
+
+# Assuming 'levenes_test_results' is a list of htest objects from running levene.test
+create_levenes_df <- function(levenes_test_results) {
+  # Initialize an empty data frame to store the results
+  results_df <- data.frame(Product = character(),
+                           Test_Statistic = numeric(),
+                           P_Value = numeric(),
+                           stringsAsFactors = FALSE)
+
+  # Loop through the list of test results and extract the information
+  for (product in names(levenes_test_results)) {
+    test_result <- levenes_test_results[[product]]
+    
+    # Create a new row for the results data frame
+    new_row <- data.frame(Product = product,
+                          Test_Statistic = unname(test_result$statistic),
+                          P_Value = test_result$p.value,
+                          row.names = NULL)
+    
+    # Bind the new row to the results data frame
+    results_df <- rbind(results_df, new_row)
+  }
+
+  # Return the results data frame
+  return(results_df)
+}
+
+# Apply the function to create a data frame of results
+levenes_borough_kable <- create_levenes_df(levenes_borough_test_results)
+levenes_osward_kable <- create_levenes_df(levenes_osward_test_results)
+levenes_msoa_kable <- create_levenes_df(levenes_msoa_test_results)
+levenes_lsoa_kable <- create_levenes_df(levenes_lsoa_test_results)
+
+
+# Use kable to create a formatted table
+
+kable(levenes_borough_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Borough)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(levenes_osward_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Osward)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(levenes_msoa_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Msoa)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(levenes_lsoa_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Lsoa)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+```
+# If Levene's test indicates that variances are equal (the p-value is above the significance threshold, typically 0.05), we proceed with a standard t-test that assumes equal variances.
+# If Levene's test indicates that variances are not equal (the p-value is below the significance threshold, 0.05), we would use a version of the t-test that does not assume equal variances, such as Welch's t-test.
+# Levene's tests: None of the product categories show a statistically significant difference in variance between the purchasing fractions of males and females (all p-values are greater than 0.05). We will use a standard t-test
+# At the granular level, more variations in purchasing patterns occurs as p-values starts failing the threshold of 0.05. We will use Welch's t-test for these cases.
+
+
+
+
+
+```{r}
+t_test <- function(data, product_categories) {
+  results_df <- data.frame(Product = character(),
+                           Levene_Test_Statistic = numeric(),
+                           Levene_P_Value = numeric(),
+                           T_Test_Statistic = numeric(),
+                           T_Test_P_Value = numeric(),
+                           Welch_Test_Statistic = numeric(),
+                           Welch_Test_P_Value = numeric(),
+                           stringsAsFactors = FALSE)
+
+  for (product in product_categories) {
+    male_data <- data[[product]] * data$male / sum(data$male, na.rm = TRUE)
+    female_data <- data[[product]] * data$female / sum(data$female, na.rm = TRUE)
+    
+    # Perform Levene's test for homogeneity of variances
+    levenes_result <- levene.test(c(male_data, female_data), 
+                                 group = factor(rep(1:2, each = length(male_data))))
+
+    # Initialize new_row with NA for t-tests
+    new_row <- data.frame(Product = product,
+                          Levene_Test_Statistic = levenes_result$statistic,
+                          Levene_P_Value = levenes_result$p.value,
+                          T_Test_Statistic = NA,
+                          T_Test_P_Value = NA,
+                          Welch_Test_Statistic = NA,
+                          Welch_Test_P_Value = NA)
+    
+    if (levenes_result$p.value > 0.05) {
+      # Variances are equal, perform standard t-test
+      t_test_result <- t.test(male_data, female_data, var.equal = TRUE)
+      # Update the row for the standard t-test results
+      new_row$T_Test_Statistic <- t_test_result$statistic
+      new_row$T_Test_P_Value <- t_test_result$p.value
+    } else {
+      # Variances are not equal, perform Welch's t-test
+      t_test_result <- t.test(male_data, female_data, var.equal = FALSE)
+      # Update the row for the Welch's t-test results
+      new_row$Welch_Test_Statistic <- t_test_result$statistic
+      new_row$Welch_Test_P_Value <- t_test_result$p.value
+    }
+    
+    # Append to results dataframe
+    results_df <- rbind(results_df, new_row)
+  }
+  
+  return(results_df)
+}
+
+# Apply the function to create a data frame of results
+t_test_borough_results <- t_test(borough_year, product_categories)
+t_test_osward_results <- t_test(osward_year, product_categories)
+t_test_msoa_results <- t_test(msoa_year, product_categories)
+t_test_lsoa_results <- t_test(lsoa_year, product_categories)
+
+generate_table <- function(results_df) {
+  kable(results_df, 
+        col.names = c("Product", "Levene's Test Statistic", "Levene's P-Value", 
+                      "Standard t-test Statistic", "Standard t-test P-Value",
+                      "Welch Test Statistic", "Welch Test P-Value"),
+        row.names = FALSE,
+        digits = 3,
+        caption = "Combined Test Results for Product Categories") %>%
+    kable_styling("striped", full_width = FALSE, position = "center")
+}
+
+# Apply function to create and print the table
+generate_table(t_test_borough_results)
+generate_table(t_test_osward_results)
+generate_table(t_test_msoa_results)
+generate_table(t_test_lsoa_results)
+```
+
+
+
+```{r}
+# Running ANOVA and Tukey's HSD test to check for significant differences between age groups in purchasing patterns
+# ANOVA can be used to test whether there are any statistically significant differences between the means of three or more independent groups.
+# Tukey's HSD test can be used to determine which specific groups differ from each other when the ANOVA test is significant.
+perform_anova_tukey <- function(data, product_categories, age_columns) {
+  # Normalizing the age columns by total population
+  data <- data %>%
+    mutate(across(all_of(age_columns), ~ .x / population, .names = "norm_{.col}")) 
+
+  # Reshaping the data into a long format for ANOVA, creating fractions for each category and age group
+  long_format_data <- data %>%
+    pivot_longer(cols = product_categories, names_to = "Category", values_to = "Fraction") %>%
+    pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Age_Fraction") %>%
+    mutate(Age_Group = sub("norm_", "", Age_Group),
+           Fraction_Age = Fraction * Age_Fraction) %>%
+    filter(!is.na(Fraction_Age)) 
+
+  # Performing ANOVA and Tukey's HSD for each product category
+  anova_tukey_results <- list()
+
+  for (category in product_categories) {
+    cat_data <- filter(long_format_data, Category == category)
+    mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+    anova_summary <- summary(mod)
+
+    # Store results only if ANOVA is significant, otherwise store a message
+    if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+      tukey_result <- TukeyHSD(mod)
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
+    } else {
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
+    }
+  }
+
+  return(anova_tukey_results)
+}
+
+# Apply the function to perform ANOVA and Tukey's HSD test
+anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories, age_columns)
+anova_tukey_osward <- perform_anova_tukey(osward_year, product_categories, age_columns)
+anova_tukey_msoa <- perform_anova_tukey(msoa_year, product_categories, age_columns)
+anova_tukey_lsoa <- perform_anova_tukey(lsoa_year, product_categories, age_columns)
+```
+
+```{r}
+anova_tukey_borough
+```
+
+```{r}
+anova_tukey_osward
+```
+
+```{r}
+anova_tukey_msoa
+```
+
+```{r}
+anova_tukey_lsoa
+```
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
+```{r}
+# Old code for reference
+# # Function to perform ANOVA and Tukey's HSD test
+# perform_anova_tukey <- function(data, product_categories) {
+#   # Create a long format data frame for ANOVA
+#   long_format_data <- data %>% 
+#     pivot_longer(cols = all_of(product_categories), names_to = "Category", values_to = "Fraction") %>% 
+#     mutate(across(all_of(age_columns), ~ .x / data$population, .names = "norm_{.col}")) %>%
+#     pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Normalized_Fraction") %>%
+#     mutate(Age_Group = sub("norm_", "", Age_Group))
+# 
+#   # Initialize an empty list to store results
+#   results <- list()
+# 
+#   # Perform ANOVA for each category
+#   for (category in product_categories) {
+#     category_data <- filter(long_format_data, Category == category)
+#     
+#     # Perform ANOVA
+#     anova_result <- aov(Normalized_Fraction ~ Age_Group, data = category_data)
+#     summary_anova <- summary(anova_result)
+#     
+#     # Check if ANOVA is significant before performing Tukey's HSD test
+#     if (summary_anova[[1]]$'Pr(>F)'[1] < 0.05) {
+#       tukey_result <- TukeyHSD(anova_result)
+#       results[[category]] <- list(ANOVA = summary_anova, Tukey = tukey_result)
+#     } else {
+#       results[[category]] <- list(ANOVA = summary_anova, Tukey = "ANOVA not significant, no post hoc test performed")
+#     }
+#   }
+# 
+#   return(results)
+# }
+# 
+# 
+# # Perform ANOVA and Tukey's HSD test for each dataset
+# anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories)
+# anova_tukey_borough
+```
+
+```{r}
+# Old EDA code for reference (converted to a function)
+# data <- borough_year %>%
+#   mutate(across(all_of(age_columns), ~ .x / population)) 
+# 
+# # Reshape the data into a long format for ANOVA, creating fractions for each category and age group
+# long_format_data <- pivot_longer(
+#   data,
+#   cols = product_categories,
+#   names_to = "Category",
+#   values_to = "Fraction"
+# )
+# 
+# # We need to create separate observations for each age group within each category
+# long_format_data <- long_format_data %>%
+#   gather(key = "Age_Group", value = "Fraction_Age", all_of(age_columns)) %>%
+#   mutate(Fraction_Age = Fraction * Fraction_Age) %>% 
+#   filter(!is.na(Fraction_Age))
+# 
+# # Now we can proceed with ANOVA and Tukey's HSD as per your Python code
+# anova_tukey_results <- list()
+# 
+# for (category in product_categories) {
+#   cat_data <- filter(long_format_data, Category == category)
+#   mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+#   anova_summary <- summary(mod)
+#   
+#   if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+#     tukey_result <- TukeyHSD(mod)
+#     anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
+#   } else {
+#     anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
+#   }
+# }
+# 
+# # Review results
+# anova_tukey_results
+```
