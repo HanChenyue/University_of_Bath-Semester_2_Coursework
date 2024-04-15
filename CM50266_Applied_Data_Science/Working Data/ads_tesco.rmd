@@ -109,13 +109,7 @@ kable(food_categories_unique,
       ) %>% 
   kable_styling("striped", full_width = F, position = "center")
 ```
-
-
 ```{r}
-# Use cluster analysis to identify possible purchasing pattern worth exploring
-# Elbow method allows us to determine the optimal number of clusters
-# If it matches the number of age groups/gender, it could indicate distinct purchasing patterns for each group that are worth exploring further
-# Products categories in csv file
 product_categories <- c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish',
                         'f_fruit_veg', 'f_grains','f_meat_red', 'f_poultry',
                         'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits',
@@ -123,13 +117,21 @@ product_categories <- c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish',
 
 age_columns <- c('age_0_17', 'age_18_64', 'age_65+')
 gender_columns <- c('male', 'female')
+```
+
+```{r}
+# Use cluster analysis to identify possible purchasing pattern worth exploring
+# Elbow method allows us to determine the optimal number of clusters
+# If it matches the number of age groups/gender, it could indicate distinct purchasing patterns for each group that are worth exploring further
+# Products categories in csv file
+
 
 # K-means clustering to identify patterns in the data
 # EDA to check age group vs food categories
 # Function to check elbow method
 purchasing_patterns_cluster_function <- function(data, hand_picked_features){
   # Selecting the specific age group and purchasing patterns
-  features <- data %>% select(hand_picked_features, 'f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains',
+  features <- data %>% dplyr::select(hand_picked_features, 'f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains',
                 'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits',
                 'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')
   # scaled_data <- scale(data[, features])
@@ -161,7 +163,7 @@ purchasing_patterns_cluster_function(lsoa_year, gender_columns)
 # Function to visualise the clustering results using fviz_cluster
 visualise_cluster <- function(data, hand_picked_features, n_clusters) {
   # Selecting the specific age group and purchasing patterns
-  features <- data %>% select(hand_picked_features, 'f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains',
+  features <- data %>% dplyr::select(hand_picked_features, 'f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish', 'f_fruit_veg', 'f_grains',
                 'f_meat_red', 'f_poultry', 'f_readymade', 'f_sauces', 'f_soft_drinks', 'f_spirits',
                 'f_sweets', 'f_tea_coffee', 'f_water', 'f_wine')
   # scaled_data <- scale(data[, features])
@@ -965,6 +967,79 @@ generate_table(t_test_msoa_results)
 generate_table(t_test_lsoa_results)
 ```
 
+
+
+```{r}
+# Running ANOVA and Tukey's HSD test to check for significant differences between age groups in purchasing patterns
+# ANOVA can be used to test whether there are any statistically significant differences between the means of three or more independent groups.
+# Tukey's HSD test can be used to determine which specific groups differ from each other when the ANOVA test is significant.
+perform_anova_tukey <- function(data, product_categories, age_columns) {
+  # Normalizing the age columns by total population
+  data <- data %>%
+    mutate(across(all_of(age_columns), ~ .x / population, .names = "norm_{.col}")) 
+
+  # Reshaping the data into a long format for ANOVA, creating fractions for each category and age group
+  long_format_data <- data %>%
+    pivot_longer(cols = product_categories, names_to = "Category", values_to = "Fraction") %>%
+    pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Age_Fraction") %>%
+    mutate(Age_Group = sub("norm_", "", Age_Group),
+           Fraction_Age = Fraction * Age_Fraction) %>%
+    filter(!is.na(Fraction_Age)) 
+
+  # Performing ANOVA and Tukey's HSD for each product category
+  anova_tukey_results <- list()
+
+  for (category in product_categories) {
+    cat_data <- filter(long_format_data, Category == category)
+    mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+    anova_summary <- summary(mod)
+
+    # Store results only if ANOVA is significant, otherwise store a message
+    if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+      tukey_result <- TukeyHSD(mod)
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
+    } else {
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
+    }
+  }
+
+  return(anova_tukey_results)
+}
+
+# Apply the function to perform ANOVA and Tukey's HSD test
+anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories, age_columns)
+anova_tukey_osward <- perform_anova_tukey(osward_year, product_categories, age_columns)
+anova_tukey_msoa <- perform_anova_tukey(msoa_year, product_categories, age_columns)
+anova_tukey_lsoa <- perform_anova_tukey(lsoa_year, product_categories, age_columns)
+```
+
+```{r}
+anova_tukey_borough
+```
+
+```{r}
+anova_tukey_osward
+```
+
+```{r}
+anova_tukey_msoa
+```
+
+```{r}
+anova_tukey_lsoa
+```
+
+```{r}
+```
+
+
+
+
+
+
+
+
+
 ```{r}
 # Old code for reference
 # # Function to perform ANOVA and Tukey's HSD test
@@ -1042,67 +1117,4 @@ generate_table(t_test_lsoa_results)
 # 
 # # Review results
 # anova_tukey_results
-```
-
-```{r}
-# Running ANOVA and Tukey's HSD test to check for significant differences between age groups in purchasing patterns
-# ANOVA can be used to test whether there are any statistically significant differences between the means of three or more independent groups.
-# Tukey's HSD test can be used to determine which specific groups differ from each other when the ANOVA test is significant.
-perform_anova_tukey <- function(data, product_categories, age_columns) {
-  # Normalizing the age columns by total population
-  data <- data %>%
-    mutate(across(all_of(age_columns), ~ .x / population, .names = "norm_{.col}")) 
-
-  # Reshaping the data into a long format for ANOVA, creating fractions for each category and age group
-  long_format_data <- data %>%
-    pivot_longer(cols = product_categories, names_to = "Category", values_to = "Fraction") %>%
-    pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Age_Fraction") %>%
-    mutate(Age_Group = sub("norm_", "", Age_Group),
-           Fraction_Age = Fraction * Age_Fraction) %>%
-    filter(!is.na(Fraction_Age)) 
-
-  # Performing ANOVA and Tukey's HSD for each product category
-  anova_tukey_results <- list()
-
-  for (category in product_categories) {
-    cat_data <- filter(long_format_data, Category == category)
-    mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
-    anova_summary <- summary(mod)
-
-    # Store results only if ANOVA is significant, otherwise store a message
-    if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
-      tukey_result <- TukeyHSD(mod)
-      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
-    } else {
-      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
-    }
-  }
-
-  return(anova_tukey_results)
-}
-
-# Apply the function to perform ANOVA and Tukey's HSD test
-anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories, age_columns)
-anova_tukey_osward <- perform_anova_tukey(osward_year, product_categories, age_columns)
-anova_tukey_msoa <- perform_anova_tukey(msoa_year, product_categories, age_columns)
-anova_tukey_lsoa <- perform_anova_tukey(lsoa_year, product_categories, age_columns)
-```
-
-```{r}
-anova_tukey_borough
-```
-
-```{r}
-anova_tukey_osward
-```
-
-```{r}
-anova_tukey_msoa
-```
-
-```{r}
-anova_tukey_lsoa
-```
-
-```{r}
 ```
