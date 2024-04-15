@@ -4,7 +4,8 @@ author: "HanChenyue"
 date: "2024-04-07"
 output:
   pdf_document: default
-  beamer_presentation: default
+  html_document:
+    df_print: paged
 ---
 
 Limitations:
@@ -1067,7 +1068,7 @@ mean_income_lm <- lm(mean_income_pound ~ year, data = income_data)
 kable(summary(mean_income_lm)$coefficients, digits = 2, caption = "Linear Regression Results for Mean Income") %>% 
   kable_styling("striped", full_width = FALSE, position = "center")
 
-ggplot(income_data, aes(x = year, y = mean_income_pound)) +
+ggplot(income_data, aes(x = year, y = mean_income_pound, colour = area_id_name)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, colour = "red") +
   geom_smooth(method = "loess", se = FALSE, colour = "blue") +
@@ -1083,7 +1084,7 @@ median_income_lm <- lm(median_income_pound ~ year, data = income_data)
 kable(summary(median_income_lm)$coefficients, digits = 1, caption = "Linear Regression Results for Median Income") %>% 
   kable_styling("striped", full_width = FALSE, position = "center")
 
-ggplot(income_data, aes(x = year, y = median_income_pound)) +
+ggplot(income_data, aes(x = year, y = median_income_pound, colour = area_id_name)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, colour = "red") +
   geom_smooth(method = "loess", se = FALSE, colour = "blue") +
@@ -1099,6 +1100,24 @@ ggplot(income_data, aes(x = year, y = median_income_pound)) +
 # Filter out 2015 data mean and median income
 income_data_2015 <- filter(income_data, year == 2015)
 
+# Rank the boroughs based on mean and median income in 2015
+ranked_mean_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
+  arrange(desc(mean_income_pound))
+
+kable(ranked_mean_income_2015, caption = "Ranking of Boroughs by Mean Income in 2015") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+ranked_median_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, median_income_pound) %>% 
+  arrange(desc(median_income_pound))
+
+kable(ranked_median_income_2015, caption = "Ranking of Boroughs by Median Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+```
+
+```{r}
+
 # Find the top 3 boroughs with the highest mean and median income in 2015
 top_3_mean_income_2015 <- income_data_2015 %>%
   dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
@@ -1110,18 +1129,37 @@ top_3_median_income_2015 <- income_data_2015 %>%
   top_n(3, median_income_pound) %>% 
   arrange(desc(median_income_pound))
 
+bottom_2_mean_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
+  top_n(-2, mean_income_pound) %>% 
+  arrange(mean_income_pound)
+
+bottom_2_median_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, median_income_pound) %>% 
+  top_n(-2, median_income_pound) %>% 
+  arrange(median_income_pound)
+
 kable(top_3_mean_income_2015, caption = "Top 3 Boroughs with Highest Mean Income in 2015") %>% 
   kable_styling("striped", full_width = FALSE, position = "center")
 
 kable(top_3_median_income_2015, caption = "Top 3 Boroughs with Highest Median Income in 2015") %>%
   kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(bottom_2_mean_income_2015, caption = "Bottom 2 Boroughs with Lowest Mean Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(bottom_2_median_income_2015, caption = "Bottom 2 Boroughs with Lowest Median Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
 ```
 
 Looks like the top earners in 2015 were from the boroughs of Kensington and Chelsea, Westminster, and City of London, based on both mean and median income. These boroughs are known for their high living standards and property prices, which likely contribute to the higher income levels observed.
 
+While the bottom earners that year which shared the lowest mean and median income were from Barking & Dagenham, and Newham. These boroughs are known to have higher levels of deprivation and lower average incomes compared to other areas in London.
+
 Let's investigate how these income levels correlate with the purchasing patterns of different food categories across boroughs.
 
-```{r, fig.width=12, fig.height=12}
+
+```{r, fig.width=10, fig.height=10}
 # Merge the income data with the borough data
 borough_with_2015_income_data <- left_join(borough_year, income_data_2015, by = c("area_id" = "area_id"))
 
@@ -1152,11 +1190,9 @@ On the other hand, negative correlations are observed with categories like f_sof
 
 These findings are consistent with existing research on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options.
 
-```{r}
 The correlations matches research outcomes of existing literature on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options:
 - https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-019-6546-2
 - https://www.york.ac.uk/news-and-events/news/2021/research/awareness-healthy-eating-struggle-access-good-food/
-
 
 
 
