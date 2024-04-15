@@ -46,57 +46,57 @@ food_categories <- read.csv("food_categories.csv", check.names = FALSE)
 
 # Load LSOA (Lower Super Output Area), MSOA (Medium Super Output Area), Ward, and borough data
 lsoa_year <- read.csv("year_lsoa_grocery.csv", check.names = FALSE)
-lsoa_jan <- read.csv("Jan_lsoa_grocery.csv", check.names = FALSE)
-lsoa_feb <- read.csv("Feb_lsoa_grocery.csv", check.names = FALSE)
-lsoa_mar <- read.csv("Mar_lsoa_grocery.csv", check.names = FALSE)
-lsoa_apr <- read.csv("Apr_lsoa_grocery.csv", check.names = FALSE)
-lsoa_may <- read.csv("May_lsoa_grocery.csv", check.names = FALSE)
-lsoa_jun <- read.csv("Jun_lsoa_grocery.csv", check.names = FALSE)
-lsoa_jul <- read.csv("Jul_lsoa_grocery.csv", check.names = FALSE)
-lsoa_aug <- read.csv("Aug_lsoa_grocery.csv", check.names = FALSE)
-lsoa_sep <- read.csv("Sep_lsoa_grocery.csv", check.names = FALSE)
-lsoa_oct <- read.csv("Oct_lsoa_grocery.csv", check.names = FALSE)
-lsoa_nov <- read.csv("Nov_lsoa_grocery.csv", check.names = FALSE)
-lsoa_dec <- read.csv("Dec_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_jan <- read.csv("Jan_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_feb <- read.csv("Feb_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_mar <- read.csv("Mar_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_apr <- read.csv("Apr_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_may <- read.csv("May_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_jun <- read.csv("Jun_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_jul <- read.csv("Jul_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_aug <- read.csv("Aug_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_sep <- read.csv("Sep_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_oct <- read.csv("Oct_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_nov <- read.csv("Nov_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_dec <- read.csv("Dec_lsoa_grocery.csv", check.names = FALSE)
 msoa_year <- read.csv("year_msoa_grocery.csv", check.names = FALSE)
-msoa_jan <- read.csv("Jan_msoa_grocery.csv", check.names = FALSE)
-msoa_feb <- read.csv("Feb_msoa_grocery.csv", check.names = FALSE)
-msoa_mar <- read.csv("Mar_msoa_grocery.csv", check.names = FALSE)
-msoa_apr <- read.csv("Apr_msoa_grocery.csv", check.names = FALSE)
-msoa_may <- read.csv("May_msoa_grocery.csv", check.names = FALSE)
-msoa_jun <- read.csv("Jun_msoa_grocery.csv", check.names = FALSE)
-msoa_jul <- read.csv("Jul_msoa_grocery.csv", check.names = FALSE)
-msoa_aug <- read.csv("Aug_msoa_grocery.csv", check.names = FALSE)
-msoa_sep <- read.csv("Sep_msoa_grocery.csv", check.names = FALSE)
-msoa_oct <- read.csv("Oct_msoa_grocery.csv", check.names = FALSE)
-msoa_nov <- read.csv("Nov_msoa_grocery.csv", check.names = FALSE)
-msoa_dec <- read.csv("Dec_msoa_grocery.csv", check.names = FALSE)
+# msoa_jan <- read.csv("Jan_msoa_grocery.csv", check.names = FALSE)
+# msoa_feb <- read.csv("Feb_msoa_grocery.csv", check.names = FALSE)
+# msoa_mar <- read.csv("Mar_msoa_grocery.csv", check.names = FALSE)
+# msoa_apr <- read.csv("Apr_msoa_grocery.csv", check.names = FALSE)
+# msoa_may <- read.csv("May_msoa_grocery.csv", check.names = FALSE)
+# msoa_jun <- read.csv("Jun_msoa_grocery.csv", check.names = FALSE)
+# msoa_jul <- read.csv("Jul_msoa_grocery.csv", check.names = FALSE)
+# msoa_aug <- read.csv("Aug_msoa_grocery.csv", check.names = FALSE)
+# msoa_sep <- read.csv("Sep_msoa_grocery.csv", check.names = FALSE)
+# msoa_oct <- read.csv("Oct_msoa_grocery.csv", check.names = FALSE)
+# msoa_nov <- read.csv("Nov_msoa_grocery.csv", check.names = FALSE)
+# msoa_dec <- read.csv("Dec_msoa_grocery.csv", check.names = FALSE)
 osward_year <- read.csv("year_osward_grocery.csv", check.names = FALSE)
-osward_jan <- read.csv("Jan_osward_grocery.csv", check.names = FALSE)
-osward_feb <- read.csv("Feb_osward_grocery.csv", check.names = FALSE)
-osward_mar <- read.csv("Mar_osward_grocery.csv", check.names = FALSE)
-osward_apr <- read.csv("Apr_osward_grocery.csv", check.names = FALSE)
-osward_may <- read.csv("May_osward_grocery.csv", check.names = FALSE)
-osward_jun <- read.csv("Jun_osward_grocery.csv", check.names = FALSE)
-osward_jul <- read.csv("Jul_osward_grocery.csv", check.names = FALSE)
-osward_aug <- read.csv("Aug_osward_grocery.csv", check.names = FALSE)
-osward_sep <- read.csv("Sep_osward_grocery.csv", check.names = FALSE)
-osward_oct <- read.csv("Oct_osward_grocery.csv", check.names = FALSE)
-osward_nov <- read.csv("Nov_osward_grocery.csv", check.names = FALSE)
-osward_dec <- read.csv("Dec_osward_grocery.csv", check.names = FALSE)
+# osward_jan <- read.csv("Jan_osward_grocery.csv", check.names = FALSE)
+# osward_feb <- read.csv("Feb_osward_grocery.csv", check.names = FALSE)
+# osward_mar <- read.csv("Mar_osward_grocery.csv", check.names = FALSE)
+# osward_apr <- read.csv("Apr_osward_grocery.csv", check.names = FALSE)
+# osward_may <- read.csv("May_osward_grocery.csv", check.names = FALSE)
+# osward_jun <- read.csv("Jun_osward_grocery.csv", check.names = FALSE)
+# osward_jul <- read.csv("Jul_osward_grocery.csv", check.names = FALSE)
+# osward_aug <- read.csv("Aug_osward_grocery.csv", check.names = FALSE)
+# osward_sep <- read.csv("Sep_osward_grocery.csv", check.names = FALSE)
+# osward_oct <- read.csv("Oct_osward_grocery.csv", check.names = FALSE)
+# osward_nov <- read.csv("Nov_osward_grocery.csv", check.names = FALSE)
+# osward_dec <- read.csv("Dec_osward_grocery.csv", check.names = FALSE)
 borough_year <- read.csv("year_borough_grocery.csv", check.names = FALSE)
-borough_jan <- read.csv("Jan_borough_grocery.csv", check.names = FALSE)
-borough_feb <- read.csv("Feb_borough_grocery.csv", check.names = FALSE)
-borough_mar <- read.csv("Mar_borough_grocery.csv", check.names = FALSE)
-borough_apr <- read.csv("Apr_borough_grocery.csv", check.names = FALSE)
-borough_may <- read.csv("May_borough_grocery.csv", check.names = FALSE)
-borough_jun <- read.csv("Jun_borough_grocery.csv", check.names = FALSE)
-borough_jul <- read.csv("Jul_borough_grocery.csv", check.names = FALSE)
-borough_aug <- read.csv("Aug_borough_grocery.csv", check.names = FALSE)
-borough_sep <- read.csv("Sep_borough_grocery.csv", check.names = FALSE)
-borough_oct <- read.csv("Oct_borough_grocery.csv", check.names = FALSE)
-borough_nov <- read.csv("Nov_borough_grocery.csv", check.names = FALSE)
-borough_dec <- read.csv("Dec_borough_grocery.csv", check.names = FALSE)
+# borough_jan <- read.csv("Jan_borough_grocery.csv", check.names = FALSE)
+# borough_feb <- read.csv("Feb_borough_grocery.csv", check.names = FALSE)
+# borough_mar <- read.csv("Mar_borough_grocery.csv", check.names = FALSE)
+# borough_apr <- read.csv("Apr_borough_grocery.csv", check.names = FALSE)
+# borough_may <- read.csv("May_borough_grocery.csv", check.names = FALSE)
+# borough_jun <- read.csv("Jun_borough_grocery.csv", check.names = FALSE)
+# borough_jul <- read.csv("Jul_borough_grocery.csv", check.names = FALSE)
+# borough_aug <- read.csv("Aug_borough_grocery.csv", check.names = FALSE)
+# borough_sep <- read.csv("Sep_borough_grocery.csv", check.names = FALSE)
+# borough_oct <- read.csv("Oct_borough_grocery.csv", check.names = FALSE)
+# borough_nov <- read.csv("Nov_borough_grocery.csv", check.names = FALSE)
+# borough_dec <- read.csv("Dec_borough_grocery.csv", check.names = FALSE)
 ```
 
 EDA
@@ -1025,10 +1025,137 @@ anova_tukey_lsoa
 ```
 
 ```{r}
+# Read income csv that are obtained from https://data.london.gov.uk/dataset/average-income-tax-payers-borough
+
+# The income data is cleaned using Excel since it is a small file and saved as 'income-of-tax-payers_cleaned.csv' for further processing
+income_data <- read_csv("income-of-tax-payers_cleaned.csv")
+
+# Ensure year, no of individual, median, mean is numeric and area is a factor
+income_data$area <- as.factor(income_data$area_id)
+income_data$year <- as.numeric(income_data$year)
+income_data$no_of_individual <- as.numeric(income_data$no_of_individual)
+income_data$median <- as.numeric(income_data$median_income_pound)
+income_data$mean <- as.numeric(income_data$mean_income_pound)
 ```
 
+```{r, fig.width=10, fig.height=10}
+# Plotting the mean income distribution across boroughs over year
+ggplot(income_data, aes(x = year, y = mean_income_pound, colour = area_id_name)) +
+  geom_line() +
+  # geom_point() +
+  theme_minimal() +
+  ggtitle("Mean Income Distribution Across Boroughs Over Years") +
+  xlab("Year") +
+  ylab("Median Income (£)")
+```
 
+```{r, fig.width=10, fig.height=10}
+# Plotting the median income distribution across boroughs over year
+ggplot(income_data, aes(x = year, y = median_income_pound, colour = area_id_name)) +
+  geom_line() +
+  # geom_point() +
+  theme_minimal() +
+  ggtitle("Median Income Distribution Across Boroughs Over Years") +
+  xlab("Year") +
+  ylab("Median Income (£)")
+```
 
+```{r, fig.width=10, fig.height=10}
+# Apply linear regression to the income data to identify trends over time
+# Linear regression for mean income
+mean_income_lm <- lm(mean_income_pound ~ year, data = income_data)
+kable(summary(mean_income_lm)$coefficients, digits = 2, caption = "Linear Regression Results for Mean Income") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+ggplot(income_data, aes(x = year, y = mean_income_pound)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, colour = "red") +
+  geom_smooth(method = "loess", se = FALSE, colour = "blue") +
+  theme_minimal() +
+  ggtitle("Linear Regression for Mean Income Over Time") +
+  xlab("Year") +
+  ylab("Mean Income (£)") +
+  annotate("text", x = Inf, y = Inf, label = "LM Fit", hjust = 1.1, vjust = 3, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = "Loess Fit", hjust = 1.1, vjust = 1, color = "blue")
+
+# Linear regression for median income
+median_income_lm <- lm(median_income_pound ~ year, data = income_data)
+kable(summary(median_income_lm)$coefficients, digits = 1, caption = "Linear Regression Results for Median Income") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+ggplot(income_data, aes(x = year, y = median_income_pound)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, colour = "red") +
+  geom_smooth(method = "loess", se = FALSE, colour = "blue") +
+  theme_minimal() +
+  ggtitle("Linear Regression for Median Income Over Time") +
+  xlab("Year") +
+  ylab("Median Income (£)") +
+  annotate("text", x = Inf, y = Inf, label = "LM Fit", hjust = 1.1, vjust = 3, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = "Loess Fit", hjust = 1.1, vjust = 1, color = "blue")
+```
+
+```{r}
+# Filter out 2015 data mean and median income
+income_data_2015 <- filter(income_data, year == 2015)
+
+# Find the top 3 boroughs with the highest mean and median income in 2015
+top_3_mean_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
+  top_n(3, mean_income_pound) %>% 
+  arrange(desc(mean_income_pound))
+
+top_3_median_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, median_income_pound) %>% 
+  top_n(3, median_income_pound) %>% 
+  arrange(desc(median_income_pound))
+
+kable(top_3_mean_income_2015, caption = "Top 3 Boroughs with Highest Mean Income in 2015") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(top_3_median_income_2015, caption = "Top 3 Boroughs with Highest Median Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+```
+
+Looks like the top earners in 2015 were from the boroughs of Kensington and Chelsea, Westminster, and City of London, based on both mean and median income. These boroughs are known for their high living standards and property prices, which likely contribute to the higher income levels observed.
+
+Let's investigate how these income levels correlate with the purchasing patterns of different food categories across boroughs.
+
+```{r, fig.width=12, fig.height=12}
+# Merge the income data with the borough data
+borough_with_2015_income_data <- left_join(borough_year, income_data_2015, by = c("area_id" = "area_id"))
+
+# Calculate the correlation matrix between income and food categories
+income_food_correlation_matrix <- cor(borough_with_2015_income_data[c('mean_income_pound','median_income_pound', product_categories)], 
+                                      use = "pairwise.complete.obs")
+corrplot(income_food_correlation_matrix, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.7, # Reduce text label size for space
+         addCoef.col = "black", # Add coefficient color
+         title = "Correlation Matrix of Income and Food Category Purchases",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.7, # Reduce correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         sig.level = 0.05, # Only show significant correlations
+         diag = FALSE, # Do not show diagonal
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(10))
+
+```
+
+It appears that both mean and median income are positively correlated with the purchase of certain food categories, such as f_fish, f_diary, f_fruit_veg, f_beer, f_wine. This suggests that higher-income areas tend to spend more on these categories, which are often associated with healthier and more expensive food choices. It is interesting to note that f_beer and f_wine are also positively correlated with income, indicating that these alcoholic beverages might be considered as luxury items in higher-income areas.
+
+On the other hand, negative correlations are observed with categories like f_soft_drinks, f_grain, f_sweets, and f_water, which are often associated with less healthy and more affordable food options. This suggests that lower-income areas might spend relatively more on these categories. It is interesting to note that f_water has a negative correlation with income, suggesting that higher income area might have the necessary purchasing power to spend on water filters.
+
+These findings are consistent with existing research on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options.
+
+```{r}
+The correlations matches research outcomes of existing literature on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options:
+- https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-019-6546-2
+- https://www.york.ac.uk/news-and-events/news/2021/research/awareness-healthy-eating-struggle-access-good-food/
 
 
 
