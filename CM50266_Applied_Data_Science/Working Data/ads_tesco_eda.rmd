@@ -9,7 +9,7 @@ output:
 ---
 
 Limitations:
-- The dataset represents purchases by loyalty cardholders only. This may not be representative of the entire population' purchasing patterns.
+- 
 
 
 ```{r setup, include=FALSE}
@@ -39,6 +39,9 @@ library(multcomp)
 library(stats)
 library(foreign)
 library(sf)
+library(purrr)
+library(ggpubr)
+library(gridExtra)
 ```
 
 
@@ -88,19 +91,21 @@ osward_year <- read.csv("year_osward_grocery.csv", check.names = FALSE)
 # osward_nov <- read.csv("Nov_osward_grocery.csv", check.names = FALSE)
 # osward_dec <- read.csv("Dec_osward_grocery.csv", check.names = FALSE)
 borough_year <- read.csv("year_borough_grocery.csv", check.names = FALSE)
-# borough_jan <- read.csv("Jan_borough_grocery.csv", check.names = FALSE)
-# borough_feb <- read.csv("Feb_borough_grocery.csv", check.names = FALSE)
-# borough_mar <- read.csv("Mar_borough_grocery.csv", check.names = FALSE)
-# borough_apr <- read.csv("Apr_borough_grocery.csv", check.names = FALSE)
-# borough_may <- read.csv("May_borough_grocery.csv", check.names = FALSE)
-# borough_jun <- read.csv("Jun_borough_grocery.csv", check.names = FALSE)
-# borough_jul <- read.csv("Jul_borough_grocery.csv", check.names = FALSE)
-# borough_aug <- read.csv("Aug_borough_grocery.csv", check.names = FALSE)
-# borough_sep <- read.csv("Sep_borough_grocery.csv", check.names = FALSE)
-# borough_oct <- read.csv("Oct_borough_grocery.csv", check.names = FALSE)
-# borough_nov <- read.csv("Nov_borough_grocery.csv", check.names = FALSE)
-# borough_dec <- read.csv("Dec_borough_grocery.csv", check.names = FALSE)
+borough_jan <- read.csv("Jan_borough_grocery.csv", check.names = FALSE)
+borough_feb <- read.csv("Feb_borough_grocery.csv", check.names = FALSE)
+borough_mar <- read.csv("Mar_borough_grocery.csv", check.names = FALSE)
+borough_apr <- read.csv("Apr_borough_grocery.csv", check.names = FALSE)
+borough_may <- read.csv("May_borough_grocery.csv", check.names = FALSE)
+borough_jun <- read.csv("Jun_borough_grocery.csv", check.names = FALSE)
+borough_jul <- read.csv("Jul_borough_grocery.csv", check.names = FALSE)
+borough_aug <- read.csv("Aug_borough_grocery.csv", check.names = FALSE)
+borough_sep <- read.csv("Sep_borough_grocery.csv", check.names = FALSE)
+borough_oct <- read.csv("Oct_borough_grocery.csv", check.names = FALSE)
+borough_nov <- read.csv("Nov_borough_grocery.csv", check.names = FALSE)
+borough_dec <- read.csv("Dec_borough_grocery.csv", check.names = FALSE)
 ```
+
+
 
 EDA
 ```{r}
@@ -120,6 +125,62 @@ product_categories <- c('f_beer', 'f_dairy', 'f_eggs', 'f_fats_oils', 'f_fish',
 
 age_columns <- c('age_0_17', 'age_18_64', 'age_65+')
 gender_columns <- c('male', 'female')
+```
+
+```{r}
+# Month abbreviations
+months <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+# Define the categories list
+columns <- c("f_beer", "f_dairy", "f_eggs", "f_fats_oils", "f_fish",
+             "f_fruit_veg", "f_grains", "f_meat_red", "f_poultry",
+             "f_readymade", "f_sauces", "f_soft_drinks", "f_spirits",
+             "f_sweets", "f_tea_coffee", "f_water", "f_wine")
+
+sales_data <- list()
+
+# Reading and processing data for each month
+for (mon in months) {
+  item_aver <- c()
+  file_path <- paste0("./7796666/", mon, "_borough_grocery.csv")
+  data <- read_csv(file_path)
+  
+  for (col in columns) {
+    mon_aver <- mean(data[[col]], na.rm = TRUE)
+    item_aver <- c(item_aver, mon_aver)
+  }
+  
+  sales_data[[mon]] <- item_aver
+}
+
+# Transpose sales_data
+sales_data_transposed <- as.data.frame(do.call(rbind, sales_data))
+
+# Calculating year average
+y_average <- c()
+for (col in columns) {
+  aver <- mean(sales_data_transposed[[col]], na.rm = TRUE)
+  y_average <- c(y_average, aver)
+}
+
+# Checking that each category has a monthly average sales value
+for (i in seq_along(columns)) {
+  if (length(sales_data_transposed[[i]]) != length(months)) {
+    message("Warning: ", columns[i], " does not have data for every month.")
+  }
+}
+
+# Plotting the monthly average sales for each category
+pdf("monthly_average_sales.pdf", width = 15, height = 20) # Saving the plot to a PDF
+par(mfrow = c(6, 3), mar = c(4, 4, 2, 1)) # Set multi-plot layout
+
+for (i in seq_along(columns)) {
+  if (i <= length(columns)) {
+    plot(months, sales_data_transposed[[i]], type = 'o', main = columns[i],
+         xlab = 'Month', ylab = 'Year Average Sales', pch = 19, col = "blue")
+    abline(h = y_average[i], col = 'red', lty = 'dashed', lwd = 2) # Add average line
+  }
+}
 ```
 
 ```{r}
@@ -150,12 +211,18 @@ purchasing_patterns_cluster_function(borough_year, age_columns)
 purchasing_patterns_cluster_function(osward_year, age_columns)
 purchasing_patterns_cluster_function(msoa_year, age_columns)
 purchasing_patterns_cluster_function(lsoa_year, age_columns)
+
+age_combined_plot <- ggarrange(plotlist = plots, ncol = 2, nrow = 2)
+# You can add a common title with `annotate_figure` from `ggpubr`
+age_combined_plot <- annotate_figure(age_combined_plot, 
+                                 top = text_grob("Elbow Method Plots", face = "bold", size = 14))
 ```
 ```{r, WARNING=FALSE}
 purchasing_patterns_cluster_function(borough_year, gender_columns)
 purchasing_patterns_cluster_function(osward_year, gender_columns)
 purchasing_patterns_cluster_function(msoa_year, gender_columns)
 purchasing_patterns_cluster_function(lsoa_year, gender_columns)
+
 ```
 ```{r}
 # Function to visualise the clustering results using fviz_cluster
@@ -1012,19 +1079,19 @@ anova_tukey_lsoa <- perform_anova_tukey(lsoa_year, product_categories, age_colum
 ```
 
 ```{r}
-anova_tukey_borough
+# anova_tukey_borough
 ```
 
 ```{r}
-anova_tukey_osward
+# anova_tukey_osward
 ```
 
 ```{r}
-anova_tukey_msoa
+# anova_tukey_msoa
 ```
 
 ```{r}
-anova_tukey_lsoa
+# anova_tukey_lsoa
 ```
 
 ```{r}
@@ -1096,6 +1163,9 @@ ggplot(income_data, aes(x = year, y = median_income_pound, colour = area_id_name
   ylab("Median Income (£)") +
   annotate("text", x = Inf, y = Inf, label = "LM Fit", hjust = 1.1, vjust = 3, color = "red") +
   annotate("text", x = Inf, y = Inf, label = "Loess Fit", hjust = 1.1, vjust = 1, color = "blue")
+
+# Do some level of multi-year analysis
+# Example, one high-income to low income, we expect purchasing pattern to change from high-income purchasing pattern to low-income purchasing pattern. Etc. etc.
 ```
 
 ```{r}
@@ -1192,7 +1262,7 @@ On the other hand, negative correlations are observed with categories like f_sof
 
 These findings are consistent with existing research on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options.
 
-The correlations matches research outcomes of existing literature on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options:
+The correlations matches research outcomes of existing literature on the relationship between income and food choices, where higher-income individuals tend to prioritise healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options:
 - https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-019-6546-2
 - https://www.york.ac.uk/news-and-events/news/2021/research/awareness-healthy-eating-struggle-access-good-food/
 
