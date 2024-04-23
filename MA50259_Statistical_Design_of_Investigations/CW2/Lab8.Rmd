@@ -1,0 +1,260 @@
+---
+title: 'MA50259: Statistical Design of Investigations'
+author: "Lab sheet 8:  Measures of assocation in cohort studies"
+date: ""
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+In this practical you will learn about how to adjust for confounding in an observational study.  Take the time to run each of the following commands and analyse the displayed results to understand what the code is doing.
+
+
+## Question 1: Hypertension in later life
+
+Some pregnant women are affected by severe gestational hypertension (high blood pressure)
+known as pre-eclampsia and eclampsia. In a study to investigate the long-term effects
+of these problems, the proportions of women with hypertension  later in life were compared  in two groups. One group included women who suffered from gestational hypertension during their first pregnancy. \textbf{This is the exposed group}. The other group included women of similar ages to those in the first group, but who did not suffer from these conditions during their first pregnancy. \textbf{This is the control group}. Details of the study can be found in [here](http://www.bmj.com/content/326/7394/845.long)
+
+The dataset corresponding to this study can be downloaded as an *R* object from the following link
+```{r}
+mydata<-load(url("http://people.bath.ac.uk/kai21/MA50259/Data/Eclampsia.R"))
+```
+
+0. Load the necessary packages in R
+
+```{r}
+library(tidyr)
+library(dplyr)
+```
+
+
+
+
+1. Produce the 2 by 2 table corresponding to this study together with the total of women in each exposure group 
+
+```{r,message=FALSE,warning=FALSE}
+table(Eclampsia$Eclampsia,Eclampsia$Hypertension) 
+# alternative calculation
+cont.table <-
+  Eclampsia %>% 
+  group_by(Eclampsia, Hypertension) %>% 
+  summarise(n=n()) %>% spread(key = Hypertension, value = n) %>% 
+  mutate(Total =`No hypertension`+`Yes hypertension`) 
+print(cont.table)
+```
+
+2. Produce a table with the total number of women, the estimated probabilities (risks) and the estimated odds of hypertension in later life  for each of the two  exposure groups
+
+```{r}
+table2 <-
+  cont.table %>% mutate(Risk=`Yes hypertension`/Total,Odds=`Yes hypertension`/`No hypertension`)
+  
+print(table2)
+```
+
+
+3. Produce point estimates as well as 95% confidence intervals for 
+
+* the risk difference 
+
+```{r}
+p0<-table2[table2$Eclampsia=="no eclampsia","Risk"]
+p1<-table2[table2$Eclampsia=="eclampsia","Risk"]
+diff<-p1-p0
+print(as.numeric(diff))
+summaries.diff<-summary(glm(Hypertension~Eclampsia,data=Eclampsia,
+                            family = binomial(link = "identity"))) %>% coefficients()
+print(summaries.diff)
+print(summaries.diff[2,"Estimate"])
+c(summaries.diff[2,"Estimate"]-1.96*summaries.diff[2,"Std. Error"]
+,summaries.diff[2,"Estimate"]+1.96*summaries.diff[2,"Std. Error"])
+
+```
+
+
+* the relative risk  
+
+```{r}
+rr<-p1/p0
+print(rr)
+summaries.rr<-summary(glm(Hypertension~Eclampsia,data=Eclampsia,
+                          family = binomial(link = "log"))) %>% coefficients()
+print(summaries.rr)
+print(exp(summaries.rr[2,"Estimate"]))
+exp(c(summaries.rr[2,"Estimate"]-1.96*summaries.rr[2,"Std. Error"]
+,summaries.rr[2,"Estimate"]+1.96*summaries.rr[2,"Std. Error"]))
+
+```
+
+
+* the odds ratio
+
+```{r}
+or<-(p1/(1-p1))/(p0/(1-p0))
+print(or)
+
+summaries.or<-summary(glm(Hypertension~Eclampsia,data=Eclampsia,
+                          family = binomial(link = "logit"))) %>% coefficients()
+print(summaries.or)
+print(exp(summaries.or[2,"Estimate"]))
+exp(c(summaries.or[2,"Estimate"]-1.96*summaries.or[2,"Std. Error"]
+,summaries.or[2,"Estimate"]+1.96*summaries.or[2,"Std. Error"]))
+
+
+
+```
+
+
+
+
+
+
+
+
+4. Perform the test of hypothesis 
+$$H_0:\, p_1=p_0\qquad  \mbox{vs} \qquad H_1:\,p_1\neq p_0$$ 
+using the $\chi^2$ test and also the normal approximation to the sampling distribution of the estimated 
+* risk difference 
+* relative risk  
+* odds ratio
+
+```{r}
+
+
+chisq.test(x=Eclampsia$Eclampsia,y=Eclampsia$Hypertension,correct=F)
+
+summaries.diff[2,"Pr(>|z|)"]
+summaries.rr[2,"Pr(>|z|)"]
+summaries.or[2,"Pr(>|z|)"]
+
+```
+
+## Question 2: Treatment for kidney stones
+
+
+Kidney stones can cause intense pain, obstruct the urinary tract or damage the kidneys. In the 1980s several new techniques were introduced  to remove kidney stones, in preference to the then standard form of treatment which involved open surgery. These new techniques included keyhole surgery and shockwave therapy.
+
+A study was undertaken to compare the different treatment methods. This exercise focuses on open surgery and keyhole surgery (the technical term is *percutaneous nephrolithotomy*).
+
+The treatment was defined as successful if the stones were eliminated or reduced to less than 2mm after three months. The study was a cohort study, including 350 patients treated with open surgery and 350 with keyhole surgery. In this study the exposure is the new treatment, namely keyhole surgery, and the "*disease* outcomes are success or failure of the treatment. Information on the size of the stones treated, small (less than 2 cm diameter) or large (more than 2cm diameter), was also collected.
+
+
+
+
+Details of the study can be found [here](http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1339981/)
+
+The dataset corresponding to this study can be loaded while in *R* by typing the following command
+
+```{r}
+load(url("http://people.bath.ac.uk/kai21/MA50259/Data/Kidney.R"))
+```
+
+1. Produce the 2 by 2 table corresponding to the association between the exposure and the disease (response) with the corresponding totals for each treatment group
+
+
+**Solution**
+
+```{r,message=FALSE,warning=FALSE}
+cont.table <-
+  Kidney %>% 
+  group_by(Treatment, Success) %>% 
+  summarise(n=n()) %>% spread(key = Success, value = n) %>% mutate(Total =Failure+Success) 
+print(cont.table)
+```
+
+2. Obtain the odds (of success) ratio for both treatment groups and then obtain the corresponding odds ratio and its corresponding 95% confidence interval.
+
+**Solution**
+
+```{r}
+table2 <-
+  cont.table %>% mutate(Odds=Success/Failure)
+  
+print(table2)
+
+OR<-table2[1,"Odds"]/table2[2,"Odds"]
+print(OR)
+
+
+Kidney$Treatment<-relevel(Kidney$Treatment,ref='Open surgery')
+summaries<-summary(glm(Success~Treatment,data=Kidney,family=binomial))%>% coefficients()
+
+print(summaries)
+print(exp(summaries[2,"Estimate"]))
+exp(c(summaries[2,"Estimate"]-1.96*summaries[2,"Std. Error"]
+,summaries[2,"Estimate"]+1.96*summaries[2,"Std. Error"]))
+```
+
+
+3. For each of the two strata defined by the size of the stones treated, produce the 2 by 2 table corresponding to the association between the exposure and the disease with the corresponding totals for each treatment group. Also obtain the corresponding the odds ratio and its corresponding 95% confidence interval for each stratum. 
+```{r}
+
+cont.table.small <-
+  Kidney %>% filter(Size=="Small") %>%
+  group_by(Treatment, Success) %>% 
+  summarise(n=n()) %>% spread(key = Success, value = n) %>% mutate(Total =Failure+Success) 
+print(cont.table.small)
+
+
+table.small<-cont.table.small %>% mutate(Odds=Success/Failure)
+print(table.small)
+  
+OR.small<-table.small[2,"Odds"]/table.small[1,"Odds"]
+print(OR.small)
+
+summaries.small<-summary(glm(Success~Treatment,data=Kidney,
+                             family=binomial,subset=Size=="Small"))%>% coefficients()
+
+print(exp(summaries.small[2,"Estimate"]))
+exp(c(summaries.small[2,"Estimate"]-1.96*summaries.small[2,"Std. Error"]
+,summaries.small[2,"Estimate"]+1.96*summaries.small[2,"Std. Error"]))
+
+
+cont.table.large <-
+  Kidney %>% filter(Size=="Large") %>%
+  group_by(Treatment, Success) %>% 
+  summarise(n=n()) %>% spread(key = Success, value = n) %>% mutate(Total =Failure+Success) 
+print(cont.table.large)
+
+
+table.large<-cont.table.large %>% mutate(Odds=Success/Failure)
+
+print(table.large)
+
+OR.large<-table.large[2,"Odds"]/table.large[1,"Odds"]
+print(OR.large)
+
+
+summaries.large<-summary(glm(Success~Treatment,data=Kidney,
+                             family=binomial,subset=Size=="Large"))%>% coefficients()
+
+print(exp(summaries.large[2,"Estimate"]))
+exp(c(summaries.large[2,"Estimate"]-1.96*summaries.large[2,"Std. Error"]
+,summaries.large[2,"Estimate"]+1.96*summaries.large[2,"Std. Error"]))
+
+
+
+
+```
+
+
+4. What is the evidence of confounding  by the size of the kidney stones?
+
+**Solution**
+
+
+```{r}
+
+summaries<-summary(glm(Success~Treatment+Size,data=Kidney,family=binomial))%>% coefficients()
+
+print(exp(summaries[2,"Estimate"]))
+exp(c(summaries[2,"Estimate"]-1.96*summaries[2,"Std. Error"]
+,summaries[2,"Estimate"]+1.96*summaries[2,"Std. Error"]))
+
+```
+
+The regression summary odds ratio is about 0.7 while the crude OR is about 1.33 then we have evidence of confunding.
+

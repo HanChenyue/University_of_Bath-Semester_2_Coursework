@@ -1,0 +1,447 @@
+---
+title: 'MA50259: Statistical Design of Investigations'
+author: 'Extra Lab sheet : Factorial designs with Unequal Replicates'
+date: ''
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+In this practical you will learn  how to  analyse an experimental factorial design with unequal number of replicates. 
+
+
+
+## Factorial design (no interaction) model with unequal number of replicates
+
+
+Consider a factorial design with two factors and no interaction. Both factors have three levels so the model can be written as:
+
+$$y_{ijk}=\mu+\alpha_i+\beta_j+\epsilon_{ijk}$$
+
+where 
+
+- $\alpha_i$ are the treatment effects for the first factor
+
+- $\beta_j$ are the treatment effects for the second factor
+
+Let $r_{ij}$ denote the number of replicates in cell $(i,j)$ 
+
+
+1. Consider the number of replicates per cell in the following 2 cases:
+
+a. $r_{11}=r_{22}=r_{33}=r_{12}=r_{23}=1$ and $r_{ij}=0$ for any other cell $(i,j)$
+
+b.  $r_{11}=r_{22}=r_{33}=1$ and $r_{ij}=0$ for any other cell $(i,j)$
+
+
+2. In each of the above 2 cases, write the model in matrix form in order to identify the corresponding $\boldsymbol{X}$ matrix. 
+
+```{r}
+# case a)
+# there are 5 observations only and 7 parameters: mu, tau_i, i=1,2,3 and beta_j, j=1,2,3
+Xa<-matrix(0,5,7)
+Xa[1,]<-c(1,1,0,0,1,0,0)
+Xa[2,]<-c(1,0,1,0,0,1,0)
+Xa[3,]<-c(1,0,0,1,0,0,1)
+Xa[4,]<-c(1,1,0,0,0,1,0)
+Xa[5,]<-c(1,0,1,0,0,0,1)
+
+Xa
+
+# case b)
+# there are only 3 observations and the same 7 parameters: mu, tau_i, i=1,2,3 and beta_j, j=1,2,3
+
+Xb<-Xa[1:3,]
+
+Xb
+
+```
+
+Note that if we try to do this using \texttt{model.matrix} then R will try
+ to be helpful and will remove 2 columns in an attempt have a full rank model 
+ 
+```{r}
+
+D1<-data.frame(factor1=c(1,2,3,1,2),factor2=c(1,2,3,2,3))
+D1$factor1<-as.factor(D1$factor1)
+D1$factor2<-as.factor(D1$factor2)
+Xaa<-model.matrix(~factor1+factor2,D1)
+Xaa
+
+
+D2<-data.frame(factor1=c(1,2,3),factor2=c(1,2,3))
+D2$factor1<-as.factor(D2$factor1)
+D2$factor2<-as.factor(D2$factor2)
+Xbb<-model.matrix(~factor1+factor2,D2)
+Xbb
+```
+
+However for case b), when we try to solve the normal equations using the reduced matrix, we still find that the system is not invertible and we need a generalised inverse anyway!!
+
+```{r,error=TRUE}
+solve(t(Xaa)%*%Xaa)
+t(Xbb)%*%Xbb
+solve(t(Xbb)%*%Xbb)
+```
+
+This is due to the fact that in case b) there are only 3 observations which is nowhere near the 5 parameters that the reduced model is trying to fit. In this case, R is not able to (automatically) recognise that the true rank of the model is 3 (see next question) which means that only 3 linearly independent linear combinations of the parameters are estimable. 
+
+
+3. Find the rank of $\boldsymbol{X}$ in each case a. and b. in question 1.
+
+```{r}
+qr(Xa)$rank
+qr(Xb)$rank
+```
+
+As mentioned above, this means that only 5 (in case a)  and 3 (in case b) linearly independent linear combinations of the parameters are estimable. 
+
+
+
+
+4. Show that, in case a, all $\tau_i-\tau_j$ and $\beta_i-\beta_j$ are estimable for $i\neq j$. What happens in case b?
+
+\textbf{Solution:} Let's start with $\tau_1-\tau_2=\boldsymbol{\lambda_1^T\beta}$
+where $\lambda_1^T=(0,1,-1,0,0,0,0)$. From the lectures we know that if there exists a solution $\boldsymbol{r}_1$ to the system
+$$\boldsymbol{X^TX\,r}_1=\boldsymbol{\lambda}_1$$
+then $\boldsymbol{\lambda_1^T\beta}=\tau_1-\tau_2$ is estimable. To check for the existence of a solution we simply can compare the rank of the matrix $\boldsymbol{X^TX}$ with that of the extended matrix $(\boldsymbol{X^TX}\,|\,\boldsymbol{\lambda})$. If both matrices have the same rank, it means that there exists a solution that can be obtained using a generalised inverse via
+
+$$\boldsymbol{r}=\boldsymbol{(X^TX)^- \lambda}$$
+
+So we have
+
+```{r}
+library(MASS)
+lambda1<-c(0,1,-1,0,0,0,0)
+
+XXa<-t(Xa)%*%Xa
+XXa
+
+# construct extended matrix
+XXa2<-cbind(XXa,lambda1)
+# check ranks
+qr(XXa)$rank
+qr(XXa2)$rank
+
+
+```
+so the ranks are equal which means that $\tau_1-\tau_2$ is estimable. To obtain the actual estimator we then solve the system 
+$$\boldsymbol{X^TX\,r}_1=\boldsymbol{\lambda}_1$$
+and the estimator is given by $\boldsymbol{a}_1^T\boldsymbol{y}$ where $\boldsymbol{a}_1=\boldsymbol{Xr}_1$
+```{r}
+ra1<-ginv(XXa)%*%lambda1
+a1<-Xa%*%ra1
+a1
+```
+so that we clearly have obtained
+$$\widehat{\tau_1-\tau_2}=y_{121}-y_{221}$$
+which is intuitive. The same $\boldsymbol{a}_1$ can be obtained  by using the other definition of estimability which is that if there exists a solution $\boldsymbol{a}_1$ to the system
+$$\boldsymbol{X^Ta}_1=\boldsymbol{\lambda}_1$$
+then $\boldsymbol{\lambda_1^T\beta}=\tau_1-\tau_2$ is estimable. By inspection of the matrix $\boldsymbol{X}$ we can clearly see that if we substract the second row from the fourth row then we obtain the desired $\boldsymbol{\lambda}_1^T=(0,1,-1,0,0,0,0)$. 
+
+Now for case b) we have
+
+```{r}
+
+
+XXb<-t(Xb)%*%Xb
+XXb
+
+XXb2<-cbind(XXb,lambda1)
+
+qr(XXb)$rank
+qr(XXb2)$rank
+
+```
+and the rank increased so there exists no solution and $\tau_1-\tau_2$  is NOT estimable!
+
+For the remaining linear combiantions we have
+```{r}
+
+# tau1-tau3
+lambda2<-c(0,1,0,-1,0,0,0)
+# tau2-tau3
+lambda3<-c(0,0,1,-1,0,0,0)
+# beta1-beta2
+lambda4<-c(0,0,0,0,1,-1,0)
+# beta1-beta3
+lambda5<-c(0,0,0,0,1,0,-1)
+# beta2-beta3
+lambda6<-c(0,0,0,0,0,1,-1)
+
+```
+
+The next set of commands show that all remaining 5 linear combinations are estimable in case a) since the rank does not change.
+
+```{r}
+
+rank.a<-qr(XXa)$rank
+
+
+
+XXa2<-cbind(XXa,lambda2)
+rank.a-qr(XXa2)$rank
+
+XXa3<-cbind(XXa,lambda3)
+rank.a-qr(XXa3)$rank
+
+
+XXa4<-cbind(XXa,lambda4)
+rank.a-qr(XXa4)$rank
+
+XXa5<-cbind(XXa,lambda5)
+rank.a-qr(XXa5)$rank
+
+XXa6<-cbind(XXa,lambda6)
+rank.a-qr(XXa6)$rank
+
+
+```
+
+
+and now for case b)
+
+```{r}
+
+
+rank.b<-qr(XXb)$rank
+
+
+XXb2<-cbind(XXb,lambda2)
+rank.b-qr(XXb2)$rank
+
+XXb3<-cbind(XXb,lambda3)
+rank.b-qr(XXb3)$rank
+
+XXb4<-cbind(XXb,lambda4)
+rank.b-qr(XXb4)$rank
+
+XXb5<-cbind(XXb,lambda5)
+rank.b-qr(XXb5)$rank
+
+XXb6<-cbind(XXb,lambda6)
+rank.b-qr(XXb6)$rank
+
+```
+
+which shows that NONE of the 6 linear combinations is estimable! 
+
+So which linear combinations in case b) are estimable then?
+
+By loking at the X matrix again
+
+```{r}
+Xb
+```
+
+
+
+we can see that, for example, $\tau_1-\tau_2+\beta_1-\beta_2$ is estimable since the corresponding $\boldsymbol{\lambda}^T=(0,1,-1,0,1,-1,0)$ is obtained by substracting the first row from the second row of \texttt{Xb}. In terms of R computations we have 
+```{r}
+lambda7<-c(0,1,-1,0,1,-1,0)
+XXb7<-cbind(XXb,lambda7)
+rank.b-qr(XXb7)$rank
+```
+
+so the system has a solution and $\tau_1-\tau_1+\beta_1-\beta_2$ is estimable!
+The corresponding estimator is given by
+
+$$\widehat{\tau_{12}+\beta_{12}}=y_{111}-y_{221}\,,\quad \mbox{where }\quad \tau_{12}=\tau_1-\tau_2\,,\quad \mbox{and }\quad \beta_{12}=\beta_1-\beta_2$$
+
+since
+
+```{r}
+r7<-ginv(XXb)%*%lambda7
+a7<-Xb%*%r7
+a7
+```
+
+
+
+
+
+
+5. The error sum of squares is defined as
+$$ssE:=\|\boldsymbol{y}-\boldsymbol{X\tilde{\beta}}\|^2$$ 
+where $\boldsymbol{\tilde{\beta}}$ is a solution to the normal equations. This can be written as
+$$ssE:=\|\boldsymbol{y}-\boldsymbol{XGX^Ty}\|^2$$ 
+and therefore is invariant to the choice of generalised inverse $\boldsymbol{G}$ since $\boldsymbol{XGX^T}$ is also invariant. 
+
+
+ Consider the following data from an experiment where only $r_{12}=0$ and 
+
+
+\begin{small}
+$$
+\left(
+\begin{array}{c}
+y_{111}\\
+y_{131}\\
+y_{211}\\
+y_{212}\\
+y_{221}\\
+y_{222}\\
+y_{231}\\
+y_{232}\\
+y_{311}\\
+y_{321}\\
+y_{331}\\
+\end{array}
+\right)=
+\left(
+\begin{array}{c}
+3 \\
+1 \\
+6 \\
+2 \\
+4 \\
+1 \\
+1 \\
+2 \\
+1 \\
+3 \\
+2 \\
+\end{array}
+\right)
+$$
+\end{small}
+
+
+Compute the sum of squares for these data
+
+
+```{r}
+# first construct the design matrix
+X<-matrix(0, 11,7)
+X[1,] <-c(1,1,0,0,1,0,0)
+X[2,] <-c(1,1,0,0,0,0,1)
+X[3,] <-c(1,0,1,0,1,0,0)
+X[4,] <-c(1,0,1,0,1,0,0)
+X[5,] <-c(1,0,1,0,0,1,0)
+X[6,] <-c(1,0,1,0,0,1,0)
+X[7,] <-c(1,0,1,0,0,0,1)
+X[8,] <-c(1,0,1,0,0,0,1)
+X[9,] <-c(1,0,0,1,1,0,0)
+X[10,]<-c(1,0,0,1,0,1,0)
+X[11,]<-c(1,0,0,1,0,0,1)
+X
+
+
+
+
+y<-c(3,1,6,2,4,1,1,2,1,3,2)
+library(MASS)
+G<-ginv(t(X)%*%X)
+
+d<-y-X%*%G%*%t(X)%*%y
+SSE<-t(d)%*%d
+SSE
+```
+
+
+
+
+
+
+
+6. To test the hypothesis 
+$$H_0\,: \alpha_1=\alpha_2=\alpha_3=0$$
+or
+$$H'_0\,: \beta_1=\beta_2=\beta_3=0$$
+
+compute the error sum of squares in the reduced models where each null hypothesis is true. Call these sums of squares $SS_1$ and $SS_2$ respectively.
+Compute $SS_1-SSE$, $SS_2-SSE$ for our data.
+
+
+```{r}
+
+# design matrix for model under the null hypothesis beta1=beta2=beta3=0
+X1<-X[,-c(5,6,7)]
+# design matrix for model under the null hypothesis tau1=tau2=tau3=0
+X2<-X[,-c(2,3,4)]
+
+G1<-ginv(t(X1)%*%X1)
+G2<-ginv(t(X2)%*%X2)
+
+d1<-y-X1%*%G1%*%t(X1)%*%y
+d2<-y-X2%*%G2%*%t(X2)%*%y
+
+# SSE for model under the null hypothesis beta1=beta2=beta3=0
+SS1<-t(d1)%*%d1
+# SSE for model under the null hypothesis tau1=tau2=tau3=0
+SS2<-t(d2)%*%d2
+
+SSE/6
+
+(SS1-SSE)/2
+(SS2-SSE)/2
+
+((SS1-SSE)/2)/(SSE/6)
+((SS2-SSE)/2)/(SSE/6)
+
+
+```
+
+
+
+```{r,echo=FALSE,eval=FALSE}
+# for later when quandratic forms
+n<-dim(X)[1]
+A<-diag(n)-X%*%G%*%t(X)
+A1<-diag(n)-X1%*%G1%*%t(X1)
+A2<-diag(n)-X2%*%G2%*%t(X2)
+
+qr(A)$rank
+qr(A1-A)$rank
+qr(A2-A)$rank
+
+```
+
+
+7. Construct a data frame \texttt{dat} in R  so that  the following commands are equivalent to the results in question 5.
+
+
+```{r}
+XX<-matrix(0,11,2)
+XX[1,]<-c(1,1)
+XX[2,]<-c(1,3)
+XX[3,]<-c(2,1)
+XX[4,]<-c(2,1)
+XX[5,]<-c(2,2)
+XX[6,]<-c(2,2)
+XX[7,]<-c(2,3)
+XX[8,]<-c(2,3)
+XX[9,]<-c(3,1)
+XX[10,]<-c(3,2)
+XX[11,]<-c(3,3)
+
+
+dat<-data.frame(response=y,factor1=XX[,1],factor2=XX[,2])
+dat$factor1<-as.factor(dat$factor1)
+dat$factor2<-as.factor(dat$factor2)
+dat
+```
+
+
+```{r}
+X1<-model.matrix(~ factor1 , data = dat)
+X2<-model.matrix(~ factor2, data = dat)
+X1
+X2
+mod1 <- aov( response ~ factor1 + factor2, data = dat )
+summary(mod1)
+
+
+mod2 <- aov( response ~ factor2 + factor1, data = dat )
+summary(mod2)
+```
+
+
+

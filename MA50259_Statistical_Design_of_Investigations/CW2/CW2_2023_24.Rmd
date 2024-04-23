@@ -1,0 +1,260 @@
+---
+title: 'MA50259: Statistical Design of Investigations'
+author: "Coursework 2 (2024)"
+date: "09618"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(Matrix)
+# Load additional library
+library(dplyr)
+library(stats)
+library(tidyr)
+```
+
+
+# Part 1: Barley Experiment
+
+The data in table below show the yields (measured in bushels per acre) of five varieties of barley in an experiment carried out in a rural area in the US.
+
+\begin{center}
+\begin{tabular}{l c c c c c c}  % creating 10 columns
+\hline                       % inserting double-line
+  Place & Year & Excel & Compana & Drummond & Conlon & Kindred\\
+\hline
+1 & 1971 & 71.0 & 95.4 & 109.7 & 119.5 & 88.3\\
+1 & 1972 & 90.7 & 102.3 & 79.4 & 86.2 & 80.2\\
+2 & 1971 & 132.6 & 121.0 & 140.7 & 171.5 & 135.7\\
+2 & 1972 & 99.4 & 105.5 & 120.2 & 157.7 & 102.1\\
+3 & 1971 & 87.3 & 73.3 & 79.4 & 128.6 & 85.3\\
+3 & 1972 & 102.5 & 111.4 & 100.5 & 131.9 & 122.6\\
+4 & 1971 & 129.8 & 111.3 & 121.5 & 148.8 & 114.8\\
+4 & 1972 & 96.9 & 60.3 & 83.2 & 118.5 & 72.4\\
+5 & 1971 & 92.3 & 81.4 & 72.1 & 84.8 & 99.1\\
+5 & 1972 & 65.2 & 48.9 & 91.5 & 72.8 & 77.4\\
+6 & 1971 & 84.3 & 72.1 & 76.9 & 109.8 & 90.0\\
+6 & 1972 & 63.3 & 68.4 & 62.7 & 97.8 & 92.2
+\end{tabular}
+\end{center}
+
+
+
+(a) What would be the purpose of running these experiments in different locations and years? Also, comment on the design that would be appropriate for analysing the data above.
+
+    Environmental Variability: Different locations have varying climatic conditions, soil types, and ecosystems that can significantly impact crop yields. By testing in multiple locations, researchers can assess how each barley variety performs under diverse environmental conditions.
+
+    Temporal Variability: Testing across multiple years allows researchers to see how the yields of each variety are affected by annual fluctuations in weather patterns, such as rainfall, temperature, and potential pest or disease outbreaks. This helps in evaluating the consistency and reliability of each variety over time.
+
+    Generalization of Results: By collecting data from a range of locations and years, the experiment aims to provide more generalized and robust conclusions about which barley varieties perform best, under what conditions, and their resilience to different environmental stresses.
+
+    Interaction Effects: It is also essential to study how location and year interact with barley varieties. Some varieties might perform exceptionally well in one location but poorly in another, or some might have good years and bad years depending on external conditions. Understanding these interactions can help in breeding programs and agricultural planning.
+
+Appropriate Design for Analysing the Data
+
+Given the structure of the data and the nature of the experiment, the following experimental design considerations are critical:
+
+    Split-Plot Design: The main plot treatments could be the locations, with the subplot treatments being the barley varieties. This design is suitable because it considers the hierarchical structure where multiple varieties are tested within each location.
+
+    Repeated Measures: Since the data involve measurements from the same experimental setup across different years, a repeated measures design could also be applicable. This approach would help in analyzing the data while accounting for the possible correlations between measurements taken from the same place across the two years.
+
+    Randomized Block Design: If each location is considered a block, this design can be useful, especially if the blocks (locations) are expected to differ significantly, which is likely the case given environmental differences. Each block would then have a randomized setup of barley varieties.
+
+    Analysis of Variance (ANOVA): This statistical method would be appropriate to analyze the data, allowing researchers to determine if there are significant differences in yields across varieties, locations, years, and their interactions. ANOVA can help in understanding which factors (and interactions between them) significantly affect the barley yields.
+
+    Mixed-Effects Models: Considering that some factors like location and year might have random effects across the dataset, using mixed-effects models (which handle both fixed and random effects) could provide a more nuanced analysis. This model accommodates the non-independence of data collected from the same locations across years.
+
+
+(b) Organise the data in an appropriate dataframe in R with barley yields as the response variable, places as the blocks and the five varieties of barley as the treatment effects. Use an appropriate model which includes block effects and treatment effects to perform the ANOVA and determine if there is a significant difference across barley varieties. Clearly state the assumptions you may need in the model and write the null and the alternative hypotheses considered in the ANOVA.
+
+```{r}
+# Create the dataframe
+barley_data <- data.frame(
+  Place = factor(rep(1:6, each = 2)),  # Ensure 'Place' is treated as a factor
+  Year = rep(c(1971, 1972), times = 6),
+  Excel = c(71.0, 90.7, 132.6, 99.4, 87.3, 102.5, 129.8, 96.9, 92.3, 65.2, 84.3, 63.3),
+  Compana = c(95.4, 102.3, 121.0, 105.5, 73.3, 111.4, 111.3, 60.3, 81.4, 48.9, 72.1, 68.4),
+  Drummond = c(109.7, 79.4, 140.7, 120.2, 79.4, 100.5, 121.5, 83.2, 72.1, 91.5, 76.9, 62.7),
+  Conlon = c(119.5, 86.2, 171.5, 157.7, 128.6, 131.9, 148.8, 118.5, 84.8, 72.8, 109.8, 97.8),
+  Kindred = c(88.3, 80.2, 135.7, 102.1, 85.3, 122.6, 114.8, 72.4, 99.1, 77.4, 90.0, 92.2)
+)
+
+# Reshape data from wide to long format
+barley_long <- barley_data %>% 
+  pivot_longer(cols = Excel:Kindred, names_to = "Variety", values_to = "Yield")
+
+# Fit the ANOVA model with block effects (place) and treatment effects
+anova_model <- aov(Yield ~ Place + Variety, data = barley_long)
+summary(anova_model)
+```
+
+\hrulefill
+
+\underline{Answer:}
+
+Interpretation
+The p-value for Variety is less than 0.05, indicating that there are statistically significant differences in the yields among the different barley varieties.
+The p-value for Place is also significantly less than 0.05, suggesting that the location (place) has a significant effect on the yields of barley.
+The significant F-statistics for both factors (variety and place) support rejecting the null hypotheses, indicating that both the type of barley and the place where it is grown affect the yield.
+This analysis confirms that both the barley variety and the experimental location (place) significantly influence the yield outcomes, as observed in the ANOVA results. ​
+
+The ANOVA model relies on several key assumptions:
+
+Independence: The observations within each group (variety and place) should be independent of each other.
+Normality: The response variable (yield) should be normally distributed for each group of categorical variables.
+Homogeneity of variances (homoscedasticity): The variances among different groups should be equal.
+
+Null and Alternative Hypotheses
+The hypotheses for the ANOVA are formulated as follows:
+
+H0 (Null Hypothesis): There are no differences in the mean yields among the five barley varieties.
+H1 (Alternative Hypothesis): At least one barley variety has a significantly different mean yield compared to others.
+
+(c) Omit the block effects in part (b) and use an appropriate model to perform the ANOVA and determine if there is a significant difference across barley varieties. Clearly state the assumptions you may need in the model and write the null and the alternative hypotheses considered in the ANOVA.
+
+```{r}
+# Recreate the data frame
+data <- data.frame(
+  Place = rep(1:6, each = 2),
+  Year = rep(c(1971, 1972), times = 6),
+  Excel = c(71.0, 90.7, 132.6, 99.4, 87.3, 102.5, 129.8, 96.9, 92.3, 65.2, 84.3, 63.3),
+  Compana = c(95.4, 102.3, 121.0, 105.5, 73.3, 111.4, 111.3, 60.3, 81.4, 48.9, 72.1, 68.4),
+  Drummond = c(109.7, 79.4, 140.7, 120.2, 79.4, 100.5, 121.5, 83.2, 72.1, 91.5, 76.9, 62.7),
+  Conlon = c(119.5, 86.2, 171.5, 157.7, 128.6, 131.9, 148.8, 118.5, 84.8, 72.8, 109.8, 97.8),
+  Kindred = c(88.3, 80.2, 135.7, 102.1, 85.3, 122.6, 114.8, 72.4, 99.1, 77.4, 90.0, 92.2)
+)
+
+# Convert data to long format
+data_long <- data %>%
+  pivot_longer(cols = Excel:Kindred, names_to = "Variety", values_to = "Yield")
+
+# Fit the ANOVA model considering only the Variety effect
+model_no_blocks <- aov(Yield ~ Variety, data = data_long)
+
+# Perform ANOVA
+anova_results_no_blocks <- summary(model_no_blocks)
+anova_results_no_blocks
+```
+
+\hrulefill
+
+\underline{Answer:}
+
+
+Assumptions of the ANOVA Model
+When conducting ANOVA, several key assumptions need to be met:
+
+Independence: Each sample is collected independently of the others.
+Normality: The residuals of the model should be normally distributed. This assumption can be checked with a normality test on the residuals, such as the Shapiro-Wilk test.
+Homogeneity of Variances (Homoscedasticity): The variances of residuals are equal across groups, which can be tested using Levene's or Bartlett's test.
+Null and Alternative Hypotheses
+For the ANOVA testing the effect of barley varieties on yield, the hypotheses are:
+
+H0 (Null Hypothesis): The means of yields are the same across all varieties of barley. This suggests that the variety of barley does not affect the yield.
+H1 (Alternative Hypothesis): At least one variety of barley has a different mean yield compared to others. This indicates that the variety does influence the yield.
+
+Here are the results from the ANOVA performed without considering the block effects (Place):
+
+Variety Effect (C(Variety)):
+Sum of Squares (SS): 7031
+Degrees of Freedom (df): 4
+F-statistic: 3.037
+p-value: 0.0247
+Interpretation
+The p-value for Variety is 0.0247, which is less than the typical significance level of 0.05. This indicates that there are statistically significant differences in the yields among the different barley varieties.
+Conclusion
+Ignoring the block effects (Place) and focusing solely on the treatment effects (Variety), the ANOVA results suggest that the variety of barley significantly affects the yield. This finding supports rejecting the null hypothesis (H0), which stated that all barley varieties have the same mean yield.
+
+
+(d) Which of the two designs represented by the two models in part (b) and part (c) would be more efficient. Justify your answer.
+
+
+
+\hrulefill
+
+\underline{Answer:}
+
+To determine which of the two designs is more efficient—either including block effects (Place) as in part (b) or omitting them as in part (c)—we should consider several factors:
+
+1. Variance Reduction
+In experimental designs, the primary goal often involves reducing the variance of the estimator to increase the precision of the estimates of the effects being studied. The inclusion of block effects, as in part (b), aims to control for variability attributable to differences in environmental conditions, soil types, microclimates, etc., at different locations. By accounting for these block effects:
+
+Reduces Unexplained Variance: Variability in the response (yield) that could be attributed to differences between blocks (places) is statistically controlled, thus reducing the residual variance compared to models that do not consider these effects.
+Increases Sensitivity: Lower residual variance increases the experiment's ability to detect a significant effect of the primary factor of interest (varieties of barley).
+2. Statistical Significance
+From the ANOVA results:
+
+With Block Effects (Part B): Both the variety and the place had significant effects on the yields, with the model showing that variability due to location is significant.
+Without Block Effects (Part C): Only the variety effect was tested, and it showed significance but likely with a larger residual variance, suggesting that some of the variations due to the place effect might have been attributed incorrectly to the variety effect or remained unexplained.
+3. Generalizability of Results
+Including Blocks: Models that account for blocking factors are generally more robust across different environments because they adjust for potential confounders related to the experimental setup. This can make findings more generalizable across similar conditions beyond the scope of the experiment.
+Excluding Blocks: While simpler and sometimes necessary if data on blocks are not available, this approach may lead to biased results if the omitted factor (block effect) significantly influences the response.
+Conclusion
+The design represented by part (b), which includes block effects, is more efficient for the following reasons:
+
+It provides a more precise estimation of the effects of barley varieties by reducing the impact of extraneous variability due to differences in location.
+It likely increases the power of the statistical tests, allowing for a clearer interpretation of how different varieties perform irrespective of the place.
+It helps in making more informed decisions when selecting barley varieties, considering how they might perform across a range of locations, which is crucial for practical agricultural planning and breeding programs.
+Therefore, incorporating block effects in the analysis not only gives a more accurate picture of the experiment's dynamics but also enhances the credibility and utility of the findings in practical applications.
+
+\hrulefill
+
+# Part 2A: Chronic Respiratory Disease Study
+
+An increase in deaths due to chronic respiratory disease (CRD) was observed in certain parts of the UK after the millennium. A case-control study was carried out to investigate the possible association between prescription of one particular medication, namely X12 and CRD deaths. 
+
+Both cases and controls were chosen among persons who were admitted to hospital for CRD. The cases comprised 257 persons who died of CRD; the controls were 570 persons who did not die of CRD. The data are presented in the following table.
+
+\begin{center}
+\begin{tabular}{cccc}
+\rule{0in}{3ex}X12 prescribed&Cases&Controls\\
+ \hline
+\rule{0in}{3ex}Yes & 130 & 200  \\
+No & 127 & 370 \\  \hline
+Total & 257 & 570 
+\end{tabular}
+\end{center}
+
+
+
+(a) Obtain the odds ratio between X12 prescription and CRD deaths and the corresponding 95\% confidence interval from the above table.
+
+(b) Test the null hypothesis of no association between X12 prescribed and CRD deaths. Interpret the results in the context of the study.
+
+(c) There was a concern that cases and control may have differed  according to the underlying severity of their CRD. Indeed, disease severity may be associated with a lifestyle habit such as smoking, and hence is a potential confounder. Accordingly, the data were stratified by variables associated with severity. One such indicator of severity is smoking habit in the previous year. The data, stratified by this variable, is shown in the following table
+
+
+\begin{center}
+\begin{tabular}{lrr|lrr}
+\;\;\;\;\;\;\;\;\;\;\;\;\;Non-smokers&&&\;\;\;\;\;\;\;\;\;\;\;\;\;Smokers&&\\\hline
+\rule{0in}{3ex}X12 prescribed&Cases&Controls& \rule{0in}{3ex}X12 prescribed&Cases&Controls\\
+ \hline
+\rule{0in}{3ex}Yes & 74 & 170 & Yes & 56 & 30  \\
+No & 100 & 267 & No & 27 & 103 \\  \hline
+Total & 174 & 437 & Total & 83 & 133 
+\end{tabular}
+\end{center}
+
+\quad\quad \hspace{0.2em} Estimate the odds ratio and calculate the corresponding 95\% confidence interval for each stratum.
+
+(d) Calculate the overall regression summary odds ratio (together with its corresponding 95\% confidence interval) when adjusting for smoking. Interpret the results in the context of the study.
+
+(e) Compare the odds ratios you obtained in parts (a) and (d). How did confounding by smoking affect the apparent direction of association between X12 and CRD deaths?
+
+(f) Which other variables that you can think of could have been used as confounders to have a better picture of the association between X12 and CRD deaths? You should justify your answer.
+
+
+# Part 2B: Low Birth Weight Study
+
+Consider a cohort study on birth weight (BW) of singleton babies and lifestyle habits (smoking, drinking, exercise etc.) of their mothers. Style 1 relates to unhealthy habits such as smoking/drinking and little exercise, and Style 2 relates to healthy habits including no smoking, no drinking and sufficient exercise. The number of babies born with low birth weight (LBW) within a 1-year period to Style 1 and Style 2 are 34 and 10 respectively. The total number of mothers who predominantly follow Style 1 and Style 2 are 335 and 320 respectively.
+
+(a) Calculate the risk difference and the relative risk of LBW in the general population for the two lifestyle habits.
+
+(b) Find a 95\% confidence interval for the risk difference and the relative risk of LBW in the general population for the two lifestyle habits. Interpret the results in the context of the study. 
+
+(c) Perform a chi-square test to determine whether there is a significant association between lifestyle habits and the birth weight of singleton babies.

@@ -1,0 +1,648 @@
+---
+title: "Tesco"
+author: "HanChenyue"
+date: "2024-04-07"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+Limitations:
+- 
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,
+                      warning = TRUE, message = TRUE)
+```
+
+```{r packages, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(lubridate)
+library(ggthemes)
+library(patchwork)
+library(viridis)
+library(broom)
+library(corrplot)
+library(scales)
+library(cluster)
+library(factoextra)
+library(lawstat)
+library(multcomp)
+library(stats)
+library(foreign)
+library(sf)
+library(purrr)
+library(ggpubr)
+library(gridExtra)
+```
+
+
+```{r data-load, echo = FALSE, message=FALSE, warning=TRUE}
+# Load the data
+# Set check.names = FALSE to avoid changing the column names
+food_categories <- read.csv("food_categories.csv", check.names = FALSE)
+
+# Load LSOA (Lower Super Output Area), MSOA (Medium Super Output Area), Ward, and borough data
+lsoa_year <- read.csv("year_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_jan <- read.csv("Jan_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_feb <- read.csv("Feb_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_mar <- read.csv("Mar_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_apr <- read.csv("Apr_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_may <- read.csv("May_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_jun <- read.csv("Jun_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_jul <- read.csv("Jul_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_aug <- read.csv("Aug_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_sep <- read.csv("Sep_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_oct <- read.csv("Oct_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_nov <- read.csv("Nov_lsoa_grocery.csv", check.names = FALSE)
+# lsoa_dec <- read.csv("Dec_lsoa_grocery.csv", check.names = FALSE)
+msoa_year <- read.csv("year_msoa_grocery.csv", check.names = FALSE)
+# msoa_jan <- read.csv("Jan_msoa_grocery.csv", check.names = FALSE)
+# msoa_feb <- read.csv("Feb_msoa_grocery.csv", check.names = FALSE)
+# msoa_mar <- read.csv("Mar_msoa_grocery.csv", check.names = FALSE)
+# msoa_apr <- read.csv("Apr_msoa_grocery.csv", check.names = FALSE)
+# msoa_may <- read.csv("May_msoa_grocery.csv", check.names = FALSE)
+# msoa_jun <- read.csv("Jun_msoa_grocery.csv", check.names = FALSE)
+# msoa_jul <- read.csv("Jul_msoa_grocery.csv", check.names = FALSE)
+# msoa_aug <- read.csv("Aug_msoa_grocery.csv", check.names = FALSE)
+# msoa_sep <- read.csv("Sep_msoa_grocery.csv", check.names = FALSE)
+# msoa_oct <- read.csv("Oct_msoa_grocery.csv", check.names = FALSE)
+# msoa_nov <- read.csv("Nov_msoa_grocery.csv", check.names = FALSE)
+# msoa_dec <- read.csv("Dec_msoa_grocery.csv", check.names = FALSE)
+osward_year <- read.csv("year_osward_grocery.csv", check.names = FALSE)
+# osward_jan <- read.csv("Jan_osward_grocery.csv", check.names = FALSE)
+# osward_feb <- read.csv("Feb_osward_grocery.csv", check.names = FALSE)
+# osward_mar <- read.csv("Mar_osward_grocery.csv", check.names = FALSE)
+# osward_apr <- read.csv("Apr_osward_grocery.csv", check.names = FALSE)
+# osward_may <- read.csv("May_osward_grocery.csv", check.names = FALSE)
+# osward_jun <- read.csv("Jun_osward_grocery.csv", check.names = FALSE)
+# osward_jul <- read.csv("Jul_osward_grocery.csv", check.names = FALSE)
+# osward_aug <- read.csv("Aug_osward_grocery.csv", check.names = FALSE)
+# osward_sep <- read.csv("Sep_osward_grocery.csv", check.names = FALSE)
+# osward_oct <- read.csv("Oct_osward_grocery.csv", check.names = FALSE)
+# osward_nov <- read.csv("Nov_osward_grocery.csv", check.names = FALSE)
+# osward_dec <- read.csv("Dec_osward_grocery.csv", check.names = FALSE)
+borough_year <- read.csv("year_borough_grocery.csv", check.names = FALSE)
+
+```
+
+
+
+
+
+
+```{r}
+# Purchase preference for each age group
+# Function to calculate normalized purchase sums by age group and plot the data
+calculate_and_plot_purchases <- function(data, product_categories, age_columns) {
+  # Calculating the sum of purchases for each product category by age group
+  purchase_sums_by_age <- lapply(age_columns, function(age) {
+    colSums(data[product_categories] * data[[age]], na.rm = TRUE)
+  })
+  names(purchase_sums_by_age) <- age_columns
+  
+  # Normalizing these sums by the total count for each age group
+  normalized_purchases <- lapply(names(purchase_sums_by_age), function(age) {
+    purchase_sums_by_age[[age]] / sum(data[[age]], na.rm = TRUE)
+  })
+  
+  # Transforming the data for visualization
+  normalized_purchases_df <- as.data.frame(normalized_purchases)
+  rownames(normalized_purchases_df) <- product_categories
+  normalized_purchases_df <- normalized_purchases_df %>%
+    tibble::rownames_to_column(var = "Product")
+  
+  melted_data_age <- normalized_purchases_df %>%
+    pivot_longer(cols = -Product, names_to = "Age_Group", values_to = "Fraction")
+  
+  
+  # Plotting the data
+  ggplot(melted_data_age, aes(x = Product, y = Fraction, fill = Age_Group)) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 6)) +
+    labs(x = "Product Categories", y = "Normalized Fraction of Purchases", fill = "Age Group") +
+    ggtitle("Normalized Purchasing Patterns by Age Group Across Product Categories") +
+    
+    guides(fill = FALSE)
+}
+
+
+
+
+calculate_and_plot_purchases(borough_year, product_categories, age_columns)
+
+
+```
+
+Key Observations:
+Age Group Differences:
+- Younger Age Group (0-17 years): This group shows relatively lower purchasing fractions across most categories, likely reflecting their lesser purchasing power or dependence on adults for buying decisions. Noticeable interests might be in categories like f_sweets and f_soft_drinks.
+- Middle Age Group (18-64 years): Dominates most categories, reflecting their broader economic activity and varied preferences. This group shows higher fractions in categories like f_beer, f_wine, and f_spirits, which are adult-oriented products.
+- Older Age Group (65+ years): Shows interest in categories that might be considered necessities or health-oriented, such as f_fruit_veg and f_dairy. There's also a noticeable fraction in f_tea_coffee.
+
+Key Observations:
+Gender Differences:
+- Certain categories like beer, spirits, and wine show a higher purchasing fraction among male customers compared to female customers.
+- Female customers tend to have a higher fraction of purchases in categories like f_fruit_veg, f_dairy, and f_sweets, indicating possible preferences for these items.
+- Shared Interests: Some categories such as f_soft_drinks and f_tea_coffee appear to have relatively balanced fractions between genders, suggesting these items are universally popular.
+
+
+
+```{r}
+# Perform t-test and Levene's test to check for significant differences between genders in purchasing patterns
+levenes_test <- function(data, product_categories) {
+  levenes_test_results <- list()
+  
+  for (product in product_categories) {
+    male_data <- data[[product]] * data$male / sum(data$male, na.rm = TRUE)
+    female_data <- data[[product]] * data$female / sum(data$female, na.rm = TRUE)
+    
+    # Perform Levene's test for homogeneity of variances
+    levenes_result <- levene.test(c(male_data, female_data),
+                                  group = factor(rep(1:2, each = length(male_data))),
+                                  location = "mean")
+    levenes_test_results[[product]] <- levenes_result
+  }
+  
+  return(levenes_test_results)  # Ensure the results are returned from the function
+}
+
+
+levenes_borough_test_results <- levenes_test(borough_year, product_categories)
+levenes_osward_test_results <- levenes_test(osward_year, product_categories)
+levenes_msoa_test_results <- levenes_test(msoa_year, product_categories)
+levenes_lsoa_test_results <- levenes_test(lsoa_year, product_categories)
+
+
+# Assuming 'levenes_test_results' is a list of htest objects from running levene.test
+create_levenes_df <- function(levenes_test_results) {
+  # Initialize an empty data frame to store the results
+  results_df <- data.frame(Product = character(),
+                           Test_Statistic = numeric(),
+                           P_Value = numeric(),
+                           stringsAsFactors = FALSE)
+
+  # Loop through the list of test results and extract the information
+  for (product in names(levenes_test_results)) {
+    test_result <- levenes_test_results[[product]]
+    
+    # Create a new row for the results data frame
+    new_row <- data.frame(Product = product,
+                          Test_Statistic = unname(test_result$statistic),
+                          P_Value = test_result$p.value,
+                          row.names = NULL)
+    
+    # Bind the new row to the results data frame
+    results_df <- rbind(results_df, new_row)
+  }
+
+  # Return the results data frame
+  return(results_df)
+}
+
+# Apply the function to create a data frame of results
+levenes_borough_kable <- create_levenes_df(levenes_borough_test_results)
+levenes_osward_kable <- create_levenes_df(levenes_osward_test_results)
+levenes_msoa_kable <- create_levenes_df(levenes_msoa_test_results)
+levenes_lsoa_kable <- create_levenes_df(levenes_lsoa_test_results)
+
+
+# Use kable to create a formatted table
+
+kable(levenes_borough_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Borough)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(levenes_osward_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Osward)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(levenes_msoa_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Msoa)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(levenes_lsoa_kable, 
+      col.names = c("Product", "Test Statistic", "P-value"), 
+      digits = 3,
+      caption = "Levene's Test (Lsoa)") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+```
+# If Levene's test indicates that variances are equal (the p-value is above the significance threshold, typically 0.05), we proceed with a standard t-test that assumes equal variances.
+# If Levene's test indicates that variances are not equal (the p-value is below the significance threshold, 0.05), we would use a version of the t-test that does not assume equal variances, such as Welch's t-test.
+# Levene's tests: None of the product categories show a statistically significant difference in variance between the purchasing fractions of males and females (all p-values are greater than 0.05). We will use a standard t-test
+# At the granular level, more variations in purchasing patterns occurs as p-values starts failing the threshold of 0.05. We will use Welch's t-test for these cases.
+
+
+
+
+
+```{r}
+t_test <- function(data, product_categories) {
+  results_df <- data.frame(Product = character(),
+                           Levene_Test_Statistic = numeric(),
+                           Levene_P_Value = numeric(),
+                           T_Test_Statistic = numeric(),
+                           T_Test_P_Value = numeric(),
+                           Welch_Test_Statistic = numeric(),
+                           Welch_Test_P_Value = numeric(),
+                           stringsAsFactors = FALSE)
+
+  for (product in product_categories) {
+    male_data <- data[[product]] * data$male / sum(data$male, na.rm = TRUE)
+    female_data <- data[[product]] * data$female / sum(data$female, na.rm = TRUE)
+    
+    # Perform Levene's test for homogeneity of variances
+    levenes_result <- levene.test(c(male_data, female_data), 
+                                 group = factor(rep(1:2, each = length(male_data))))
+
+    # Initialize new_row with NA for t-tests
+    new_row <- data.frame(Product = product,
+                          Levene_Test_Statistic = levenes_result$statistic,
+                          Levene_P_Value = levenes_result$p.value,
+                          T_Test_Statistic = NA,
+                          T_Test_P_Value = NA,
+                          Welch_Test_Statistic = NA,
+                          Welch_Test_P_Value = NA)
+    
+    if (levenes_result$p.value > 0.05) {
+      # Variances are equal, perform standard t-test
+      t_test_result <- t.test(male_data, female_data, var.equal = TRUE)
+      # Update the row for the standard t-test results
+      new_row$T_Test_Statistic <- t_test_result$statistic
+      new_row$T_Test_P_Value <- t_test_result$p.value
+    } else {
+      # Variances are not equal, perform Welch's t-test
+      t_test_result <- t.test(male_data, female_data, var.equal = FALSE)
+      # Update the row for the Welch's t-test results
+      new_row$Welch_Test_Statistic <- t_test_result$statistic
+      new_row$Welch_Test_P_Value <- t_test_result$p.value
+    }
+    
+    # Append to results dataframe
+    results_df <- rbind(results_df, new_row)
+  }
+  
+  return(results_df)
+}
+
+# Apply the function to create a data frame of results
+t_test_borough_results <- t_test(borough_year, product_categories)
+t_test_osward_results <- t_test(osward_year, product_categories)
+t_test_msoa_results <- t_test(msoa_year, product_categories)
+t_test_lsoa_results <- t_test(lsoa_year, product_categories)
+
+generate_table <- function(results_df) {
+  kable(results_df, 
+        col.names = c("Product", "Levene's Test Statistic", "Levene's P-Value", 
+                      "Standard t-test Statistic", "Standard t-test P-Value",
+                      "Welch Test Statistic", "Welch Test P-Value"),
+        row.names = FALSE,
+        digits = 3,
+        caption = "Combined Test Results for Product Categories") %>%
+    kable_styling("striped", full_width = FALSE, position = "center")
+}
+
+# Apply function to create and print the table
+generate_table(t_test_borough_results)
+generate_table(t_test_osward_results)
+generate_table(t_test_msoa_results)
+generate_table(t_test_lsoa_results)
+```
+
+
+
+```{r}
+# Running ANOVA and Tukey's HSD test to check for significant differences between age groups in purchasing patterns
+# ANOVA can be used to test whether there are any statistically significant differences between the means of three or more independent groups.
+# Tukey's HSD test can be used to determine which specific groups differ from each other when the ANOVA test is significant.
+perform_anova_tukey <- function(data, product_categories, age_columns) {
+  # Normalizing the age columns by total population
+  data <- data %>%
+    mutate(across(all_of(age_columns), ~ .x / population, .names = "norm_{.col}")) 
+
+  # Reshaping the data into a long format for ANOVA, creating fractions for each category and age group
+  long_format_data <- data %>%
+    pivot_longer(cols = product_categories, names_to = "Category", values_to = "Fraction") %>%
+    pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Age_Fraction") %>%
+    mutate(Age_Group = sub("norm_", "", Age_Group),
+           Fraction_Age = Fraction * Age_Fraction) %>%
+    filter(!is.na(Fraction_Age)) 
+
+  # Performing ANOVA and Tukey's HSD for each product category
+  anova_tukey_results <- list()
+
+  for (category in product_categories) {
+    cat_data <- filter(long_format_data, Category == category)
+    mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+    anova_summary <- summary(mod)
+
+    # Store results only if ANOVA is significant, otherwise store a message
+    if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+      tukey_result <- TukeyHSD(mod)
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
+    } else {
+      anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
+    }
+  }
+
+  return(anova_tukey_results)
+}
+
+# Apply the function to perform ANOVA and Tukey's HSD test
+anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories, age_columns)
+anova_tukey_osward <- perform_anova_tukey(osward_year, product_categories, age_columns)
+anova_tukey_msoa <- perform_anova_tukey(msoa_year, product_categories, age_columns)
+anova_tukey_lsoa <- perform_anova_tukey(lsoa_year, product_categories, age_columns)
+```
+
+```{r}
+# anova_tukey_borough
+```
+
+```{r}
+# anova_tukey_osward
+```
+
+```{r}
+# anova_tukey_msoa
+```
+
+```{r}
+# anova_tukey_lsoa
+```
+
+```{r}
+# Read income csv that are obtained from https://data.london.gov.uk/dataset/average-income-tax-payers-borough
+
+# The income data is cleaned using Excel since it is a small file and saved as 'income-of-tax-payers_cleaned.csv' for further processing
+income_data <- read_csv("income-of-tax-payers_cleaned.csv")
+
+# Ensure year, no of individual, median, mean is numeric and area is a factor
+income_data$area <- as.factor(income_data$area_id)
+income_data$year <- as.numeric(income_data$year)
+income_data$no_of_individual <- as.numeric(income_data$no_of_individual)
+income_data$median <- as.numeric(income_data$median_income_pound)
+income_data$mean <- as.numeric(income_data$mean_income_pound)
+```
+
+```{r, fig.width=10, fig.height=10}
+# Plotting the mean income distribution across boroughs over year
+ggplot(income_data, aes(x = year, y = mean_income_pound, colour = area_id_name)) +
+  geom_line() +
+  # geom_point() +
+  theme_minimal() +
+  ggtitle("Mean Income Distribution Across Boroughs Over Years") +
+  xlab("Year") +
+  ylab("Median Income (£)")
+```
+
+```{r, fig.width=10, fig.height=10}
+# Plotting the median income distribution across boroughs over year
+ggplot(income_data, aes(x = year, y = median_income_pound, colour = area_id_name)) +
+  geom_line() +
+  # geom_point() +
+  theme_minimal() +
+  ggtitle("Median Income Distribution Across Boroughs Over Years") +
+  xlab("Year") +
+  ylab("Median Income (£)")
+```
+
+```{r, fig.width=10, fig.height=10}
+# Apply linear regression to the income data to identify trends over time
+# Linear regression for mean income
+mean_income_lm <- lm(mean_income_pound ~ year, data = income_data)
+kable(summary(mean_income_lm)$coefficients, digits = 2, caption = "Linear Regression Results for Mean Income") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+ggplot(income_data, aes(x = year, y = mean_income_pound, colour = area_id_name)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, colour = "red") +
+  geom_smooth(method = "loess", se = FALSE, colour = "blue") +
+  theme_minimal() +
+  ggtitle("Linear Regression for Mean Income Over Time") +
+  xlab("Year") +
+  ylab("Mean Income (£)") +
+  annotate("text", x = Inf, y = Inf, label = "LM Fit", hjust = 1.1, vjust = 3, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = "Loess Fit", hjust = 1.1, vjust = 1, color = "blue")
+
+# Linear regression for median income
+median_income_lm <- lm(median_income_pound ~ year, data = income_data)
+kable(summary(median_income_lm)$coefficients, digits = 1, caption = "Linear Regression Results for Median Income") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+ggplot(income_data, aes(x = year, y = median_income_pound, colour = area_id_name)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, colour = "red") +
+  geom_smooth(method = "loess", se = FALSE, colour = "blue") +
+  theme_minimal() +
+  ggtitle("Linear Regression for Median Income Over Time") +
+  xlab("Year") +
+  ylab("Median Income (£)") +
+  annotate("text", x = Inf, y = Inf, label = "LM Fit", hjust = 1.1, vjust = 3, color = "red") +
+  annotate("text", x = Inf, y = Inf, label = "Loess Fit", hjust = 1.1, vjust = 1, color = "blue")
+
+# Do some level of multi-year analysis
+# Example, one high-income to low income, we expect purchasing pattern to change from high-income purchasing pattern to low-income purchasing pattern. Etc. etc.
+```
+
+```{r}
+# Filter out 2015 data mean and median income
+income_data_2015 <- filter(income_data, year == 2015)
+
+# Rank the boroughs based on mean and median income in 2015
+ranked_mean_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
+  arrange(desc(mean_income_pound))
+
+kable(ranked_mean_income_2015, caption = "Ranking of Boroughs by Mean Income in 2015") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+ranked_median_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, median_income_pound) %>% 
+  arrange(desc(median_income_pound))
+
+kable(ranked_median_income_2015, caption = "Ranking of Boroughs by Median Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+```
+
+```{r}
+
+# Find the top 3 boroughs with the highest mean and median income in 2015
+top_3_mean_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
+  top_n(3, mean_income_pound) %>% 
+  arrange(desc(mean_income_pound))
+
+top_3_median_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, median_income_pound) %>% 
+  top_n(3, median_income_pound) %>% 
+  arrange(desc(median_income_pound))
+
+bottom_2_mean_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, mean_income_pound) %>% 
+  top_n(-2, mean_income_pound) %>% 
+  arrange(mean_income_pound)
+
+bottom_2_median_income_2015 <- income_data_2015 %>%
+  dplyr::select(area_id, area_id_name, median_income_pound) %>% 
+  top_n(-2, median_income_pound) %>% 
+  arrange(median_income_pound)
+
+kable(top_3_mean_income_2015, caption = "Top 3 Boroughs with Highest Mean Income in 2015") %>% 
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(top_3_median_income_2015, caption = "Top 3 Boroughs with Highest Median Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(bottom_2_mean_income_2015, caption = "Bottom 2 Boroughs with Lowest Mean Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+
+kable(bottom_2_median_income_2015, caption = "Bottom 2 Boroughs with Lowest Median Income in 2015") %>%
+  kable_styling("striped", full_width = FALSE, position = "center")
+```
+
+Looks like the top earners in 2015 were from the boroughs of Kensington and Chelsea, Westminster, and City of London, based on both mean and median income. These boroughs are known for their high living standards and property prices, which likely contribute to the higher income levels observed.
+
+While the bottom earners that year which shared the lowest mean and median income were from Barking & Dagenham, and Newham. These boroughs are known to have higher levels of deprivation and lower average incomes compared to other areas in London.
+
+Let's investigate how these income levels correlate with the purchasing patterns of different food categories across boroughs.
+
+
+```{r, fig.width=15, fig.height=15}
+# Merge the income data with the borough data
+borough_with_2015_income_data <- left_join(borough_year, income_data_2015, by = c("area_id" = "area_id"))
+
+# Calculate the correlation matrix between income and food categories
+income_food_correlation_matrix <- cor(borough_with_2015_income_data[c('mean_income_pound','median_income_pound', product_categories)], 
+                                      use = "pairwise.complete.obs")
+corrplot(income_food_correlation_matrix, method = "color", 
+         type = "upper", # Only upper triangular part of the matrix
+         order = "hclust", # Hierarchical clustering order
+         tl.col = "black", # Text label color
+         tl.srt = 45, # Text label rotation
+         tl.cex = 0.7, # Reduce text label size for space
+         addCoef.col = "black", # Add coefficient color
+         title = "Correlation Matrix of Income and Food Category Purchases",
+         cl.cex = 0.7, # Color legend text size
+         number.cex = 0.7, # Reduce correlation coefficient text size
+         number.digits = 2, # Number of digits in correlation coefficient
+         sig.level = 0.05, # Only show significant correlations
+         diag = FALSE, # Do not show diagonal
+         mar = c(0, 0, 1, 0), # Margins around the plot
+         col = colorRampPalette(c("blue", "white", "red"))(10))
+
+```
+
+It appears that both mean and median income are positively correlated with the purchase of certain food categories, such as f_fish, f_diary, f_fruit_veg, f_beer, f_wine. This suggests that higher-income areas tend to spend more on these categories, which are often associated with healthier and more expensive food choices. It is interesting to note that f_beer and f_wine are also positively correlated with income, indicating that these alcoholic beverages might be considered as luxury items in higher-income areas.
+
+On the other hand, negative correlations are observed with categories like f_soft_drinks, f_grain, f_sweets, and f_water, which are often associated with less healthy and more affordable food options. This suggests that lower-income areas might spend relatively more on these categories. It is interesting to note that f_water has a negative correlation with income, suggesting that higher income area might have the necessary purchasing power to spend on water filters.
+
+These findings are consistent with existing research on the relationship between income and food choices, where higher-income individuals tend to prioritize healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options.
+
+The correlations matches research outcomes of existing literature on the relationship between income and food choices, where higher-income individuals tend to prioritise healthier and more expensive food items, while lower-income individuals may opt for more affordable and less nutritious options:
+- https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-019-6546-2
+- https://www.york.ac.uk/news-and-events/news/2021/research/awareness-healthy-eating-struggle-access-good-food/
+
+From: https://data.london.gov.uk/dataset/statistical-gis-boundary-files-london
+```{r}
+# Encountered an error, switch to Python
+# Read the London Boroughs dbf and shp files
+# london_borough_dbf <- read.dbf("london_borough_gis.dbf")
+# london_borough_shp <- st_read("london_borough_gis.shp")
+```
+
+
+```{r}
+# Old code for reference
+# # Function to perform ANOVA and Tukey's HSD test
+# perform_anova_tukey <- function(data, product_categories) {
+#   # Create a long format data frame for ANOVA
+#   long_format_data <- data %>% 
+#     pivot_longer(cols = all_of(product_categories), names_to = "Category", values_to = "Fraction") %>% 
+#     mutate(across(all_of(age_columns), ~ .x / data$population, .names = "norm_{.col}")) %>%
+#     pivot_longer(cols = starts_with("norm_"), names_to = "Age_Group", values_to = "Normalized_Fraction") %>%
+#     mutate(Age_Group = sub("norm_", "", Age_Group))
+# 
+#   # Initialize an empty list to store results
+#   results <- list()
+# 
+#   # Perform ANOVA for each category
+#   for (category in product_categories) {
+#     category_data <- filter(long_format_data, Category == category)
+#     
+#     # Perform ANOVA
+#     anova_result <- aov(Normalized_Fraction ~ Age_Group, data = category_data)
+#     summary_anova <- summary(anova_result)
+#     
+#     # Check if ANOVA is significant before performing Tukey's HSD test
+#     if (summary_anova[[1]]$'Pr(>F)'[1] < 0.05) {
+#       tukey_result <- TukeyHSD(anova_result)
+#       results[[category]] <- list(ANOVA = summary_anova, Tukey = tukey_result)
+#     } else {
+#       results[[category]] <- list(ANOVA = summary_anova, Tukey = "ANOVA not significant, no post hoc test performed")
+#     }
+#   }
+# 
+#   return(results)
+# }
+# 
+# 
+# # Perform ANOVA and Tukey's HSD test for each dataset
+# anova_tukey_borough <- perform_anova_tukey(borough_year, product_categories)
+# anova_tukey_borough
+```
+
+```{r}
+# Old EDA code for reference (converted to a function)
+# data <- borough_year %>%
+#   mutate(across(all_of(age_columns), ~ .x / population)) 
+# 
+# # Reshape the data into a long format for ANOVA, creating fractions for each category and age group
+# long_format_data <- pivot_longer(
+#   data,
+#   cols = product_categories,
+#   names_to = "Category",
+#   values_to = "Fraction"
+# )
+# 
+# # We need to create separate observations for each age group within each category
+# long_format_data <- long_format_data %>%
+#   gather(key = "Age_Group", value = "Fraction_Age", all_of(age_columns)) %>%
+#   mutate(Fraction_Age = Fraction * Fraction_Age) %>% 
+#   filter(!is.na(Fraction_Age))
+# 
+# # Now we can proceed with ANOVA and Tukey's HSD as per your Python code
+# anova_tukey_results <- list()
+# 
+# for (category in product_categories) {
+#   cat_data <- filter(long_format_data, Category == category)
+#   mod <- aov(Fraction_Age ~ Age_Group, data = cat_data)
+#   anova_summary <- summary(mod)
+#   
+#   if (anova_summary[[1]]$'Pr(>F)'[[1]] < 0.05) {
+#     tukey_result <- TukeyHSD(mod)
+#     anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = tukey_result)
+#   } else {
+#     anova_tukey_results[[category]] <- list(ANOVA = anova_summary, Tukey = "ANOVA not significant, no post hoc test performed")
+#   }
+# }
+# 
+# # Review results
+# anova_tukey_results
+```
