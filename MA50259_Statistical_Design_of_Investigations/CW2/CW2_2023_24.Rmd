@@ -52,48 +52,52 @@ in the US.
     locations and years? Also, comment on the design that would be
     appropriate for analysing the data above.
 
-    Environmental Variability: Different locations have varying climatic
-    conditions, soil types, and ecosystems that can significantly impact
-    crop yields. By testing in multiple locations, researchers can
-    assess how each barley variety performs under diverse environmental
-    conditions.
+\hrulefill
 
-    Temporal Variability: Testing across multiple years allows
-    researchers to see how the yields of each variety are affected by
-    annual fluctuations in weather patterns, such as rainfall,
-    temperature, and potential pest or disease outbreaks. This helps in
-    evaluating the consistency and reliability of each variety over
-    time.
+\underline{Answer:}
 
-    Generalization of Results: By collecting data from a range of
-    locations and years, the experiment aims to provide more generalized
-    and robust conclusions about which barley varieties perform best,
-    under what conditions, and their resilience to different
-    environmental stresses.
+Environmental Variability: Different locations have varying climatic
+conditions, soil types, and ecosystems that can significantly impact
+crop yields. By testing in multiple locations, researchers can
+assess how each barley variety performs under diverse environmental
+conditions.
 
-    Interaction Effects: It is also essential to study how location and
-    year interact with barley varieties. Some varieties might perform
-    exceptionally well in one location but poorly in another, or some
-    might have good years and bad years depending on external
-    conditions. Understanding these interactions can help in breeding
-    programs and agricultural planning.
+Temporal Variability: Testing across multiple years allows
+researchers to see how the yields of each variety are affected by
+annual fluctuations in weather patterns, such as rainfall,
+temperature, and potential pest or disease outbreaks. This helps in
+evaluating the consistency and reliability of each variety over
+time.
+
+Generalization of Results: By collecting data from a range of
+locations and years, the experiment aims to provide more generalized
+and robust conclusions about which barley varieties perform best,
+under what conditions, and their resilience to different
+environmental stresses.
+
+Interaction Effects: It is also essential to study how location and
+year interact with barley varieties. Some varieties might perform
+exceptionally well in one location but poorly in another, or some
+might have good years and bad years depending on external
+conditions. Understanding these interactions can help in breeding
+programs and agricultural planning.
 
 Appropriate Design for Analysing the Data
 
 Given the structure of the data and the nature of the experiment, the
 following experimental design considerations are critical:
 
-```         
 Split-Plot Design: The main plot treatments could be the locations, with the subplot treatments being the barley varieties. This design is suitable because it considers the hierarchical structure where multiple varieties are tested within each location.
 
-Repeated Measures: Since the data involve measurements from the same experimental setup across different years, a repeated measures design could also be applicable. This approach would help in analyzing the data while accounting for the possible correlations between measurements taken from the same place across the two years.
+Repeated Measures: Since the data involve measurements from the same experimental setup across different years, a repeated measures design could also be applicable. This approach would help in analysing the data while accounting for the possible correlations between measurements taken from the same place across the two years.
 
 Randomized Block Design: If each location is considered a block, this design can be useful, especially if the blocks (locations) are expected to differ significantly, which is likely the case given environmental differences. Each block would then have a randomized setup of barley varieties.
 
-Analysis of Variance (ANOVA): This statistical method would be appropriate to analyze the data, allowing researchers to determine if there are significant differences in yields across varieties, locations, years, and their interactions. ANOVA can help in understanding which factors (and interactions between them) significantly affect the barley yields.
+Analysis of Variance (ANOVA): This statistical method would be appropriate to analyse the data, allowing researchers to determine if there are significant differences in yields across varieties, locations, years, and their interactions. ANOVA can help in understanding which factors (and interactions between them) significantly affect the barley yields.
 
 Mixed-Effects Models: Considering that some factors like location and year might have random effects across the dataset, using mixed-effects models (which handle both fixed and random effects) could provide a more nuanced analysis. This model accommodates the non-independence of data collected from the same locations across years.
-```
+
+\hrulefill
 
 (b) Organise the data in an appropriate dataframe in R with barley
     yields as the response variable, places as the blocks and the five
@@ -103,6 +107,10 @@ Mixed-Effects Models: Considering that some factors like location and year might
     barley varieties. Clearly state the assumptions you may need in the
     model and write the null and the alternative hypotheses considered
     in the ANOVA.
+
+\hrulefill
+
+\underline{Answer:}
 
 ```{r}
 # Create the dataframe
@@ -125,9 +133,6 @@ anova_model <- aov(Yield ~ Place + Variety, data = barley_long)
 summary(anova_model)
 ```
 
-\hrulefill
-
-\underline{Answer:}
 
 Interpretation The p-value for Variety is less than 0.05, indicating
 that there are statistically significant differences in the yields among
@@ -142,25 +147,45 @@ influence the yield outcomes, as observed in the ANOVA results. ​
 
 The ANOVA model relies on several key assumptions:
 
-Independence: The observations within each group (variety and place)
-should be independent of each other. Normality: The response variable
-(yield) should be normally distributed for each group of categorical
-variables. Homogeneity of variances (homoscedasticity): The variances
-among different groups should be equal.
+- Independence: The observations within each group (variety and place) should be independent of each other.
+
+- Normality: The response variable (yield) should be normally distributed for each group of categorical variables.
+
+- Homogeneity of variances (homoscedasticity): The variances among different groups should be equal.
 
 Null and Alternative Hypotheses The hypotheses for the ANOVA are
 formulated as follows:
 
-H0 (Null Hypothesis): There are no differences in the mean yields among
-the five barley varieties. H1 (Alternative Hypothesis): At least one
+- $H_0$ (Null Hypothesis): There are no differences in the mean yields among
+the five barley varieties.
+
+- $H_a$ (Alternative Hypothesis): At least one
 barley variety has a significantly different mean yield compared to
 others.
+
+Since the p-value for Variety is less than 0.05, we reject the null
+hypothesis in favour of the alternative hypothesis. This indicates that
+there are statistically significant differences in the yields across the
+barley varieties, supporting the conclusion that the type of barley
+variety significantly influences the yield outcomes in the experiment.
+
+Since the p-value for Place is also less than 0.05, we reject the null
+hypothesis for the effect of location (place) on the yields, indicating
+that the experimental location significantly impacts the barley yields.
+This suggests that the location where the barley is grown plays a
+significant role in determining the yield outcomes.
+
+\hrulefill
 
 (c) Omit the block effects in part (b) and use an appropriate model to
     perform the ANOVA and determine if there is a significant difference
     across barley varieties. Clearly state the assumptions you may need
     in the model and write the null and the alternative hypotheses
     considered in the ANOVA.
+
+\hrulefill
+
+\underline{Answer:}
 
 ```{r}
 # Recreate the data frame
@@ -186,25 +211,28 @@ anova_results_no_blocks <- summary(model_no_blocks)
 anova_results_no_blocks
 ```
 
-\hrulefill
-
-\underline{Answer:}
 
 Assumptions of the ANOVA Model When conducting ANOVA, several key
 assumptions need to be met:
 
-Independence: Each sample is collected independently of the others.
-Normality: The residuals of the model should be normally distributed.
+- Independence: Each sample is collected independently of the others.
+
+- Normality: The residuals of the model should be normally distributed.
 This assumption can be checked with a normality test on the residuals,
-such as the Shapiro-Wilk test. Homogeneity of Variances
-(Homoscedasticity): The variances of residuals are equal across groups,
-which can be tested using Levene's or Bartlett's test. Null and
+such as the Shapiro-Wilk test.
+
+-Homogeneity of Variances (Homoscedasticity): The variances of residuals are equal across groups,
+which can be tested using Levene's or Bartlett's test.
+
+Null and
 Alternative Hypotheses For the ANOVA testing the effect of barley
 varieties on yield, the hypotheses are:
 
-H0 (Null Hypothesis): The means of yields are the same across all
+- $H_0$ (Null Hypothesis): The means of yields are the same across all
 varieties of barley. This suggests that the variety of barley does not
-affect the yield. H1 (Alternative Hypothesis): At least one variety of
+affect the yield.
+
+- $H_1$ (Alternative Hypothesis): At least one variety of
 barley has a different mean yield compared to others. This indicates
 that the variety does influence the yield.
 
@@ -221,6 +249,8 @@ solely on the treatment effects (Variety), the ANOVA results suggest
 that the variety of barley significantly affects the yield. This finding
 supports rejecting the null hypothesis (H0), which stated that all
 barley varieties have the same mean yield.
+
+\hrulefill
 
 (d) Which of the two designs represented by the two models in part (b)
     and part (c) would be more efficient. Justify your answer.
@@ -241,26 +271,35 @@ should consider several factors:
     soil types, microclimates, etc., at different locations. By
     accounting for these block effects:
 
-Reduces Unexplained Variance: Variability in the response (yield) that
+- Reduces Unexplained Variance: Variability in the response (yield) that
 could be attributed to differences between blocks (places) is
 statistically controlled, thus reducing the residual variance compared
-to models that do not consider these effects. Increases Sensitivity:
+to models that do not consider these effects.
+
+- Increases Sensitivity:
 Lower residual variance increases the experiment's ability to detect a
 significant effect of the primary factor of interest (varieties of
-barley). 2. Statistical Significance From the ANOVA results:
+barley).
 
-With Block Effects (Part B): Both the variety and the place had
+2. Statistical Significance
+
+From the ANOVA results:
+
+- With Block Effects (Part B): Both the variety and the place had
 significant effects on the yields, with the model showing that
-variability due to location is significant. Without Block Effects (Part
-C): Only the variety effect was tested, and it showed significance but
-likely with a larger residual variance, suggesting that some of the
-variations due to the place effect might have been attributed
-incorrectly to the variety effect or remained unexplained. 3.
-Generalizability of Results Including Blocks: Models that account for
-blocking factors are generally more robust across different environments
+variability due to location is significant.
+
+- Without Block Effects (Part C): Only the variety effect was tested, and it showed significance but likely with a larger residual variance, suggesting that some of the variations due to the place effect might have been attributed incorrectly to the variety effect or remained unexplained.
+
+3. Generalisability of Results
+
+- Including Blocks:
+Models that account for blocking factors are generally more robust across different environments
 because they adjust for potential confounders related to the
 experimental setup. This can make findings more generalizable across
-similar conditions beyond the scope of the experiment. Excluding Blocks:
+similar conditions beyond the scope of the experiment.
+
+- Excluding Blocks:
 While simpler and sometimes necessary if data on blocks are not
 available, this approach may lead to biased results if the omitted
 factor (block effect) significantly influences the response. Conclusion
@@ -278,6 +317,10 @@ planning and breeding programs. Therefore, incorporating block effects
 in the analysis not only gives a more accurate picture of the
 experiment's dynamics but also enhances the credibility and utility of
 the findings in practical applications.
+
+\hrulefill
+
+\hrulefill
 
 \hrulefill
 
@@ -306,6 +349,10 @@ Total & 257 & 570
 ```
 (a) Obtain the odds ratio between X12 prescription and CRD deaths and
     the corresponding 95% confidence interval from the above table.
+
+\hrulefill
+
+\underline{Answer:}
 
 ```{r}
 # Create a 2x2 table for the data
@@ -382,8 +429,15 @@ true odds ratio lies within this interval, suggesting a statistically
 significant association between X12 prescription and CRD deaths,
 assuming the interval does not include 1.
 
+\hrulefill
+
 (b) Test the null hypothesis of no association between X12 prescribed
     and CRD deaths. Interpret the results in the context of the study.
+
+\hrulefill
+
+\underline{Answer:}
+
 
 ```{r}
 # Define the 2x2 contingency table
@@ -447,6 +501,8 @@ could be associated with other confounding factors. Further
 investigation would be needed to clarify the nature of this association
 and whether it is causal.
 
+\hrulefill
+
 (c) There was a concern that cases and control may have differed
     according to the underlying severity of their CRD. Indeed, disease
     severity may be associated with a lifestyle habit such as smoking,
@@ -469,6 +525,11 @@ Total & 174 & 437 & Total & 83 & 133
 ```
 \quad\quad \hspace{0.2em} Estimate the odds ratio and calculate the
 corresponding 95% confidence interval for each stratum.
+
+\hrulefill
+
+\underline{Answer:}
+
 
 To estimate the odds ratio and calculate the corresponding 95%
 confidence interval for each stratum (non-smokers and smokers), we will
@@ -562,9 +623,15 @@ stratification helps highlight the importance of considering smoking
 status as a potential confounder or effect modifier in studies related
 to respiratory diseases.
 
+\hrulefill
+
 (d) Calculate the overall regression summary odds ratio (together with
     its corresponding 95% confidence interval) when adjusting for
     smoking. Interpret the results in the context of the study.
+
+\hrulefill
+
+\underline{Answer:}
 
 To calculate the overall adjusted odds ratio that accounts for smoking
 as a potential confounding factor, we can use the Mantel-Haenszel
@@ -644,14 +711,22 @@ smokers. Further research might be required to explore the causal
 mechanisms behind this association and to evaluate whether similar
 patterns exist in other populations or settings.
 
+\hrulefill
+
 (e) Compare the odds ratios you obtained in parts (a) and (d). How did
     confounding by smoking affect the apparent direction of association
-    between X12 and CRD deaths? In part (a), where we didn't account for
-    smoking, the odds ratio (OR) calculated for the association between
-    X12 prescription and CRD deaths was approximately 1.89, with a
-    confidence interval ranging from about 1.40 to 2.55. This suggested
-    a significant association indicating that individuals prescribed X12
-    had higher odds of dying from CRD.
+    between X12 and CRD deaths?
+
+\hrulefill
+
+\underline{Answer:}
+
+In part (a), where we didn't account for
+smoking, the odds ratio (OR) calculated for the association between
+X12 prescription and CRD deaths was approximately 1.89, with a
+confidence interval ranging from about 1.40 to 2.55. This suggested
+a significant association indicating that individuals prescribed X12
+had higher odds of dying from CRD.
 
 In part (d), after adjusting for smoking using the Mantel-Haenszel
 method, the summary odds ratio was approximately 1.87, with a confidence
@@ -660,13 +735,11 @@ in magnitude to the unadjusted odds ratio, now explicitly accounts for
 smoking as a confounding factor. Comparison and Impact of Confounding by
 Smoking:
 
-```         
 Magnitude of Association: The magnitude of the association between X12 prescription and CRD deaths remained relatively unchanged (from 1.89 to 1.87) after adjusting for smoking. This suggests that the overall effect of X12 on the risk of CRD deaths is not heavily confounded by smoking, as the adjustment did not markedly alter the odds ratio.
 
 Confidence Interval: Both confidence intervals do not include 1 and are relatively wide but overlapping, which supports a statistically significant association in both scenarios. The adjusted model has a slightly wider interval, indicating increased uncertainty in the estimate when accounting for smoking, which is a common outcome when adjusting for confounders due to the division of the sample into strata.
 
 Direction of Association: There was no change in the direction of the association; in both cases, X12 prescription was associated with increased odds of CRD deaths.
-```
 
 Interpretation:
 
@@ -683,64 +756,78 @@ confounders in epidemiological studies to ensure that the observed
 associations are not spurious and to better understand the underlying
 dynamics between treatment/exposure and outcomes.
 
+\hrulefill
+
 (f) Which other variables that you can think of could have been used as
     confounders to have a better picture of the association between X12
-    and CRD deaths? You should justify your answer. To better understand
-    the association between X12 prescription and chronic respiratory
-    disease (CRD) deaths, considering additional potential confounders
-    could provide a clearer picture. Confounders are variables that are
-    associated with both the exposure (in this case, X12 prescription)
-    and the outcome (CRD deaths) but are not an intermediate step in the
-    causal pathway from the exposure to the outcome. Here are some
-    potential confounders and justifications for including them:
+    and CRD deaths? You should justify your answer.
 
-    Age: Age is a fundamental determinant of health status and is
-    strongly associated with both the likelihood of being prescribed
-    certain medications and the risk of mortality from chronic diseases,
-    including CRD. Older individuals may have both higher medication use
-    and higher mortality rates.
+\hrulefill
 
-    Gender: Some diseases and their outcomes vary by gender due to
-    biological, behavioral, and healthcare access differences.
-    Additionally, medication effects can vary between men and women due
-    to pharmacokinetic and pharmacodynamic differences.
+\underline{Answer:}
 
-    Comorbidities: The presence of other diseases, such as
-    cardiovascular disease, diabetes, or other respiratory conditions
-    like COPD or asthma, can influence both the prescription of
-    medications and the risk of death from CRD. Individuals with
-    multiple health issues may be more likely to be prescribed X12 and
-    also have a higher risk of mortality.
+To better understand
+the association between X12 prescription and chronic respiratory
+disease (CRD) deaths, considering additional potential confounders
+could provide a clearer picture. Confounders are variables that are
+associated with both the exposure (in this case, X12 prescription)
+and the outcome (CRD deaths) but are not an intermediate step in the
+causal pathway from the exposure to the outcome. Here are some
+potential confounders and justifications for including them:
 
-    Socioeconomic Status (SES): Socioeconomic factors including income,
-    education, and occupational exposures can influence health
-    behaviors, access to healthcare, adherence to treatments, and
-    overall health outcomes. Lower SES is often associated with poorer
-    health outcomes and might influence the type of treatment received.
+Age: Age is a fundamental determinant of health status and is
+strongly associated with both the likelihood of being prescribed
+certain medications and the risk of mortality from chronic diseases,
+including CRD. Older individuals may have both higher medication use
+and higher mortality rates.
 
-    Healthcare Access and Quality: Access to and quality of healthcare
-    services can affect both the likelihood of receiving specific
-    treatments and the outcomes associated with those treatments. This
-    includes how often individuals see their doctors, the continuity of
-    care they receive, and the overall quality of the healthcare system
-    they have access to.
+Gender: Some diseases and their outcomes vary by gender due to
+biological, behavioural, and healthcare access differences.
+Additionally, medication effects can vary between men and women due
+to pharmacokinetic and pharmacodynamic differences.
 
-    Environmental Exposures: Exposure to pollutants or allergens,
-    particularly in industrial or high-traffic areas, can exacerbate CRD
-    and may influence both the severity of the disease and the treatment
-    options prescribed.
+Comorbidities: The presence of other diseases, such as
+cardiovascular disease, diabetes, or other respiratory conditions
+like COPD or asthma, can influence both the prescription of
+medications and the risk of death from CRD. Individuals with
+multiple health issues may be more likely to be prescribed X12 and
+also have a higher risk of mortality.
 
-    Lifestyle Factors: Beyond smoking, other lifestyle factors such as
-    physical activity, diet, and alcohol use could also confound the
-    relationship between X12 and CRD deaths. These factors affect
-    general health and could independently contribute to CRD severity
-    and mortality.
+Socioeconomic Status (SES): Socioeconomic factors including income,
+education, and occupational exposures can influence health
+behaviours, access to healthcare, adherence to treatments, and
+overall health outcomes. Lower SES is often associated with poorer
+health outcomes and might influence the type of treatment received.
+
+Healthcare Access and Quality: Access to and quality of healthcare
+services can affect both the likelihood of receiving specific
+treatments and the outcomes associated with those treatments. This
+includes how often individuals see their doctors, the continuity of
+care they receive, and the overall quality of the healthcare system
+they have access to.
+
+Environmental Exposures: Exposure to pollutants or allergens,
+particularly in industrial or high-traffic areas, can exacerbate CRD
+and may influence both the severity of the disease and the treatment
+options prescribed.
+
+Lifestyle Factors: Beyond smoking, other lifestyle factors such as
+physical activity, diet, and alcohol use could also confound the
+relationship between X12 and CRD deaths. These factors affect
+general health and could independently contribute to CRD severity
+and mortality.
 
 Including these variables in the analysis would help in adjusting for
 multiple sources of bias, leading to more reliable estimates of the
 effect of X12 on CRD mortality. This would be especially important in
 designing prospective studies or clinical trials where such confounding
 factors can be measured and controlled more effectively.
+
+\hrulefill
+
+\hrulefill
+
+\hrulefill
 
 # Part 2B: Low Birth Weight Study
 
@@ -754,10 +841,16 @@ and 10 respectively. The total number of mothers who predominantly
 follow Style 1 and Style 2 are 335 and 320 respectively.
 
 (a) Calculate the risk difference and the relative risk of LBW in the
-    general population for the two lifestyle habits. To analyze the data
-    from the birth weight study, we need to calculate two key
-    epidemiological measures: the Risk Difference (RD) and the Relative
-    Risk (RR). Here’s how we can calculate each:
+    general population for the two lifestyle habits.
+
+\hrulefill
+
+\underline{Answer:}
+
+To analyse the data
+from the birth weight study, we need to calculate two key
+epidemiological measures: the Risk Difference (RD) and the Relative
+Risk (RR). Here’s how we can calculate each:
 
 
 Risk Difference (RD): This measures the absolute difference in risk (or probability) of an outcome between two groups. It is given by:
@@ -838,9 +931,15 @@ Furthermore, babies born to mothers with Style 1 have a relative risk
 3.25 times greater of being of low birth weight compared to those from
 mothers with Style 2.
 
+\hrulefill
+
 (b) Find a 95% confidence interval for the risk difference and the
     relative risk of LBW in the general population for the two lifestyle
     habits. Interpret the results in the context of the study.
+
+\hrulefill
+
+\underline{Answer:}
 
 To determine the confidence intervals (CI) for both the Risk Difference
 (RD) and the Relative Risk (RR), we can use standard methods for
@@ -900,7 +999,6 @@ CI_RR_upper <- exp(CI_ln_RR_upper)
 cat("95% Confidence Interval for Risk Difference (RD):", CI_RD_lower, CI_RD_upper)
 cat("\n")
 cat("95% Confidence Interval for Relative Risk (RR):", CI_RR_lower, CI_RR_upper)
-
 ```
 
 Here are the calculated 95% confidence intervals for the Risk Difference
@@ -908,16 +1006,13 @@ Here are the calculated 95% confidence intervals for the Risk Difference
 in babies of mothers following the two different lifestyle habits:
 Confidence Intervals:
 
-```         
 Risk Difference (RD) 95% CI: (0.0327, 0.1078)
     This interval suggests that the difference in the risk of LBW between mothers with unhealthy habits (Style 1) and those with healthy habits (Style 2) is between 3.27% and 10.78%. This significant difference emphasizes the impact of lifestyle choices on LBW.
 
 Relative Risk (RR) 95% CI: (1.63, 6.46)
     This interval indicates that the risk of having a LBW baby for mothers with unhealthy habits is between 1.63 and 6.46 times greater than for mothers with healthy habits. The lower bound exceeding 1 suggests a statistically significant increased risk associated with unhealthy lifestyle habits.
-```
 
 Interpretation:
-
 These confidence intervals underscore the statistical significance and
 potential public health impact of lifestyle choices during pregnancy on
 birth weight. The findings advocate for interventions or education aimed
@@ -925,9 +1020,15 @@ at promoting healthier lifestyle choices among pregnant women to reduce
 the risk of LBW, which is associated with various adverse health
 outcomes in infants.
 
+\hrulefill
+
 (c) Perform a chi-square test to determine whether there is a
     significant association between lifestyle habits and the birth
     weight of singleton babies.
+
+\hrulefill
+
+\underline{Answer:}
 
 To assess the association between lifestyle habits and the birth weight
 of singleton babies using a chi-square test, we'll use a contingency
@@ -935,12 +1036,9 @@ table with the counts of low birth weight (LBW) and normal birth weight
 (NBW) for both Style 1 and Style 2 mothers. First, we need to determine
 the counts for the normal birth weight (NBW) babies:
 
-```{r}
-# redo this in LaTeX
-#Style 1 NBW: Total mothers in Style 1 - LBW babies in Style 1 = 335 - 34
+Style 1 NBW: Total mothers in Style 1 - LBW babies in Style 1 = 335 - 34
 
-#Style 2 NBW: Total mothers in Style 2 - LBW babies in Style 2 = 320 - 10
-```
+Style 2 NBW: Total mothers in Style 2 - LBW babies in Style 2 = 320 - 10
 
 Next, we'll create a contingency table with the following structure:
 
@@ -968,15 +1066,12 @@ p_value <- chi2_test$p.value
 
 test_statistic
 p_value
-
 ```
 
 The results of the chi-square test are as follows:
 
-```         
 Chi-square statistic: 11.79
 P-value: 0.0006
-```
 
 Interpretation:
 
@@ -989,3 +1084,9 @@ incidence of low birth weight in babies. Since the p-value is less than
 0.05, we reject the null hypothesis that there is no association between
 lifestyle habits and low birth weight. This supports the finding that
 maternal lifestyle habits have a notable impact on birth outcomes.
+
+\hrulefill
+
+\hrulefill
+
+\hrulefill
