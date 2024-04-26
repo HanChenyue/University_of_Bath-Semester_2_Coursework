@@ -273,8 +273,7 @@ beta.est<-G%*%t(X)%*%y
 beta.est
 
 # now we verify the solve the normal equations
-unname(t(X)%*%X%*%beta.est-t(X)%*%y) # should be zero due to (t(X) * X) * beta.est = t(X) * y
-
+unname(t(X)%*%X%*%beta.est-t(X)%*%y)
 
 ```
 
@@ -294,7 +293,7 @@ means<-rep(0,9)
 for (i in 1:9){
   means[i]<-mean(y[c(i,9+i)])
 }
-means # both should be the same
+means
 ```
 
 7. Verify that the 9 estimable linear combinations above are lineraly independent
