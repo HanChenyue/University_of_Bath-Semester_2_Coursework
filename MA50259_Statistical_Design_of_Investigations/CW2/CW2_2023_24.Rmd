@@ -11,6 +11,12 @@ editor_options:
     wrap: 72
 ---
 
+
+\underline{Disclaimer}:
+
+AI software (RStudio built-in Co-Pilot and ChatGPT) are used in this coursework for code, RMarkdown formatting, explanation suggestions, grammar check, and debugging purposes.
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
@@ -56,46 +62,16 @@ in the US.
 
 \underline{Answer:}
 
-Environmental Variability: Different locations have varying climatic
-conditions, soil types, and ecosystems that can significantly impact
-crop yields. By testing in multiple locations, researchers can
-assess how each barley variety performs under diverse environmental
-conditions.
+Reference: Lawson, J., 2014. *Design and Analysis of Experiments with R*. Florida: CRC Press.
 
-Temporal Variability: Testing across multiple years allows
-researchers to see how the yields of each variety are affected by
-annual fluctuations in weather patterns, such as rainfall,
-temperature, and potential pest or disease outbreaks. This helps in
-evaluating the consistency and reliability of each variety over
-time.
+So that variability caused by geographical and meteorological conditions can be removed from the error sum of squares.
 
-Generalization of Results: By collecting data from a range of
-locations and years, the experiment aims to provide more generalized
-and robust conclusions about which barley varieties perform best,
-under what conditions, and their resilience to different
-environmental stresses.
+Doing so meant that the conclusions can be generalised over the range of geographical and meteorological conditions that are being studied.
 
-Interaction Effects: It is also essential to study how location and
-year interact with barley varieties. Some varieties might perform
-exceptionally well in one location but poorly in another, or some
-might have good years and bad years depending on external
-conditions. Understanding these interactions can help in breeding
-programs and agricultural planning.
+Some varieties might perform exceptionally well in one location but poorly in another, or some might have good years and bad years depending on external conditions.
 
-Appropriate Design for Analysing the Data
+An appropriate design for analysing the data would be a Randomised Complete Block Design (RCBD).
 
-Given the structure of the data and the nature of the experiment, the
-following experimental design considerations are critical:
-
-Split-Plot Design: The main plot treatments could be the locations, with the subplot treatments being the barley varieties. This design is suitable because it considers the hierarchical structure where multiple varieties are tested within each location.
-
-Repeated Measures: Since the data involve measurements from the same experimental setup across different years, a repeated measures design could also be applicable. This approach would help in analysing the data while accounting for the possible correlations between measurements taken from the same place across the two years.
-
-Randomized Block Design: If each location is considered a block, this design can be useful, especially if the blocks (locations) are expected to differ significantly, which is likely the case given environmental differences. Each block would then have a randomized setup of barley varieties.
-
-Analysis of Variance (ANOVA): This statistical method would be appropriate to analyse the data, allowing researchers to determine if there are significant differences in yields across varieties, locations, years, and their interactions. ANOVA can help in understanding which factors (and interactions between them) significantly affect the barley yields.
-
-Mixed-Effects Models: Considering that some factors like location and year might have random effects across the dataset, using mixed-effects models (which handle both fixed and random effects) could provide a more nuanced analysis. This model accommodates the non-independence of data collected from the same locations across years.
 
 \hrulefill
 
@@ -113,10 +89,10 @@ Mixed-Effects Models: Considering that some factors like location and year might
 \underline{Answer:}
 
 ```{r}
-# Create the dataframe
+# nd Create the dataframe
 barley_data <- data.frame(
   Place = factor(rep(1:6, each = 2)),  # Ensure 'Place' is treated as a factor
-  Year = rep(c(1971, 1972), times = 6),
+  Year = factor(rep(c(1971, 1972), times = 6)),
   Excel = c(71.0, 90.7, 132.6, 99.4, 87.3, 102.5, 129.8, 96.9, 92.3, 65.2, 84.3, 63.3),
   Compana = c(95.4, 102.3, 121.0, 105.5, 73.3, 111.4, 111.3, 60.3, 81.4, 48.9, 72.1, 68.4),
   Drummond = c(109.7, 79.4, 140.7, 120.2, 79.4, 100.5, 121.5, 83.2, 72.1, 91.5, 76.9, 62.7),
@@ -133,7 +109,6 @@ anova_model <- aov(Yield ~ Place + Variety, data = barley_long)
 summary(anova_model)
 ```
 
-
 Interpretation The p-value for Variety is less than 0.05, indicating
 that there are statistically significant differences in the yields among
 the different barley varieties. The p-value for Place is also
@@ -149,9 +124,11 @@ The ANOVA model relies on several key assumptions:
 
 - Independence: The observations within each group (variety and place) should be independent of each other.
 
-- Normality: The response variable (yield) should be normally distributed for each group of categorical variables.
+- Normality: The response variable (yield) should be normally distributed for each group.
 
-- Homogeneity of variances (homoscedasticity): The variances among different groups should be equal.
+- Homogeneity of variances: The variances among different groups should be equal.
+
+- Random sampling: Observations within each group have been sampled randomly and are independent of each other
 
 Null and Alternative Hypotheses The hypotheses for the ANOVA are
 formulated as follows:
@@ -190,8 +167,10 @@ significant role in determining the yield outcomes.
 ```{r}
 # Recreate the data frame
 data <- data.frame(
-  Place = rep(1:6, each = 2),
-  Year = rep(c(1971, 1972), times = 6),
+  # Place = rep(1:6, each = 2),
+  # Year = rep(c(1971, 1972), times = 6),
+  Place = factor(rep(1:6, each = 2)),
+  Year = factor(rep(c(1971, 1972), times = 6)),
   Excel = c(71.0, 90.7, 132.6, 99.4, 87.3, 102.5, 129.8, 96.9, 92.3, 65.2, 84.3, 63.3),
   Compana = c(95.4, 102.3, 121.0, 105.5, 73.3, 111.4, 111.3, 60.3, 81.4, 48.9, 72.1, 68.4),
   Drummond = c(109.7, 79.4, 140.7, 120.2, 79.4, 100.5, 121.5, 83.2, 72.1, 91.5, 76.9, 62.7),
@@ -230,7 +209,7 @@ varieties on yield, the hypotheses are:
 
 - $H_0$ (Null Hypothesis): The means of yields are the same across all
 varieties of barley. This suggests that the variety of barley does not
-affect the yield.
+affect the yield. $\text{H}_0: \tau_1 = \tau_2 = \tau_3 = \tau_4 = \tau_5 = 0$
 
 - $H_1$ (Alternative Hypothesis): At least one variety of
 barley has a different mean yield compared to others. This indicates
@@ -374,9 +353,6 @@ ci_lower <- exp(log_odds_ratio - 1.96 * se_log_odds_ratio)
 ci_upper <- exp(log_odds_ratio + 1.96 * se_log_odds_ratio)
 ci_lower
 ci_upper
-
-
-
 ```
 
 The odds ratio (OR) is calculated as follows:
