@@ -1130,6 +1130,8 @@ frequencies to compute the chi-square statistic and p-value.
 
 ```{r}
 # Reference: https://libguides.library.kent.edu/SPSS/ChiSquare
+# Haviland M. G. (1990). Yates's correction for continuity and the analysis of 2 x 2 contingency tables. Statistics in medicine, 9(4), 363–383. https://doi.org/10.1002/sim.4780090403
+# https://imaging.mrc-cbu.cam.ac.uk/statswiki/FAQ/yates
 
 # Calculate the counts of normal birth weight (NBW) babies for each lifestyle
 NBW_Style1 <- Total_Style1 - LBW_Style1
@@ -1139,7 +1141,7 @@ NBW_Style2 <- Total_Style2 - LBW_Style2
 contingency_table <- matrix(c(LBW_Style1, NBW_Style1, LBW_Style2, NBW_Style2), nrow = 2, byrow = TRUE)
 
 # Perform the chi-square test for independence
-chi2_test <- chisq.test(contingency_table, correct = FALSE) # Disable Yates' continuity correction
+chi2_test <- chisq.test(contingency_table, correct = FALSE)
 
 # Extract the test statistic and p-value
 test_statistic <- chi2_test$statistic
@@ -1153,6 +1155,9 @@ cat("\n")
 cat("P-value:", p_value)
 
 ```
+
+Yates' correction for continuity is not applied in this case as the sample size is large enough to rely on the asymptotic chi-square distribution.
+
 The results of the chi-square test are as follows:
 
 Chi-square statistic: 12.89
