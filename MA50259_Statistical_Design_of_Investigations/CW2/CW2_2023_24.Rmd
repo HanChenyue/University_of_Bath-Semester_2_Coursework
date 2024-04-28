@@ -823,6 +823,20 @@ follow Style 1 and Style 2 are 335 and 320 respectively.
 
 \underline{Answer:}
 
+First we organise the data into a table with header on Lifestyle, LBW, NBW, and Total.
+
+```{=tex}
+\begin{center}
+\begin{tabular}{cccc}
+\rule{0in}{3ex}Lifestyle & LBW & NBW & Total\\
+ \hline
+\rule{0in}{3ex}Style 1 & 34 & 301 & 335  \\
+Style 2 & 10 & 310 & 320 \\  \hline
+Total & 44 & 611 & 655
+\end{tabular}
+\end{center}
+```
+
 To analyse the data
 from the birth weight study, we need to calculate two key
 epidemiological measures: the Risk Difference (RD) and the Relative
@@ -860,6 +874,7 @@ Total mothers in Style 2: 320
 Now, let's compute the proportions, RD, and RR.
 
 ```{r}
+# Reference: https://handbook-5-1.cochrane.org/chapter_9/9_2_2_4_measure_of_absolute_effect_the_risk_difference.htm#:~:text=The%20risk%20difference%20is%20straightforward,probability%20of%20experiencing%20the%20event.
 # Define the data
 LBW_Style1 <- 34
 Total_Style1 <- 335
@@ -876,6 +891,11 @@ RD <- P1 - P2
 # Calculate the Relative Risk (RR)
 RR <- P1 / P2
 
+P1 <- round(P1, 4)
+P2 <- round(P2, 4)
+RD <- round(RD, 4)
+RR <- round(RR, 2)
+
 cat("Proportion of LBW babies in Style 1:", P1)
 cat("\n")
 cat("Proportion of LBW babies in Style 2:", P2)
@@ -889,14 +909,14 @@ Here are the calculated values for the two lifestyle habits in the
 cohort study on birth weight:
 
 ```         
-Proportion of LBW babies for mothers with Style 1 (P1): 0.1015 (10.15%)
-Proportion of LBW babies for mothers with Style 2 (P2): 0.03125 (3.13%)
+Proportion of LBW babies for mothers with Style 1 (P1): 0.1015
+Proportion of LBW babies for mothers with Style 2 (P2): 0.03125
 ```
 
 Epidemiological Measures:
 
 ```         
-Risk Difference (RD): 0.07024 (7.02%)
+Risk Difference (RD): 0.0702 (7.02%)
 Relative Risk (RR): 3.25
 ```
 
@@ -913,9 +933,13 @@ mothers with Style 2.
     relative risk of LBW in the general population for the two lifestyle
     habits. Interpret the results in the context of the study.
 
+
 \hrulefill
 
 \underline{Answer:}
+
+Reference:
+
 
 To determine the confidence intervals (CI) for both the Risk Difference
 (RD) and the Relative Risk (RR), we can use standard methods for
@@ -944,13 +968,25 @@ The 95% CI for $ln(RR)$ is: $$
 ln(RR) \pm 1.96 \times SE_{(ln(RR))}
 $$
 
-```         
 We then exponentiate the limits of this interval to get the CI for RR.
-```
+
+by the formula:
+
+$$
+CI = e^{ln(RR) \pm 1.96 \times SE_{ln(RR)}}
+$$
+
+
 
 Let's calculate these confidence intervals using the given data:
 
 ```{r}
+# References:
+# https://www.youtube.com/watch?v=jRQ2nP7lAoU
+# https://www.youtube.com/watch?v=BmXJ_jJIGE0
+# https://sphweb.bumc.bu.edu/otlt/mph-modules/ep/ep713_randomerror/EP713_RandomError5.html
+
+
 # Calculate the standard error for Risk Difference (RD)
 SE_RD <- sqrt(P1 * (1 - P1) / Total_Style1 + P2 * (1 - P2) / Total_Style2)
 
@@ -972,6 +1008,12 @@ CI_ln_RR_upper <- ln_RR + 1.96 * SE_ln_RR
 CI_RR_lower <- exp(CI_ln_RR_lower)
 CI_RR_upper <- exp(CI_ln_RR_upper)
 
+CI_RD_lower <- round(CI_RD_lower, 4)
+CI_RD_upper <- round(CI_RD_upper, 4)
+CI_RR_lower <- round(CI_RR_lower, 2)
+CI_RR_upper <- round(CI_RR_upper, 2)
+
+
 cat("95% Confidence Interval for Risk Difference (RD):", CI_RD_lower, CI_RD_upper)
 cat("\n")
 cat("95% Confidence Interval for Relative Risk (RR):", CI_RR_lower, CI_RR_upper)
@@ -982,11 +1024,23 @@ Here are the calculated 95% confidence intervals for the Risk Difference
 in babies of mothers following the two different lifestyle habits:
 Confidence Intervals:
 
-Risk Difference (RD) 95% CI: (0.0327, 0.1078)
-    This interval suggests that the difference in the risk of LBW between mothers with unhealthy habits (Style 1) and those with healthy habits (Style 2) is between 3.27% and 10.78%. This significant difference emphasizes the impact of lifestyle choices on LBW.
+The hypothesis test for the risk difference is as follows:
 
-Relative Risk (RR) 95% CI: (1.63, 6.46)
-    This interval indicates that the risk of having a LBW baby for mothers with unhealthy habits is between 1.63 and 6.46 times greater than for mothers with healthy habits. The lower bound exceeding 1 suggests a statistically significant increased risk associated with unhealthy lifestyle habits.
+- $H_0: RD = 0$, the risk is the same for both groups
+
+- $H_a: RD \neq 0$, the risk is different for both groups
+
+Risk Difference (RD) 95% CI: (0.0327, 0.1078)
+    This interval suggests that the difference in the risk of LBW between mothers with unhealthy habits (Style 1) and those with healthy habits (Style 2) is between 3.27% and 10.78%. This significant difference emphasises the impact of lifestyle choices on LBW. The lower bound exceeding 0 indicates a statistically significant increased risk associated with unhealthy lifestyle habits, thus we reject the null hypothesis.
+
+The hypothesis test for the relative risk is as follows:
+
+- $H_0: RR = 1$, the risk is the same for both groups
+
+- $H_a: RR \neq 1$, the risk is different for both groups
+
+Relative Risk (RR) 95% CI: (1.63, 6.47)
+    This interval indicates that the risk of having a LBW baby for mothers with unhealthy habits is between 1.63 and 6.47 times greater than for mothers with healthy habits. The lower bound exceeding 1 suggests a statistically significant increased risk associated with unhealthy lifestyle habits, thus we reject the null hypothesis.
 
 Interpretation:
 These confidence intervals underscore the statistical significance and
@@ -1005,6 +1059,55 @@ outcomes in infants.
 \hrulefill
 
 \underline{Answer:}
+
+
+Using the table:
+
+```{=tex}
+\begin{center}
+\begin{tabular}{cccc}
+\rule{0in}{3ex}Lifestyle & LBW & NBW & Total\\
+ \hline
+\rule{0in}{3ex}Style 1 & 34 & 301 & 335  \\
+Style 2 & 10 & 310 & 320 \\  \hline
+Total & 44 & 611 & 655
+\end{tabular}
+\end{center}
+```
+
+Null Hypothesis ($H_0$): There is no association between lifestyle habits and birth weight.
+
+Alternative Hypothesis ($H_a$): There is an association between lifestyle habits and birth weight.
+
+The chi-square test works by:
+
+Under the null hypothesis, which states that there is no association between the two categorical variables (lifestyle habits and birth weight), the expected frequency for each cell in the contingency table is calculated as:
+
+$$
+E_{ij} = \frac{(\text{row total}_i \times \text{column total}_j)}{\text{total observations}}
+$$
+
+where $E_{ij}$ is the expected frequency for cell $(i, j)$, and the row and column totals are the sums of the observed frequencies in the respective rows and columns.
+
+
+The chi-square test statistic is calculated as:
+
+$$
+\chi^2 = \sum \frac{(O_{ij} - E_{ij})^2}{E_{ij}}
+$$
+
+where $O_{ij}$ is the observed frequency for cell $(i, j)$ and $E_{ij}$ is the expected frequency for the same cell.
+
+The degrees of freedom for a 2x2 contingency table are 1.
+
+This is calculated as:
+$$\text{degrees of freedom} = (\text{number of rows} - 1) \times (\text{number of columns} - 1)$$
+
+The p-value is then determined based on the chi-square statistic and the degrees of freedom using a chi-square distribution table (built-in to R chi-square test function).
+
+
+Let's perform the chi-square test to determine if there is a significant association between lifestyle habits and the birth weight of singleton babies.
+
 
 To assess the association between lifestyle habits and the birth weight
 of singleton babies using a chi-square test, we'll use a contingency
@@ -1026,6 +1129,8 @@ vs. Style 2) and the incidence of LBW. We will use the observed
 frequencies to compute the chi-square statistic and p-value.
 
 ```{r}
+# Reference: https://libguides.library.kent.edu/SPSS/ChiSquare
+
 # Calculate the counts of normal birth weight (NBW) babies for each lifestyle
 NBW_Style1 <- Total_Style1 - LBW_Style1
 NBW_Style2 <- Total_Style2 - LBW_Style2
@@ -1034,25 +1139,29 @@ NBW_Style2 <- Total_Style2 - LBW_Style2
 contingency_table <- matrix(c(LBW_Style1, NBW_Style1, LBW_Style2, NBW_Style2), nrow = 2, byrow = TRUE)
 
 # Perform the chi-square test for independence
-chi2_test <- chisq.test(contingency_table)
+chi2_test <- chisq.test(contingency_table, correct = FALSE) # Disable Yates' continuity correction
 
 # Extract the test statistic and p-value
 test_statistic <- chi2_test$statistic
 p_value <- chi2_test$p.value
 
-test_statistic
-p_value
-```
+test_statistic <- round(test_statistic, 2)
+p_value <- round(p_value, 4)
 
+cat("Chi-square Test Statistic:", test_statistic)
+cat("\n")
+cat("P-value:", p_value)
+
+```
 The results of the chi-square test are as follows:
 
-Chi-square statistic: 11.79
-P-value: 0.0006
+Chi-square statistic: 12.89
+P-value: 0.0003
 
 Interpretation:
 
-The chi-square test statistic of 11.79 with a p-value of approximately
-0.0006 suggests a statistically significant association between
+The chi-square test statistic of 12.89 with a p-value of approximately
+0.0003 suggests a statistically significant association between
 lifestyle habits and the birth weight of singleton babies. This result
 indicates that the lifestyle habits (Style 1 being unhealthy habits and
 Style 2 being healthy habits) are significantly associated with the
@@ -1060,6 +1169,7 @@ incidence of low birth weight in babies. Since the p-value is less than
 0.05, we reject the null hypothesis that there is no association between
 lifestyle habits and low birth weight. This supports the finding that
 maternal lifestyle habits have a notable impact on birth outcomes.
+
 
 \hrulefill
 
