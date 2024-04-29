@@ -375,7 +375,7 @@ The alternative hypothesis: \[H_a: \text{OR} \neq 1\]
 The corresponding 95% confidence interval for the odds ratio ranges from
 approximately 1.40 to 2.55. This means we are 95% confident that the
 true odds ratio lies within this interval, suggesting a statistically
-significant association between X12 prescription and CRD deaths as the interval does not include 1. Thus, we reject the null hypothesis.
+significant association between X12 prescription and CRD deaths as the interval does not include 1. Thus, at a significance level of 0.05, we reject the null hypothesis.
 
 \hrulefill
 
