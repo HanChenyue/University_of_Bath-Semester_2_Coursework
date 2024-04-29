@@ -253,7 +253,7 @@ From the ANOVA results:
 significant effects on the yields, with the model showing that
 variability due to location is significant.
 
-- Without Block Effects (Part C): Only the variety effect was tested, and it showed significance but likely with a larger residual variance, suggesting that some of the variations due to the place effect might have been unaccounted for.
+- Without Block Effects (Part C): Only the variety effect was tested, and it showed significance but with a larger residual variance, because some of the variations due to the place effect have been unaccounted for.
 
 Models that account for blocking factors are generally more robust across different environments because they adjust for potential factors that affects our experimental setup. This can make findings more generalisable across similar conditions beyond the scope of the experiment.
 
