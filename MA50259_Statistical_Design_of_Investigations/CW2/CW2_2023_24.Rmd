@@ -62,7 +62,9 @@ in the US.
 
 \underline{Answer:}
 
-Reference: Lawson, J., 2014. *Design and Analysis of Experiments with R*. Florida: CRC Press.
+```{r}
+# Reference: Lawson, J., 2014. *Design and Analysis of Experiments with R*. Florida: CRC Press.
+```
 
 So that variability caused by geographical and meteorological conditions can be removed from the error sum of squares.
 
@@ -129,14 +131,14 @@ where:
 
 The ANOVA model relies on several key assumptions:
 
-- Independence: The observations within each group (variety and place) should be independent of each other.
+- Independence: The observations within each group should be independent of each other.
 
-- Normality: The response variable (yield) should be normally distributed for each group.
+- Normality: The response variable should be normally distributed for each group.
 
 - Homogeneity of variances: The variances among different groups should be equal.
 
 
-Null and Alternative Hypotheses The hypotheses for the ANOVA are
+The hypotheses for the ANOVA are
 formulated as follows:
 
 - $H_0$ (Null Hypothesis): $\text{H}_0: \tau_1 = \tau_2 = \tau_3 = \tau_4 = \tau_5 = 0$ (There are no differences between barley varieties in terms of yield)
@@ -145,17 +147,7 @@ formulated as follows:
 
 The ANOVA results uses the F-statistic to test the null hypothesis.
 
-The F-statistic is calculated as:
-
-$$F = \frac{MST}{MSE}$$
-
-where:
-
-- $MST$ is the mean square treatment
-
-- $MSE$ is the mean square error
-
-The F-statistics obtained here will lead us to its associated p-value, which will help us determine the significance
+The F-value obtained has its associated p-value, which will help us determine the significance
 
 p-value is 0.000576, which is less than 0.05. Therefore, at a significance level of 0.05, we reject the null hypothesis. This suggests that there are statistically significant differences in the yields across the barley varieties.
 
@@ -213,32 +205,20 @@ where:
 
 
 
-Assumptions of the ANOVA Model When conducting ANOVA, several key
-assumptions need to be met:
+Assumptions of the ANOVA Model:
 
-- Independence: The observations within each group (variety and place) should be independent of each other.
+- Independence: The observations within each group should be independent of each other.
 
-- Normality: The response variable (yield) should be normally distributed for each group.
+- Normality: The response variable should be normally distributed for each group.
 
 - Homogeneity of variances: The variances among different groups should be equal.
 
 The ANOVA results uses the F-statistic to test the null hypothesis.
 
-The F-statistic is calculated as:
+The F-value obtained has its associated p-value, which will help us determine the significance
 
-$$F = \frac{MST}{MSE}$$
-
-where:
-
-- $MST$ is the mean square treatment
-
-- $MSE$ is the mean square error
-
-The F-statistics obtained here will lead us to its associated p-value, which will help us determine the significance
-
-Null and
-Alternative Hypotheses For the ANOVA testing the effect of barley
-varieties on yield, the hypotheses are:
+The hypotheses for the ANOVA are
+formulated as follows:
 
 - $H_0$ (Null Hypothesis): $\text{H}_0: \tau_1 = \tau_2 = \tau_3 = \tau_4 = \tau_5 = 0$ (There are no differences between barley varieties in terms of yield)
 
