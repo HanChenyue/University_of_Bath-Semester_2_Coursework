@@ -334,6 +334,8 @@ Total & 257 & 570
 \underline{Answer:}
 
 ```{r}
+# Reference: https://www.youtube.com/watch?v=jRQ2nP7lAoU
+# Reference: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8198228/
 # Create a 2x2 table for the data
 X12_table <- matrix(c(130, 127, 200, 370), nrow = 2, byrow = TRUE)
 colnames(X12_table) <- c("Cases", "Controls")
@@ -341,18 +343,28 @@ rownames(X12_table) <- c("Yes", "No")
 
 # Calculate the odds ratio
 odds_ratio <- X12_table[1, 1] * X12_table[2, 2] / (X12_table[1, 2] * X12_table[2, 1])
-odds_ratio
+
+# Round the odds ratio to two decimal places
+odds_ratio <- round(odds_ratio, 2)
 
 # Calculate the standard error of the log odds ratio
 log_odds_ratio <- log(odds_ratio)
-se_log_odds_ratio <- sqrt(1 / X12_table[1, 1] + 1 / X12_table[1, 2] + 1 / X12_table[2, 1] + 1 / X12_table[2, 2])
-se_log_odds_ratio
+se_log_odds_ratio <- sqrt(1 / X12_table[1, 1] + 1 / X12_table[1, 2] +
+                            1 / X12_table[2, 1] + 1 / X12_table[2, 2])
 
 # Calculate the 95% confidence interval for the odds ratio
 ci_lower <- exp(log_odds_ratio - 1.96 * se_log_odds_ratio)
 ci_upper <- exp(log_odds_ratio + 1.96 * se_log_odds_ratio)
-ci_lower
-ci_upper
+
+# Round the confidence interval to two decimal places
+ci_lower <- round(ci_lower, 4)
+ci_upper <- round(ci_upper, 4)
+
+# Print the results
+cat("The odds ratio (OR) between X12 prescription and CRD deaths is approximately",
+    odds_ratio, ".\n")
+cat("The 95% confidence interval for the odds ratio is (",
+    ci_lower, ", ", ci_upper, ").\n")
 ```
 
 The odds ratio (OR) is calculated as follows:
@@ -395,15 +407,15 @@ $$
 After computing the OR and its 95% CI, we get:
 
 The odds ratio (OR) between X12 prescription and CRD deaths is
-approximately 1.89. This indicates that those prescribed X12 had about
-1.89 times the odds of dying from CRD compared to those not prescribed
-X12.
+approximately 1.89. This indicates that the ratio of those prescribed with X12 to those not prescribed with X12 was about 1.89 times higher among cases (deaths) compared to controls (non-deaths).
+
+The null hypothesis: \[H_0: \text{OR} = 1\]
+The alternative hypothesis: \[H_a: \text{OR} \neq 1\]
 
 The corresponding 95% confidence interval for the odds ratio ranges from
 approximately 1.40 to 2.55. This means we are 95% confident that the
 true odds ratio lies within this interval, suggesting a statistically
-significant association between X12 prescription and CRD deaths,
-assuming the interval does not include 1.
+significant association between X12 prescription and CRD deaths as the interval does not include 1. Thus, we reject the null hypothesis.
 
 \hrulefill
 
@@ -420,15 +432,19 @@ assuming the interval does not include 1.
 contingency_table <- matrix(c(130, 127, 200, 370), nrow = 2, byrow = TRUE)
 
 # Perform the chi-square test for independence
-chi2_test <- chisq.test(contingency_table)
+chi2_test <- chisq.test(contingency_table, correct = FALSE)
 
 # Extract the test statistic and p-value
 test_statistic <- chi2_test$statistic
 p_value <- chi2_test$p.value
 
-test_statistic
-p_value # Different from my Python Code, better recheck
+# Round the test statistics and p-value
+test_statistic <- round(test_statistic, 2)
+p_value <- format(p_value, scientific = TRUE, digits = 2)
 
+# Print the results
+cat("The chi-square test statistic is approximately", test_statistic, ".\n")
+cat("The p-value is about", p_value, ".\n")
 ```
 
 To test the null hypothesis that there is no association between X12
@@ -436,33 +452,84 @@ prescription and CRD deaths (i.e., the odds ratio equals 1), we can use
 the chi-square test for independence in a 2x2 contingency table. The
 test statistic is calculated as:
 
-The chi-square ($\chi^2$) statistic is calculated as follows:
+<!-- The chi-square ($\chi^2$) statistic is calculated as follows: -->
 
-$$
-\chi^2 = \frac{(ad - bc)^2 \times (a + b + c + d)}{(a + b)(c + d)(a + c)(b + d)}
-$$
+<!-- $$ -->
+<!-- \chi^2 = \frac{(ad - bc)^2 \times (a + b + c + d)}{(a + b)(c + d)(a + c)(b + d)} -->
+<!-- $$ -->
 
-Where:
+<!-- Where: -->
+
+<!-- ```{=tex} -->
+<!-- \begin{itemize} -->
+<!--   \item $a = 130$ (Exposed cases) -->
+<!--   \item $b = 200$ (Exposed controls) -->
+<!--   \item $c = 127$ (Unexposed cases) -->
+<!--   \item $d = 370$ (Unexposed controls) -->
+<!-- \end{itemize} -->
+<!-- ``` -->
+
+In table format:
+
 
 ```{=tex}
-\begin{itemize}
-  \item $a = 130$ (Exposed cases)
-  \item $b = 200$ (Exposed controls)
-  \item $c = 127$ (Unexposed cases)
-  \item $d = 370$ (Unexposed controls)
-\end{itemize}
+\begin{center}
+\begin{tabular}{cccc}
+\rule{0in}{3ex} & Cases & Controls & Total\\
+ \hline
+\rule{0in}{3ex}X12 prescribed & 130 & 200 & 330  \\
+No & 127 & 370 & 497 \\  \hline
+Total & 257 & 570 & 827
+\end{tabular}
+\end{center}
 ```
+
+Null Hypothesis ($H_0$): There is no association between X12 prescription and CRD deaths.
+
+Alternative Hypothesis ($H_a$): There is an association between X12 prescription and CRD deaths.
+
+
+The chi-square test works by:
+
+Under the null hypothesis, which states that there is no association between X12 prescriptions and CRD death, the expected frequency for each cell in the contingency table is calculated as:
+
+$$
+E_{ij} = \frac{(\text{row total}_i \times \text{column total}_j)}{\text{total observations}}
+$$
+
+where $E_{ij}$ is the expected frequency for cell $(i, j)$, and the row and column totals are the sums of the observed frequencies in the respective rows and columns.
+
+
+The chi-square test statistic is calculated as:
+
+$$
+\chi^2 = \sum \frac{(O_{ij} - E_{ij})^2}{E_{ij}}
+$$
+
+where $O_{ij}$ is the observed frequency for cell $(i, j)$ and $E_{ij}$ is the expected frequency for the same cell.
+
+The degrees of freedom for a 2x2 contingency table are 1.
+
+This is calculated as:
+$$\text{degrees of freedom} = (\text{number of rows} - 1) \times (\text{number of columns} - 1)$$
+
+The p-value is then determined based on the chi-square statistic and the degrees of freedom using a chi-square distribution table (built-in to R chi-square test function).
+
+
+Let's perform the chi-square test to determine if there is a significant association between X12 prescription and CRD deaths.
+
+
 The test statistic follows a chi-square distribution with 1 degree of
 freedom under the null hypothesis. We will also calculate the p-value,
 which indicates the probability of observing a test statistic as extreme
 as, or more extreme than, what is observed if the null hypothesis is
 true.
 
-A common threshold for significance is p < 0.05.
+The threshold for significance is p < 0.05.
 
 Let's calculate the chi-square test statistic and the p-value.
 
-The chi-square test statistics is approximately 17.74, and the p-value is about 2.5e-05.
+The chi-square test statistics is approximately 17.74, and the p-value is about 2.5e-05. Thus, we reject the null hypothesis.
 
 This p-value is very small (less than 0.05), indicating that the test
 result is statistically significant. Therefore, we reject the null
@@ -516,27 +583,25 @@ computing the confidence intervals similarly to the previous part.
 For Non-Smokers:
 
 ```         
-a=74a=74 (Exposed cases)
-b=170b=170 (Exposed controls)
-c=100c=100 (Unexposed cases)
-d=267d=267 (Unexposed controls)
+a=74(Exposed cases)
+b=170 (Exposed controls)
+c=100 (Unexposed cases)
+d=267 (Unexposed controls)
 ```
 
 For Smokers:
 
 ```         
-a=56a=56 (Exposed cases)
-b=30b=30 (Exposed controls)
-c=27c=27 (Unexposed cases)
-d=103d=103 (Unexposed controls)
+a=56 (Exposed cases)
+b=30 (Exposed controls)
+c=27 (Unexposed cases)
+d=103 (Unexposed controls)
 ```
 
 We'll calculate the odds ratio for each stratum using the formula:
 
 $$
 OR = \frac{\text{ad}}{\text{bc}}
-$$ $$
-OR = \frac{\text{bc}}{\text{ad}}
 $$
 
 And then calculate the 95% confidence interval using: $$
@@ -547,6 +612,10 @@ Where the standard error is: $$
 SE(\log(OR)) = \sqrt{\frac{1}{a} + \frac{1}{b} + \frac{1}{c} + \frac{1}{d}}
 $$ ​
 
+The null hypothesis: \[H_0: \text{OR} = 1\]
+
+The alternative hypothesis: \[H_a: \text{OR} \neq 1\]
+
 Let's perform these calculations for both strata.
 
 ```{r}
@@ -555,41 +624,62 @@ non_smokers_table <- matrix(c(74, 100, 170, 267), nrow = 2, byrow = TRUE)
 smokers_table <- matrix(c(56, 27, 30, 103), nrow = 2, byrow = TRUE)
 
 # Calculate the odds ratio and 95% confidence interval for non-smokers
-odds_ratio_non_smokers <- non_smokers_table[1, 1] * non_smokers_table[2, 2] / (non_smokers_table[1, 2] * non_smokers_table[2, 1])
+odds_ratio_non_smokers <- non_smokers_table[1, 1]* non_smokers_table[2, 2] /
+  (non_smokers_table[1, 2] * non_smokers_table[2, 1])
+
 log_odds_ratio_non_smokers <- log(odds_ratio_non_smokers)
-se_log_odds_ratio_non_smokers <- sqrt(1 / non_smokers_table[1, 1] + 1 / non_smokers_table[1, 2] + 1 / non_smokers_table[2, 1] + 1 / non_smokers_table[2, 2])
+
+se_log_odds_ratio_non_smokers <- sqrt(1 / non_smokers_table[1, 1] +
+                                        1 / non_smokers_table[1, 2] +
+                                        1 / non_smokers_table[2, 1] +
+                                        1 / non_smokers_table[2, 2])
+
 ci_lower_non_smokers <- exp(log_odds_ratio_non_smokers - 1.96 * se_log_odds_ratio_non_smokers)
 ci_upper_non_smokers <- exp(log_odds_ratio_non_smokers + 1.96 * se_log_odds_ratio_non_smokers)
 
 # Calculate the odds ratio and 95% confidence interval for smokers
-odds_ratio_smokers <- smokers_table[1, 1] * smokers_table[2, 2] / (smokers_table[1, 2] * smokers_table[2, 1])
+odds_ratio_smokers <- smokers_table[1, 1] * smokers_table[2, 2] /
+  (smokers_table[1, 2] * smokers_table[2, 1])
+
 log_odds_ratio_smokers <- log(odds_ratio_smokers)
-se_log_odds_ratio_smokers <- sqrt(1 / smokers_table[1, 1] + 1 / smokers_table[1, 2] + 1 / smokers_table[2, 1] + 1 / smokers_table[2, 2])
+se_log_odds_ratio_smokers <- sqrt(1 / smokers_table[1, 1] +
+                                    1 / smokers_table[1, 2] +
+                                    1 / smokers_table[2, 1] +
+                                    1 / smokers_table[2, 2])
+
+
 ci_lower_smokers <- exp(log_odds_ratio_smokers - 1.96 * se_log_odds_ratio_smokers)
 ci_upper_smokers <- exp(log_odds_ratio_smokers + 1.96 * se_log_odds_ratio_smokers)
 
+# Round the results
+odds_ratio_non_smokers <- round(odds_ratio_non_smokers, 2)
+ci_lower_non_smokers <- round(ci_lower_non_smokers, 2)
+ci_upper_non_smokers <- round(ci_upper_non_smokers, 2)
+odds_ratio_smokers <- round(odds_ratio_smokers, 2)
+ci_lower_smokers <- round(ci_lower_smokers, 2)
+ci_upper_smokers <- round(ci_upper_smokers, 2)
 
-cat("Non-Smokers Odds Ratio and 95% CI:")
-cat(odds_ratio_non_smokers, ci_lower_non_smokers, ci_upper_non_smokers)
-cat("\n")
-cat("Smokers Odds Ratio and 95% CI:")
-cat(odds_ratio_smokers, ci_lower_smokers, ci_upper_smokers)
+cat ("Non-Smokers Odds Ratio:", odds_ratio_non_smokers)
+cat ("\n")
+cat ("Non-Smokers CI:", ci_lower_non_smokers, ci_upper_non_smokers)
+cat ("\n")
+cat ("Smokers Odds Ratio:", odds_ratio_smokers)
+cat ("\n")
+cat ("Smokers CI:", ci_lower_smokers, ci_upper_smokers)
 
 
 ```
 
 Interpretation:
 
-For Non-Smokers: The odds ratio of 1.16 suggests a slight increase in
-the odds of dying from CRD among those prescribed X12 compared to those
-not prescribed X12, but the confidence interval includes 1, indicating
-that this association is not statistically significant for non-smokers.
+For non-smokers:
+- The OR is 1.16.
+- This indicates that the ratio of those prescribed with X12 to those not prescribed with X12 was about 1.16 times higher among non-smokers who died of CRD compared to non-smokers who did not die of CRD. Since confidence interval includes 1, the association is not statistically significant for non-smokers. We fail to reject the null hypothesis.
 
-For Smokers: The odds ratio of 7.12 is substantially higher, indicating
-that smokers prescribed X12 have about 7 times the odds of dying from
-CRD compared to smokers not prescribed X12. The confidence interval does
-not include 1 and is quite wide (3.86 to 13.15), suggesting a strong and
-statistically significant association in this group.
+For smokers:
+- The OR is 7.12.
+- This indicates that the ratio of those prescribed with X12 to those not prescribed with X12 was about 7.12 times higher among smokers who died of CRD compared to smokers who did not die of CRD. The confidence interval does not include 1, suggesting a statistically significant association for smokers. We reject the null hypothesis.
+
 
 These results imply that the effect of X12 prescription on CRD mortality
 may be much more pronounced in smokers than in non-smokers, possibly due
@@ -1132,6 +1222,7 @@ frequencies to compute the chi-square statistic and p-value.
 # Reference: https://libguides.library.kent.edu/SPSS/ChiSquare
 # Haviland M. G. (1990). Yates's correction for continuity and the analysis of 2 x 2 contingency tables. Statistics in medicine, 9(4), 363–383. https://doi.org/10.1002/sim.4780090403
 # https://imaging.mrc-cbu.cam.ac.uk/statswiki/FAQ/yates
+# https://www.ncl.ac.uk/webtemplate/ask-assets/external/maths-resources/business/hypothesis-tests/chi-square-tests.html
 
 # Calculate the counts of normal birth weight (NBW) babies for each lifestyle
 NBW_Style1 <- Total_Style1 - LBW_Style1
@@ -1148,7 +1239,7 @@ test_statistic <- chi2_test$statistic
 p_value <- chi2_test$p.value
 
 test_statistic <- round(test_statistic, 2)
-p_value <- round(p_value, 4)
+p_value <- format(p_value, scientific = TRUE, digits = 2)
 
 cat("Chi-square Test Statistic:", test_statistic)
 cat("\n")
@@ -1161,12 +1252,12 @@ Yates' correction for continuity is not applied in this case as the sample size 
 The results of the chi-square test are as follows:
 
 Chi-square statistic: 12.89
-P-value: 0.0003
+P-value: 3.3e-04
 
 Interpretation:
 
 The chi-square test statistic of 12.89 with a p-value of approximately
-0.0003 suggests a statistically significant association between
+3.3e-04 suggests a statistically significant association between
 lifestyle habits and the birth weight of singleton babies. This result
 indicates that the lifestyle habits (Style 1 being unhealthy habits and
 Style 2 being healthy habits) are significantly associated with the
