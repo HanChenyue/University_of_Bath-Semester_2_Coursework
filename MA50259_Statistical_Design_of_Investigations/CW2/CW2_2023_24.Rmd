@@ -408,6 +408,7 @@ significant association between X12 prescription and CRD deaths as the interval 
 
 
 ```{r}
+# Reference: https://vula.uct.ac.za/access/content/group/9c29ba04-b1ee-49b9-8c85-9a468b556ce2/DOH/Module%202%20(Bio_Epi)/Biostatistics/BIOSTATISTICS/BS1-10.htm
 # Define the 2x2 contingency table
 contingency_table <- matrix(c(130, 127, 200, 370), nrow = 2, byrow = TRUE)
 
@@ -627,7 +628,7 @@ ci_upper_smokers <- round(ci_upper_smokers, 2)
 
 cat ("Non-Smokers Odds Ratio:", odds_ratio_non_smokers)
 cat ("\n")
-cat ("Non-Smokers CI:", ci_lower_non_smokers, ci_upper_non_smokers)
+# cat ("Non-Smokers CI:", ci_lower_non_smokers, ci_upper_non_smokers)
 cat ("Non-Smokers CI:", "(", ci_lower_non_smokers, ci_upper_non_smokers,")")
 cat ("\n")
 cat ("Smokers Odds Ratio:", odds_ratio_smokers)
@@ -753,8 +754,6 @@ V <- ((a_ns + b_ns) * (c_ns + d_ns) * (a_ns + c_ns) * (b_ns + d_ns) / (n_ns^2 * 
 # Calculate the more precise SE
 SE <- sqrt(V / (Q * R))
 
-# Mantel-Haenszel Odds Ratio from previous calculation
-MH_OR <- 1.87
 
 # Exposure Factor and Confidence Interval using more precise SE
 EF <- exp(1.96 * SE)
@@ -782,8 +781,7 @@ interval ranges from 1.36 to 2.57.
 
 Interpretation:
 
-The overall adjusted odds ratio of 1.87 suggests that individuals prescribed X12 to those not prescribed X12 have about 1.87 times the odds of dying from CRD compared to those who survived, after adjusting for smoking status. This indicates a significant association between X12 prescription and CRD mortality across both smokers and non-smokers, with the effect being evident even after controlling for the potential confounding effect of smoking.
-
+The MH OR of approximately 1.87 suggests a stronger association between being prescribed medication X12 and the risk of dying from chronic respiratory disease (CRD), taking into account the smoking status as a stratifying factor.
 
 The confidence interval (1.36 to 2.57) does not include 1, which further
 supports the statistical significance of this finding. At a significance level of 0.05, we reject the null hypothesis.
@@ -792,11 +790,6 @@ This analysis highlights that X12 prescription may increase the risk of CRD mort
 irrespective of smoking status, though the effect is more pronounced in
 smokers as seen in the stratified analysis.
 
-This suggests the need for careful consideration in prescribing X12,
-especially in patients with existing severe CRD or those who are active
-smokers. Further research might be required to explore the causal
-mechanisms behind this association and to evaluate whether similar
-patterns exist in other populations or settings.
 
 \hrulefill
 
@@ -810,38 +803,28 @@ patterns exist in other populations or settings.
 
 In part (a), where we didn't account for
 smoking, the odds ratio (OR) calculated for the association between
-X12 prescription and CRD deaths was approximately 1.89, with a
-confidence interval ranging from about 1.40 to 2.55. This suggested
-a significant association indicating that individuals prescribed X12
-had higher odds of dying from CRD.
+X12 prescription and CRD deaths was approximately 1.89.
 
 In part (d), after adjusting for smoking using the Mantel-Haenszel
-method, the summary odds ratio was approximately 1.87, with a confidence
-interval ranging from 1.36 to 2.57. This odds ratio, though very similar
+method, the summary odds ratio was approximately 1.87. This odds ratio, though very similar
 in magnitude to the unadjusted odds ratio, now explicitly accounts for
-smoking as a confounding factor. Comparison and Impact of Confounding by
-Smoking:
+smoking as a confounding factor.
 
-Magnitude of Association: The magnitude of the association between X12 prescription and CRD deaths remained relatively unchanged (from 1.89 to 1.87) after adjusting for smoking. This suggests that the overall effect of X12 on the risk of CRD deaths is not heavily confounded by smoking, as the adjustment did not markedly alter the odds ratio.
+This analysis highlights that X12 prescription may increase the risk of CRD mortality
+irrespective of smoking status, though the effect is more pronounced in
+smokers as seen in the stratified analysis.
 
-Confidence Interval: Both confidence intervals do not include 1 and are relatively wide but overlapping, which supports a statistically significant association in both scenarios. The adjusted model has a slightly wider interval, indicating increased uncertainty in the estimate when accounting for smoking, which is a common outcome when adjusting for confounders due to the division of the sample into strata.
+The magnitude of the association between X12 prescription and CRD deaths remained relatively unchanged (from 1.89 to 1.87) after adjusting for smoking. This suggests that the overall effect of X12 on the risk of CRD deaths is not heavily confounded by smoking, as the adjustment did not markedly alter the odds ratio.
 
-Direction of Association: There was no change in the direction of the association; in both cases, X12 prescription was associated with increased odds of CRD deaths.
+
 
 Interpretation:
 
 Adjusting for smoking confirmed that the relationship between X12
 prescription and increased mortality from CRD is robust and not merely a
 product of confounding due to differences in smoking habits among the
-cases and controls. The slight change in the confidence interval width
-reflects the typical increase in uncertainty when models adjust for
-additional factors but does not diminish the overall finding of a
-significant positive association.
+cases and controls. 
 
-This analysis underscores the importance of considering potential
-confounders in epidemiological studies to ensure that the observed
-associations are not spurious and to better understand the underlying
-dynamics between treatment/exposure and outcomes.
 
 \hrulefill
 
@@ -1001,23 +984,8 @@ cat("\n")
 cat("Relative Risk (RR):", RR)
 ```
 
-Here are the calculated values for the two lifestyle habits in the
-cohort study on birth weight:
-
-```         
-Proportion of LBW babies for mothers with Style 1 (P1): 0.1015
-Proportion of LBW babies for mothers with Style 2 (P2): 0.03125
-```
-
-Epidemiological Measures:
-
-```         
-Risk Difference (RD): 0.0702 (7.02%)
-Relative Risk (RR): 3.25
-```
-
 These results indicate that the risk of having a baby with low birth
-weight is 7.02% higher for mothers with unhealthy lifestyle habits
+weight is 7.02% (RD = 0.0702) higher for mothers with unhealthy lifestyle habits
 (Style 1) compared to those with healthy lifestyle habits (Style 2).
 Furthermore, babies born to mothers with Style 1 have a relative risk
 3.25 times greater of being of low birth weight compared to those from
@@ -1110,9 +1078,9 @@ CI_RR_lower <- round(CI_RR_lower, 2)
 CI_RR_upper <- round(CI_RR_upper, 2)
 
 
-cat("95% Confidence Interval for Risk Difference (RD):", CI_RD_lower, CI_RD_upper)
+cat("95% Confidence Interval for Risk Difference (RD):", "(", CI_RD_lower, ",", CI_RD_upper, ")" )
 cat("\n")
-cat("95% Confidence Interval for Relative Risk (RR):", CI_RR_lower, CI_RR_upper)
+cat("95% Confidence Interval for Relative Risk (RR):", "(", CI_RR_lower, ",", CI_RR_upper, ")")
 ```
 
 Here are the calculated 95% confidence intervals for the Risk Difference
@@ -1244,10 +1212,12 @@ vs. Style 2) and the incidence of LBW. We will use the observed
 frequencies to compute the chi-square statistic and p-value.
 
 ```{r}
-# Reference: https://libguides.library.kent.edu/SPSS/ChiSquare
+# Reference:
+# https://libguides.library.kent.edu/SPSS/ChiSquare
 # Haviland M. G. (1990). Yates's correction for continuity and the analysis of 2 x 2 contingency tables. Statistics in medicine, 9(4), 363–383. https://doi.org/10.1002/sim.4780090403
 # https://imaging.mrc-cbu.cam.ac.uk/statswiki/FAQ/yates
 # https://www.ncl.ac.uk/webtemplate/ask-assets/external/maths-resources/business/hypothesis-tests/chi-square-tests.html
+# https://vula.uct.ac.za/access/content/group/9c29ba04-b1ee-49b9-8c85-9a468b556ce2/DOH/Module%202%20(Bio_Epi)/Biostatistics/BIOSTATISTICS/BS1-10.htm
 
 # Calculate the counts of normal birth weight (NBW) babies for each lifestyle
 NBW_Style1 <- Total_Style1 - LBW_Style1
