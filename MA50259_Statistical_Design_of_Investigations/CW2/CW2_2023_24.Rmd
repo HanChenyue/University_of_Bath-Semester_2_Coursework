@@ -479,7 +479,7 @@ The p-value is then determined based on the chi-square statistic and the degrees
 Let's perform the chi-square test to determine if there is a significant association between X12 prescription and CRD deaths.
 
 
-The chi-square test statistics is approximately 17.74, and the p-value is about 2.5e-05.
+The chi-square test statistics (Without Yates' correction) is 17.74, and the p-value is about 2.5e-05.
 
 This p-value is very small (less than 0.05), indicating that the test
 result is statistically significant. Therefore, at a significance level of 0.05, we reject the null hypothesis of no association between X12 prescription and CRD deaths. This suggests that there is a statistically
@@ -759,8 +759,6 @@ The Mantel-Haenszel summary odds ratio (MH OR), when adjusting for
 smoking, is approximately 1.87. The corresponding 95% confidence
 interval ranges from 1.36 to 2.57.
 
-Interpretation:
-
 The MH OR of approximately 1.87 suggests a stronger association between being prescribed medication X12 and the risk of dying from chronic respiratory disease (CRD), taking into account the smoking status as a stratifying factor.
 
 The confidence interval (1.36 to 2.57) does not include 1, which further
@@ -796,11 +794,7 @@ smokers as seen in the stratified analysis.
 
 The magnitude of the association between X12 prescription and CRD deaths remained relatively unchanged (from 1.89 to 1.87) after adjusting for smoking. This suggests that the overall effect of X12 on the risk of CRD deaths is not heavily confounded by smoking, as the adjustment did not markedly alter the odds ratio.
 
-
-
-Interpretation:
-
-Adjusting for smoking confirmed that the relationship between X12
+Adjusting for smoking suggests that the relationship between presence of X12
 prescription and increased mortality from CRD is robust and not merely a
 product of confounding due to differences in smoking habits among the
 cases and controls. 
@@ -816,47 +810,26 @@ cases and controls.
 
 \underline{Answer:}
 
+
+
+Socio-economic Status (SES): Socio-economic factors including income,
+education, and occupational exposures can influence health
+behaviours, lifestyle factors, access to healthcare, adherence to treatments, and
+overall health outcomes. Lower SES is often associated with poorer
+health outcomes and might influence the type of treatment received.
+
 Age: Age is a fundamental determinant of health status and is
 strongly associated with both the likelihood of being prescribed
 certain medications and the risk of mortality from chronic diseases,
 including CRD. Older individuals may have both higher medication use
 and higher mortality rates.
 
-Socio-economic Status (SES): Socio-economic factors including income,
-education, and occupational exposures can influence health
-behaviours, access to healthcare, adherence to treatments, and
-overall health outcomes. Lower SES is often associated with poorer
-health outcomes and might influence the type of treatment received.
-
 Environmental Exposures: Exposure to pollutants or allergens,
 particularly in industrial or high-traffic areas, can exacerbate CRD
 and may influence both the severity of the disease and the treatment
 options prescribed.
 
-Lifestyle Factors: Beyond smoking, other lifestyle factors such as
-physical activity, diet, and alcohol use could also confound the
-relationship between X12 and CRD deaths. These factors affect
-general health and could independently contribute to CRD severity
-and mortality.
 
-<!-- Gender: Some diseases and their outcomes vary by gender due to -->
-<!-- biological, behavioural, and healthcare access differences. -->
-<!-- Additionally, medication effects can vary between men and women due -->
-<!-- to pharmacokinetic and pharmacodynamic differences. -->
-
-<!-- Comorbidities: The presence of other diseases, such as -->
-<!-- cardiovascular disease, diabetes, or other respiratory conditions -->
-<!-- like COPD or asthma, can influence both the prescription of -->
-<!-- medications and the risk of death from CRD. Individuals with -->
-<!-- multiple health issues may be more likely to be prescribed X12 and -->
-<!-- also have a higher risk of mortality. -->
-
-<!-- Healthcare Access and Quality: Access to and quality of healthcare -->
-<!-- services can affect both the likelihood of receiving specific -->
-<!-- treatments and the outcomes associated with those treatments. This -->
-<!-- includes how often individuals see their doctors, the continuity of -->
-<!-- care they receive, and the overall quality of the healthcare system -->
-<!-- they have access to. -->
 
 \hrulefill
 
@@ -1222,11 +1195,11 @@ cat("P-value:", p_value)
 
 ```
 
-Yates' correction for continuity is not applied in this case as the sample size is large enough to rely on the asymptotic chi-square distribution.
 
 The results of the chi-square test are as follows:
 
-Chi-square statistic: 12.89
+Chi-square statistic (Without Yates' correction): 12.89
+
 P-value: 3.3e-04
 
 Interpretation:
