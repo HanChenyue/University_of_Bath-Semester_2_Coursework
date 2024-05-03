@@ -1047,8 +1047,8 @@ The hypothesis test for the risk difference is as follows:
 
 - $H_a: RD \neq 0$, the risk is different for both groups
 
-Risk Difference (RD) 95% CI: (0.0327, 0.1078)
-    This interval suggests that the difference in the risk of LBW between mothers with unhealthy habits (Style 1) and those with healthy habits (Style 2) is between 3.27% and 10.78%. This significant difference emphasises the impact of lifestyle choices on LBW. The lower bound exceeding 0 indicates a statistically significant increased risk associated with unhealthy lifestyle habits, thus at a significance level of 0.05, we reject the null hypothesis.
+Risk Difference (RD) 95% CI: (0.0327, 0.1077)
+    This interval suggests that the difference in the risk of LBW between mothers with unhealthy habits (Style 1) and those with healthy habits (Style 2) is between 3.27% and 10.77%. This significant difference emphasises the impact of lifestyle choices on LBW. The lower bound exceeding 0 indicates a statistically significant increased risk associated with unhealthy lifestyle habits, thus at a significance level of 0.05, we reject the null hypothesis.
 
 The hypothesis test for the relative risk is as follows:
 
