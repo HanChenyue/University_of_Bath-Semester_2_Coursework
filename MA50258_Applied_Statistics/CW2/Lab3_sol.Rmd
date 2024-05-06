@@ -1,0 +1,1335 @@
+---
+title: 'MA50258: Applied Statistics Lab 3 (SOLUTIONS)'
+author: "Karim Anaya-Izquierdo"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    code_download: yes
+  pdf_document:
+    keep_tex: yes
+    number_sections: yes
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, highlight = TRUE,warning = FALSE,message= FALSE)
+```
+
+```{r klippy, echo=FALSE, include=TRUE}
+klippy::klippy()
+```
+
+
+# Introduction
+
+
+The goal of this lab is to consolidate your knowledge on proposing different regression models in R. You are encouraged to use  pipes (` %>% `) as well as appropriate indentation in your code answers. Overall, `log` refers to natural logarithm.
+
+
+
+
+# Packages
+
+
+```{r message=FALSE}
+library(tidyverse) 
+library(knitr) # general purpose literate programming tools
+library(klippy) # to copy chunks of code to clipboard
+library(patchwork)
+library(broom)
+library(kableExtra)
+library(modelr)
+```
+
+
+
+# Sustainable development goals (SDG) data
+
+
+The data comes from UNESCO's [Sustainable Development Goals](https://en.unesco.org/sustainabledevelopmentgoals). The data is of free access via UNESCO [Institute of Statistics ](http://data.uis.unesco.org). The dataset contains:
+
+
+* Information about 89 countries
+
+* 9 variables of education and socio-demographic
+
+* Yearly information from 2013 to 2017
+
+## Variable dictionary
+
+The description of the variables in the SDG data set is below.
+
+* `country`: Name of the country (character)
+
+* `year`: year of observation
+
+* `continent`: name of the continent (character)
+
+* `region`: region of the continent (character)
+
+* `years_education`: mean number of years in education for population over 25 years of age 
+
+* `gdp`: GDP per capita (in US dollars)
+
+* `life_expectancy` = Life expectancy at birth in years
+
+* `infant_mortality_rate`= infant mortality rate (per 1,000 live births)
+
+* `income_class` = World Bank income classification (character): 
+L =low, LM =low-middle, UM = middle-upper and H= upper
+
+
+## Load the data
+
+The data can be loaded into `R` using the following command:
+
+```{r,message=FALSE}
+sdg <- read_csv("https://people.bath.ac.uk/kai21/MA50258/data/sdg.csv")
+```
+
+
+Remind yourself this data by having a quick glimpse, e.g.:
+
+```{r}
+glimpse(sdg)
+```
+
+
+Each row in `sdg` refers to an specific country in a specific year.
+
+
+> For all the following tasks, you should only consider data from 2017 and from all continents except for Oceania.
+
+
+### Task 1
+
+Use `ggplot2` to do a scatter plot of the natural logarithm of gdp per capita (horizontal) against  life expectancy (vertical) with the data from different continents in different colours. Use `+ geom_smooth()` to add to the same plot separate least squares fits for each continent. Use the option `se = FALSE` so there should not be  a 95\% confidence band. Assign this plot the name `graph_1`.
+
+Now create a separate plot based on `graph_1` but now add `+ coord_trans(x = scales::exp_trans(exp(1)))` to change the horizontal scale back to its original units. Assign this plot the name `graph_2`.
+
+Display both plots `graph_1` and `graph_2` on top of each other.
+
+
+
+### Solution to Task 1
+
+```{r Task_1}
+sdg_17 <- sdg %>% filter(year == 2017,
+                         continent != "Oceania") 
+```
+
+```{r}
+graph1 <- sdg_17 %>% ggplot(aes(x   = gdp,
+                            y   = life_expectancy,
+                            col = continent)) +
+                  geom_point() +
+                    scale_x_continuous(trans  = "log",
+                                       breaks = scales::trans_breaks("log", function(x) exp(x)),
+                                       labels = scales::trans_format("log", scales::math_format(exp(.x)))) + 
+                      geom_smooth(method = lm,
+                                  se = F,
+                                  fullrange = TRUE) 
+
+ 
+graph2 <- graph1 +  coord_trans(x = scales::exp_trans(exp(1)))  +ylim(55,85)
+
+(graph1 + xlab("gdp (log)"))/graph2
+```
+
+The combination of using `col = continent` inside `aes` with `geom_smooth(method = lm)` implies that a different line has been fitted separately for each continent. This is a exploratory step in the data analysis as we have not fitted a model to the data as a whole just yet!  
+
+With this in mind and looking at the second plot we can see that the relationship between gdp per capita and life expectancy seems to depend  on the continent in the following sense.  We see the same shape of fitted curve  just shifted up or down depending on the continent. The equivalent argument in the top plot is that the fitted lines have roughly the same slope but different intercepts depending on the continent. America and Europe have  very similar curves while Asia and Africa have the same shape of curve but for lower levels of life expectancy. The only extra thing we see here is that for Africa, the fitted curve really is extrapolating away for high values of the gdp so we have to be careful in the comparison with other continents  in that gdp region! Finally is good to emphasize the the second plot   is important for the interpretation as not everyone will be able to the understand the plot where one axis is on the log scale!
+
+
+
+### Task 2
+
+Now fit the following models: 
+
+* Model 0 
+$$E[\mbox{life_expectancy}|\mbox{gdp, continent}]=\alpha_0 + \alpha_1 \log(\mbox{gdp}) + \xi_1\, \mbox{continent}_1 +  \xi_2\, \mbox{continent}_2 +  \xi_3\, \mbox{continent}_3$$
+
+
+
+* Model 1 
+$$E[\mbox{life_expectancy}|\mbox{gdp, continent}]=\beta_0 + \beta_1 \log(\mbox{gdp}) + \eta_1\, \mbox{continent}_1 +  \eta_2\, \mbox{continent}_2 +  \eta_3\, \mbox{continent}_3 + \delta_1 \,\log(\mbox{gdp})\, \mbox{continent}_1 +  \delta_2\,  \log(\mbox{gdp})\, \mbox{continent}_2 +  \delta_3 \,\log(\mbox{gdp})\, \mbox{continent}_3$$
+
+
+where $\mbox{continent}_1$, $\mbox{continent}_2$ and $\mbox{continent}_3$ are dummy variables. You can use expressions such as `variable_1 * variable_2` or `variable_1 : variable_2` in your `R` formula. Read the help file `?formula`.
+
+
+For each model, display a table (using `library(kableExtra)`) with the estimated coefficients and their standard errors. 
+
+Also for each model, try to interpret (n the context of the data) as many estimated coefficients as you can. Use the space below to write your answer. 
+
+
+### Solution Task 2
+
+The model fitting goes as follows:
+
+```{r}
+
+mod_0 <- lm(life_expectancy ~ log(gdp) + continent, sdg_17)
+
+mod_1 <- lm(life_expectancy ~ log(gdp) * continent, sdg_17)
+```
+
+A note on the terminology is 
+
+* Model 0 is usually called the **main effects** model
+
+* Model 1 is usually called the **main effects and interactions** model
+
+In an `R` formula, an interaction between two variables is written as 
+```{r,eval=FALSE}
+variable_1 : variable_1
+```
+so using a colon in between the variable names! The formula for a  model with main effects and interactions is written as 
+```{r,eval=FALSE}
+response ~ variable_1 +variable_2 + variable_1:variable_2
+```
+Interestingly, there is shorthand for this previous formula which is 
+```{r,eval=FALSE}
+variable_1 * variable_2
+```
+as I did above! Not very common, but we can have a model with interaction term but with no main effects or not all main effects, in which case we would write 
+```{r,eval=FALSE}
+respose ~ variable_1:variable_2
+respose ~ variable_1 + variable_1:variable_2
+```
+
+Read the documentation in `?formula` for more details.
+
+#### Interpretation of Model 0
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, continent}]=\alpha_0 + \alpha_1 \log(\mbox{gdp}) + \xi_1\, \mbox{continent}_1 +  \xi_2\, \mbox{continent}_2 +  \xi_3\, \mbox{continent}_3$$
+
+The parameter estimates are given in the following table:
+
+```{r,echo=FALSE}
+
+t0<- bind_cols(parameter=c("alpha_0","alpha_1","xi_1","xi_2","xi_3"),
+               tidy(mod_0)[,1:2])
+
+t0 %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters. Model 0") %>%
+    kable_styling(full_width = F)
+```
+
+
+We first note that the model equations can be written alternatively as follows:
+
+
+\begin{eqnarray*}
+E[\mbox{life_expectancy}|\mbox{gdp, Africa}] & = & (\alpha_0) & + &  \alpha_1 \log(\mbox{gdp}) & = &\xi_{Africa} & + &  \alpha_1 \log(\mbox{gdp}) \\
+E[\mbox{life_expectancy}|\mbox{gdp, America}] & = &(\alpha_0 +\xi_1)& + &  \alpha_1 \log(\mbox{gdp}) & = & \xi_{America} & + &  \alpha_1 \log(\mbox{gdp}) \\
+E[\mbox{life_expectancy}|\mbox{gdp, Asia}]    & = & (\alpha_0 +\xi_2)& + &  \alpha_1 \log(\mbox{gdp}) & = &\xi_{Asia}  & + &  \alpha_1 \log(\mbox{gdp}) \\
+E[\mbox{life_expectancy}|\mbox{gdp, Europe}]  & = & (\alpha_0 +\xi_3 )& + &  \alpha_1 \log(\mbox{gdp})& = &\xi_{Europe} & + &  \alpha_1 \log(\mbox{gdp}) \\
+\end{eqnarray*}
+
+so this model specifies a straight line for each continent with different intercepts for different continents, namely
+
+\begin{align*}
+\xi_{Africa}  &= \alpha_0\\
+\xi_{America} &= \alpha_0 +\xi_1\\
+\xi_{Asia}    &= \alpha_0 +\xi_2\\
+\xi_{Europe}  &= \alpha_0 +\xi_3\\
+\end{align*}
+
+
+
+Note that Africa is selected by `R` to be the reference category since it comes first alphabetically!  
+Now for the interpretation lets focus first on countries in the same continent. Choose  countries in Africa for example, then any $k$-fold increase in gdp will make the expected life expectancy to increase by
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, Africa}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \alpha_0 + \alpha_1 \log(k\times \mbox{gdp}) - \alpha_0 -  \alpha_1 \log(\mbox{gdp}) \\
+ &= \alpha_1\, (\log(k)+\log(\mbox{gdp}))- \alpha_1 \log(\mbox{gdp}) \\
+ &= \alpha_1 \,\log(k)
+\end{align*}
+
+It gives the same result with any other continent, say Asia
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, Asia}] -E[\mbox{life_expectancy}|\mbox{gdp, Asia}] &= 
+ \alpha_0 + \xi_2 + \alpha_1 \log(k\times \mbox{gdp}) - \alpha_0 - \xi_2 - \alpha_1 \log(\mbox{gdp}) \\
+ &= \alpha_1\, (\log(k)+\log(\mbox{gdp}))- \alpha_1 \log(\mbox{gdp}) \\
+ &= \alpha_1 \,\log(k)
+\end{align*}
+
+So for countries in the same continent, any two-fold increase in gdp implies an increase in the average life expectancy of $\log(2) \times 2.519 \approx 1.75$ years. Similarly, any ten-fold increase in gdp implies an increase in the average life expectancy of $\log(10) \times 2.519 \approx 5.8$ years
+
+Now for countries in different continents we still can make comparisons. Choose  countries in Asia to compare with countries in America,  for example, then any $k$-fold increase in gdp will make the expected life expectancy to increase by
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, Asia}] -E[\mbox{life_expectancy}|\mbox{gdp, America}] &= 
+ \alpha_0 +\xi_2 + \alpha_1 \log(k\times \mbox{gdp}) - \alpha_0 - \xi_1 - \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_2-\xi_1 + \alpha_1\, (\log(k)+\log(\mbox{gdp}))- \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_2-\xi_1 + \alpha_1 \,\log(k)
+\end{align*} 
+
+But now there comparison depend on the pair continents chosen! For example, for countries in Asia to be compared with countries in America,  any two-fold increase in gdp will make the expected life expectancy to increase by $7.447-8.637+\log(2)\times 2.519 \approx 0.56$ years.
+
+Also, countries in America have on average 8.64 more years of life expectancy than in Africa. This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, America}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \alpha_0 + \xi_1 +\alpha_1 \log(\mbox{gdp}) - \alpha_0 -  \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_1\\
+ \end{align*}
+ 
+Note the countries compared should have the same level of gdp so that the terms with $\log(\mbox{gdp})$ cancel out!
+
+Countries in Asia have on average 7.45 more years of life expectancy than in Africa. This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, Asia}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \alpha_0 + \xi_2 +\alpha_1 \log(\mbox{gdp}) - \alpha_0 -  \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_2\\
+ \end{align*}
+
+
+Countries in Europe have on average 9.24 more years of life expectancy than in Africa 
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, Europe}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \alpha_0 + \xi_3 +\alpha_2 \log(\mbox{gdp}) - \alpha_0 -  \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_3\\
+ \end{align*}
+
+So far we have always compared to countries in Africa. This is not necessary.  
+
+For example, countries in America have on average $8.637-7.447\approx 1.2$ more years of life expectancy than in Asia. This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, America}] -E[\mbox{life_expectancy}|\mbox{gdp, Asia}] &= 
+ \alpha_0 + \xi_2 +\alpha_1 \log(\mbox{gdp}) - \alpha_0 - \xi_1-  \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_2-\xi_1\\
+ \end{align*}
+ 
+ 
+Countries in Europe have on average $9.241-7.447\approx 1.8$ more years of life expectancy than in America. This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, Europe}] -E[\mbox{life_expectancy}|\mbox{gdp, Asia}] &= 
+ \alpha_0 + \xi_3 +\alpha_1 \log(\mbox{gdp}) - \alpha_0 - \xi_1-  \alpha_1 \log(\mbox{gdp}) \\
+ &= \xi_3-\xi_1\\
+ \end{align*}
+
+Is important to note again  that all the  comparisons above are valid only when all the countries compared have the same level of gdp so that the terms with $\log(\mbox{gdp})$ cancel out!
+
+
+**Note** that we can change the reference category to another continent by manipulating the levels of a factor variable (you can read [here](https://r4ds.had.co.nz/factors.html) for a primer of how to use factors) and then we would obtain a different set of estimated coefficients. See below
+
+```{r}
+# For example take Asia as the reference continent
+# we create a new variable `continent_fct` to not disturb other results
+
+sdg_17<-sdg_17 %>% 
+          mutate(continent_fct = factor(continent,
+                                        levels = c("Asia","Africa","Americas","Europe")))
+
+
+mod_0_alt <- lm(life_expectancy ~ log(gdp) + continent_fct, 
+             data = sdg_17)
+
+t0_alt<- bind_cols(parameter=c("alpha_0","alpha_1","xi_1","xi_2","xi_3"),
+               tidy(mod_0_alt)[,1:2])
+
+t0_alt %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters. Model 0") %>%
+    kable_styling(full_width = F)
+
+# Note that `mod_0_alt` has used our newly created factor variable `continent_fct` while `mod_0` above creates a factor variable "on the fly" from the character variable `continent`.
+
+```
+
+
+As an extra exercise you can verify that all the comparison made above are still the same under this apparently new model! 
+
+
+
+####  Interpretation of Model 1 
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, continent}]=\beta_0 + \beta_1 \log(\mbox{gdp}) + \eta_1\, \mbox{continent}_1 +  \eta_2\, \mbox{continent}_2 +  \eta_3\, \mbox{continent}_3 + \delta_1 \,\log(\mbox{gdp})\, \mbox{continent}_1 +  \delta_2\,  \log(\mbox{gdp})\, \mbox{continent}_2 +  \delta_3 \,\log(\mbox{gdp})\, \mbox{continent}_3$$
+
+The parameter estimates are given in the following table:
+
+```{r,echo=FALSE}
+
+t1<- bind_cols(parameter=c("beta_0","beta_1","eta_1","eta_2","eta_3","delta_1","delta_2","delta_3"),
+               tidy(mod_1)[,1:2])
+
+t1  %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters. Model 1") %>%
+    kable_styling(full_width = F)
+```
+
+
+We first note that the model equations can be written alternatively as follows:
+
+
+
+\begin{eqnarray*}
+E[\mbox{life_expectancy}|\mbox{gdp, Africa}]  & = & (\beta_0) & + & (\beta_1)\,\log(gdp)& = &\eta_{Africa}  & + &  \delta_{Africa} \, \log(\mbox{gdp}) \\
+E[\mbox{life_expectancy}|\mbox{gdp, America}] & = &(\beta_0+\eta_1) & + &(\beta_1+\delta_1)\,\log(gdp)& = & \eta_{America} & + &  \delta_{America}\, \log(\mbox{gdp}) \\
+E[\mbox{life_expectancy}|\mbox{gdp, Asia}]  & = &(\beta_0+\eta_2) & + &(\beta_1+\delta_2)\,\log(gdp)& = & \eta_{Asia}    & + &  \delta_{Asia}   \, \log(\mbox{gdp}) \\
+E[\mbox{life_expectancy}|\mbox{gdp, Europe}]  & = &(\beta_0+\eta_3) & + &(\beta_1+\delta_3)\,\log(gdp)& = & \eta_{Europe}  & + &  \delta_{Europe} \, \log(\mbox{gdp}) \\
+\end{eqnarray*} 
+
+so this model specifies a different straight line for each continent, each with its own different intercepts
+
+\begin{align*}
+\eta_{Africa}  &= \beta_0       \\
+\eta_{America} &= \beta_0 +\eta_1\\
+\eta_{Asia}    &= \beta_0 +\eta_2\\
+\eta_{Europe}  &= \beta_0 +\eta_3\\
+\end{align*}
+
+and different slopes
+
+\begin{align*}
+\delta_{Africa}  &= \beta_1       \\
+\delta_{America} &= \beta_1 +\delta_1\\
+\delta_{Asia}    &= \beta_1 +\delta_2\\
+\delta_{Europe}  &= \beta_1 +\delta_3\\
+\end{align*}
+
+Now for the interpretation lets focus first on countries in the same continent. 
+
+For countries in Africa, any $k$-fold increase in gdp will make the expected life expectancy to increase by
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, Africa}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \beta_0  +  \beta_1\,\log(k \times gdp) - \beta_0  -  \beta_1\,\log(gdp) \\
+ &= \beta_1\, (\log(k)+\log(\mbox{gdp}))- \beta_1 \log(\mbox{gdp}) \\
+ &= \beta_1 \,\log(k)
+\end{align*}
+
+For countries in America, any $k$-fold increase in gdp will make the expected life expectancy to increase by
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, America}] -E[\mbox{life_expectancy}|\mbox{gdp, America}] &= 
+ \beta_0  + \eta_1 + (\beta_1+\delta_1)\,\log(k \times gdp) - \beta_0 -\eta_1 -  (\beta_1+\delta_1)\,\log(gdp) \\
+ &= (\beta_1+\delta_1)\, (\log(k)+\log(\mbox{gdp}))- (\beta_1+\delta_1) \log(\mbox{gdp}) \\
+ &=  (\beta_1+\delta_1)\,\log(k)
+\end{align*}
+
+For countries in Asia, any $k$-fold increase in gdp will make the expected life expectancy to increase by
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, Asia}] -E[\mbox{life_expectancy}|\mbox{gdp, Asia}] &= 
+ \beta_0  + \eta_2 + (\beta_1+\delta_2)\,\log(k \times gdp) - \beta_0 -\eta_2 -  (\beta_1+\delta_2)\,\log(gdp) \\
+ &= (\beta_1+\delta_2)\, (\log(k)+\log(\mbox{gdp}))- (\beta_1+\delta_2) \log(\mbox{gdp}) \\
+ &=  (\beta_1+\delta_2)\,\log(k)
+\end{align*}
+
+For countries in Europe, any $k$-fold increase in gdp will make the expected life expectancy to increase by
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{k*gdp, Europe}] -E[\mbox{life_expectancy}|\mbox{gdp, Europe}] &= 
+ \beta_0  + \eta_3 + (\beta_1+\delta_3)\,\log(k \times gdp) - \beta_0 -\eta_3 -  (\beta_1+\delta_3)\,\log(gdp) \\
+ &= (\beta_1+\delta_3)\, (\log(k)+\log(\mbox{gdp}))- (\beta_1+\delta_3) \log(\mbox{gdp}) \\
+ &=  (\beta_1+\delta_3)\,\log(k)
+\end{align*}
+
+For example,   for any twofold increase in gdp the life expectancy increases on average  by:
+
+* $\log(2) \times (1.261 + 0) \approx 0.87$ years on average for countries in Africa
+
+* $\log(2) \times (1.261 + 1.931) \approx 2.1$ years on average for countries in America
+
+* $\log(2) \times (1.261 + 1.173) \approx 1.69$ years on average for countries in Asia
+
+* $\log(2) \times (1.261 + 2.199) \approx 2.4$ years on average for countries in Europe
+
+
+For  a country with $x$ dollars of gdp per capita in America, then it will have on average $-6.45 + \log(x)\times 1.931$ more years life expectancy than a country in Africa with the same level of gdp. 
+This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, America}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \beta_0 + \eta_1  +(\beta_1 + \delta_1)\, \log(\mbox{gdp}) - \beta_0 -  \beta_1 \log(\mbox{gdp}) \\
+ &= \eta_1 + \delta_1\, \log(\mbox{gdp})\\
+ \end{align*}
+
+For  a country with $x$ dollars of gdp per capita in Asia, then it will have on average$-0.636 + \log(x)\times 1.173$ more years life expectancy than a country in Africa with the same level of gdp. This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, Asia}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \beta_0 + \eta_2  +(\beta_1 + \delta_2)\, \log(\mbox{gdp}) - \beta_0 -  \beta_1 \log(\mbox{gdp}) \\
+ &= \eta_2+ \delta_2\, \log(\mbox{gdp})\\
+ \end{align*}  
+
+
+For  a country with $x$ dollars of gdp per capita in Europe, then it will have on average  $-9.192  + \log(x)\times 2.199$  more years life expectancy than a country in Africa with the same level of gdp. This is true since
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, America}] -E[\mbox{life_expectancy}|\mbox{gdp, Africa}] &= 
+ \beta_0 + \eta_3  +(\beta_1 + \delta_3)\, \log(\mbox{gdp}) - \beta_0 -  \beta_1 \log(\mbox{gdp}) \\
+ &= \eta_3 + \delta_3\, \log(\mbox{gdp})\\
+ \end{align*}  
+
+
+The following plot summarises the above functions.
+
+```{r}
+America <- function(gdp){ -6.45  + log(gdp)*1.931}
+
+Asia <- function(gdp){ -0.636 + log(gdp)*1.173}
+
+Euro <- function(gdp){ -9.192  + log(gdp)*2.199}
+
+tibble(gdp =seq_range(sdg_17$gdp,100)) %>% 
+        mutate(America = America(gdp),
+               Asia = Asia(gdp),
+               Europe = Euro(gdp)) %>% 
+          pivot_longer(cols = !gdp,
+                       names_to = "continent", 
+                       values_to = "difference") %>% 
+            ggplot(aes(x = gdp,
+                       y = difference,
+                       col = continent)) +
+              geom_line() +
+                labs(y = "Difference in life expectancy (years)",
+                     title = "Africa is the  reference continent") +
+                   geom_hline(yintercept = c(8.64,7.45,9.24),
+                              col= c("red","green","blue"),lty=2)
+```
+
+The horizontal dashed lines are the corresponding  average difference in life expectancy  levels as described in the interpretation of Model 0 and they have been included for reference.
+
+Finally we note that, like in Model 0, we are still able to make comparison of countries across any pair continents but above we only focused in comparisons with Africa. A general comment here is that, in order to make an interpretation of the parameters, we always do two things
+
+* we compare different countries (make differences on the conditional expectation of the response given the explanatory variables), and
+
+* we vary one explanatory variable  and fix any other explanatory variables in the model!
+
+
+### Task 3
+
+Use the commands `data_grid` and `gather_predictions` to generate a two dimensional grid of values of `gdp` (not the log)  and `continent` in the range of the data.
+
+Now use `ggplot` to draw the scatter plot of the natural logarithm of gdp per capita (horizontal) against  life expectancy (vertical) with the data from different continents in different colours.  Add ` + geom_line() + facet_wrap()`  to display the fitted straight lines from both  models. Assign this plot the name `graph_3`.
+
+
+Now create a separate plot based on `graph_3` but now add `+ coord_trans(x = scales::exp_trans(exp(1)))` to change the horizontal scale back to its original units. 
+Assign this plot the name `graph_4`. 
+
+Display both plots `graph_3` and `graph_4` one on top of each other.
+
+
+### Solution to Task 3
+
+```{r}
+
+grid <- sdg_17 %>% 
+  data_grid(gdp ,continent) %>% 
+  gather_predictions(mod_0,
+                     mod_1,
+                     type = "response")
+
+glimpse(grid)
+
+```
+Note that `data_grid` has chosen arbitrarily 168 different combinations of values of `gdp` and `continent` in the range defined by the dataset! `continent` is easy to cover all possible values since it only has a small number of categories!  if you want to have more control over the grid of values of `gdp` then you can use (for example) `data_grid(gdp = seq_range(gdp,50),continent)` which will chose 200 ($= 50 \times 4$)   different combinations of values of `gdp` and `continent`. Also note we include the option ` type = "response"` inside `gather_predictions`. This is not necessary for linear models, but for generalised linear models it will give an undesired result if you do not include this option!
+
+
+```{r}
+
+graph3 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     col = continent)) + 
+              geom_point() + 
+                scale_x_continuous(trans = "log") +
+                  geom_line(data = grid, aes(y = pred)) + 
+                    facet_wrap(~ model) 
+                    
+
+graph4<- graph3 + coord_trans(x = scales::exp_trans(exp(1))) 
+
+
+(graph3 +xlab("gdp (log scale)"))/graph4
+
+```
+
+
+
+The coloured curves show the  fitted curves (for each model) of the conditional expectation of the life expectancy  as a function of `gdp` (bottom) and as a function of `log(gdp)` (top) for different continents. 
+
+Note that if we just want to plot the fit of the model without going through the fit in the log gdp scale we can simply do the following
+
+```{r}
+sdg_17 %>% 
+  ggplot(aes(x   = gdp,
+             y   = life_expectancy,
+             col = continent)) + 
+    geom_point() + 
+        geom_line(data = grid, aes(y = pred)) + 
+          facet_wrap(~ model) 
+```
+
+
+
+The main difference wit the plots in Task 1 depends on the model. In the plot of Task 1, the coloured lines were independent fitted curves for each continent. Model 0 , as we explained in the previous task,  can be interpreted as the same curve just shifted up or down depending on the continent.  A fitted curve of a single continent under  Model 1 "borrows information" from the data of other different continents while a  fitted  curve of a single continent in Task one (e.g. using `geom_smooth`) is done using data from that continent alone!
+
+Now, Model 1, as explained in the previous task, it can be interpreted as four different curves, one for each continent. So Model 1 plots and the plots from Task 1 should be identical . In fact, they are. This is true since Model one has 8 parameters which correspond to two parameters (intercept and slope) for each continent so Model 1 fit is just an alternative way of fitting the four continents separately! Below we verify this with the coefficients of each continent fitted independently just to see they match those in the table of coefficients of Model 1 in the previous task!
+
+
+```{r,echo=FALSE}
+sdg_17 %>% 
+  filter(continent == "Africa") %>% 
+    lm(life_expectancy ~ log(gdp), data= .) %>% 
+      tidy() %>% 
+         select(term,estimate) %>% 
+            kable(digits=3, caption ="Africa coefficients (independent fit)") %>% 
+              kable_styling(full_width = FALSE)
+
+sdg_17 %>% 
+  filter(continent == "Americas") %>% 
+    lm(life_expectancy ~ log(gdp), data= .) %>% 
+      tidy() %>% 
+         select(term,estimate) %>% 
+            kable(digits=3, caption ="America coefficients (independent fit)") %>% 
+              kable_styling(full_width = FALSE)
+
+
+sdg_17 %>% 
+  filter(continent == "Asia") %>% 
+    lm(life_expectancy ~ log(gdp), data= .) %>% 
+      tidy() %>% 
+         select(term,estimate) %>% 
+            kable(digits=3, caption ="Asia coefficients (independent fit)") %>% 
+              kable_styling(full_width = FALSE)
+
+
+sdg_17 %>% 
+  filter(continent == "Europe") %>% 
+    lm(life_expectancy ~ log(gdp), data= .) %>% 
+      tidy() %>% 
+         select(term,estimate) %>% 
+            kable(digits=3, caption ="Europe coefficients (independent fit)") %>% 
+              kable_styling(full_width = FALSE)
+
+
+
+```
+
+
+Visually, there is very little difference between the fit of the models, perhaps the only noticeable one  is that America and Europe seem to be following a slightly different pattern than Africa and Asia apart from the level of life expectancy. To judge better the fit of each model is better to use residuals! Below we do this briefly for completeness.
+
+```{r}
+sdg_resid<- sdg_17 %>% gather_residuals(mod_0,
+                                        mod_1,
+                                        .resid = "residuals")
+
+sdg_fv<- sdg_17 %>% gather_predictions(mod_0,
+                                        mod_1,
+                                       .pred ="fitted_vals",
+                                       type = "response")
+
+sdg_resid %>%
+    left_join(sdg_fv) %>% 
+            ggplot(aes(x=fitted_vals,residuals)) +
+              geom_point() +
+                geom_hline(yintercept = 0,
+                           col="red") +
+                  geom_smooth() +
+                    facet_wrap(~model)
+```
+
+
+Model 1 seems a little bit better than Model 0 in terms of the trend of the residual mean. However, there seems to be a problem with the fit of countries with fitted life expectancy of about 77 years for which ther residuals seem  to be pulled down! This requires further investigation!
+
+### Task 4
+
+Use `gather_predictions` again to compute the fitted values (under each model) of the life expectancy in each country  and to create a new data frame with twice the number of rows of the original  data frame.
+
+Use `ggplot` with ` + facet_wrap()` to draw the scatter plot of the  fitted values (vertical) against the original life expectancy observations (horizontal). Add the 45 degree (identity) line for reference. 
+
+What is the value of the coefficient of determination $R^2$ for each model? 
+
+In the light of the above pair of plots and the corresponding $R^2$, what can you say about the fit of each model to the life expectancy data, individually and comparatively between the plots.
+
+
+
+
+
+
+### Solution to Task 4
+
+
+
+The computation of fitted values was already done at the end of the  solution of the previous task in the data frame `sdg_fv`. However you might wonder why we need to run `gather _residuals` if we apparently have already done it in Task 3. The answer is that, the ones we just computed in `sdg_fv` are the ones usually called  "fitted values" and they contain only values from the dataset. The ones in Task 3 in `grid`, are fitted to some `gdp` values which are not in the dataset, and they are most commonly called "predictions" since we really did not observed the life expectancy of a country with a gdp of 1096.633 (say)  and the model still is able to predict it (look at the plot in Task 1 to see this)! 
+
+The scatter plot of the  fitted values against the original life expectancy observations is given below.
+
+```{r}
+ sdg_fv %>% 
+    ggplot(aes(life_expectancy, fitted_vals)) + 
+      geom_point() +
+        geom_abline(intercept = 0,
+                    slope = 1,
+                    col = "red")  +
+           facet_wrap(~model)
+```
+
+There are at least two ways to compute the value of the coefficient of determination $R^2$ for the two models. The first one is simply by its definition which is the (squared of the) correlation coefficient between the observed response values and the fitted values.
+The other is by simply acknowledging that $R^2$ has already been computed for each model so we only need to  pull it out, for example using `glance` from the `broom` library. See below for details on the computation.
+
+```{r}
+
+sdg_fv %>% 
+  group_by(model) %>% 
+    summarise(R2 = cor(life_expectancy,fitted_vals)^2) %>% 
+      kable(digits=3) %>% 
+        kable_styling(full_width = FALSE)
+
+glance(mod_0)["r.squared"]
+glance(mod_1)["r.squared"]
+```
+
+
+Both models have an apparently large $R^2$ and also the corresponding values are  very close to each other. Remembering that each of these numbers is also subject to sampling variability then is difficult to say if one is larger than the other in the larger population. The  scatter plots  above of the fitted values against the observed responses  have a little bit more information than the $R^2$ itself. However, the two scatter plots look very similar to each other and in fact, the same information is conveyed by the residual plots in the solution of the previous task. There, is a bit clearer that there is a small difference between the fit of both  models.
+
+
+### Task 5
+
+Use the knowledge you have develop so far to  explore other models for the relationship between the response `life_expectancy` and the explanatory variables `gdp`  and `continent`. You should explore at least two different models apart from the two models explored above . Remember you can use other transformations apart from the log of the gdp (for example a polynomial) and also generalised linear models, transformed linear models and generalised additive models. In a short report, discuss the relative merits of each model and compare across models if you think is appropriate.
+
+### Solution to Task 5
+
+First we look at empirical smoothings (LOESS) separately for each continent. This is shown in the next plot
+
+```{r}
+sdg_17 %>% 
+    ggplot(aes(x = gdp,
+               y = life_expectancy,
+               color = continent)) +
+        geom_point() + 
+          geom_smooth() +
+            facet_wrap(~ continent) 
+```
+
+We can see that data from Africa is quite separated from the data of other continents since it has countries with both the lowest gdp per capita as well as the lowest life expectancy. It makes sense to merge Africa with other continent under the assumption that the union will have a consistent pattern. For example we can see from the above plot that Asia has countries with the lowest life expectancy just above the African countries so we can merge Africa and Asia in a "new" continent called _Afrasia_. Note the generated new variable (which we will call `continent2`) is a simple transformation of the `continent` variable. We construct this variable below and add it to the data frame.
+
+```{r}
+sdg_17<-sdg_17 %>% 
+          mutate(continent2 = fct_recode(continent, Afrasia = "Africa", 
+                                                    Afrasia = "Asia"))
+```
+
+Below we plot separate fits of the  model 
+
+$$E[\mbox{life_expectancy}|\mbox{gdp}]=\alpha_0 +\alpha_1\,\log(\mbox{gdp})$$
+for each continent.
+
+```{r}
+
+sdg_17 %>% 
+    ggplot(aes(x = gdp,
+               y = life_expectancy,
+               color = continent2)) +
+      geom_point() + 
+        geom_smooth(formula= y ~ log(x),method=lm) +
+          facet_wrap(~ continent2)
+```
+
+The fact that the shapes looks very similar indicates the following model is sensible
+
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp,Afrasia}] & = \beta_0^{Afrasia} +\beta_1\,\log(\mbox{gdp})\\
+E[\mbox{life_expectancy}|\mbox{gdp,America}] & = \beta_0^{America}  +\beta_1\,\log(\mbox{gdp})\\
+E[\mbox{life_expectancy}|\mbox{gdp,Europe}] & =  \beta_0^{Europe} + \beta_1\,\log(\mbox{gdp})\\
+\end{align*}
+
+
+This model will fit parallel curves of the form $\beta_0 +\beta_1\,\log(\mbox{gdp})$ which will shift up or down only  depending on the continent. So only one curve fit  but sifted up or down depending on the continent! This model has 4 regression parameters to be estimated!
+
+
+We fit this below 
+
+```{r}
+
+mod_2 <- lm(life_expectancy ~ log(gdp) + continent2, 
+            data=sdg_17)
+
+tidy(mod_2)[,1:2] %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters of Model 2") %>%
+    kable_styling(full_width = F)
+
+```
+and we confirm that 4 parameters have been estimated!
+
+Now  we show the fitted model with the data as well.
+
+```{r}
+
+grid2 <- sdg_17 %>% 
+          data_grid(gdp,continent2) %>% 
+            add_predictions(mod_2)
+
+graph5 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                       y   = life_expectancy,
+                      col = continent2)) + 
+              geom_point() + 
+                  geom_line(data = grid2, 
+                            aes(y = pred)) + 
+                    facet_wrap(~ continent2)
+
+graph5
+```
+
+
+
+
+
+
+
+We now look for an alternative transformation of `gdp`. We use a quadratic transformation.
+
+Below we plot separate fits of the  model 
+
+$$E[\mbox{life_expectancy}|\mbox{gdp}]=\alpha_0 +\alpha_1\,\mbox{gdp}+\alpha_2\,(\mbox{gdp})^2$$
+for each continent in `continent2`.
+
+```{r}
+sdg_17 %>% 
+    ggplot(aes(x = gdp,
+               y = life_expectancy,
+               color = continent2)) +
+      geom_point() +
+        geom_smooth(formula = y ~ poly(x,2),
+                    method = lm) +
+          facet_wrap(~ continent2) 
+```
+
+The shapes of the individual fits is very similar so the following model is sensible 
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp,Afrasia}] & = \beta_0^{Afrasia} +\beta_1\,\mbox{gdp}+\beta_2\,(\mbox{gdp})^2\\
+E[\mbox{life_expectancy}|\mbox{gdp,America}] & = \beta_0^{America}  +\beta_1\,\mbox{gdp}+\beta_2\,(\mbox{gdp})^2\\
+E[\mbox{life_expectancy}|\mbox{gdp,Europe}] & =  \beta_0^{Europe} +\beta_1\,\mbox{gdp}+\beta_2\,(\mbox{gdp})^2\\
+\end{align*}
+
+
+
+This model will fit parallel quadratic curves of the form $\beta_0 +\beta_1\,\mbox{gdp}+\beta_2\,(\mbox{gdp})^2$ which will shift up or down only  depending on the continent. So only one quadratic curve fit, but shifted up or down depending on the continent! This model has 5 regression parameters to be estimated!
+
+We fit it below and then we show the fitted model with the data as well
+
+
+```{r}
+mod_3 <- lm(life_expectancy~ poly(gdp,2) + continent2, 
+                   data=sdg_17)
+
+tidy(mod_3)[,1:2] %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters of Model 3") %>%
+    kable_styling(full_width = F)
+
+```
+
+and we confirm that 5 parameters have been estimated!
+
+Now we plot the fitted model with the data
+
+```{r}
+
+grid3 <- sdg_17 %>% 
+          data_grid(gdp,continent2) %>% 
+            add_predictions(mod_3)
+
+graph6 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     col = continent2)) + 
+              geom_point() + 
+                  geom_line(data = grid3, 
+                            aes(y = pred)) + 
+                    facet_wrap(~ continent2)
+
+graph6
+
+
+```
+
+
+so the fit is not very good for America. We can try to improve the fit a bit by allowing different quadratic polynomials for each continent as follows
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, continent2}] &= \beta_0^{Afrasia} +\beta_1^{Afrasia}\,\mbox{gdp}+\beta^{Afrasia}_2\,(\mbox{gdp})^2\\
+& +\beta_0^{America}+\beta_1^{America}\,\mbox{gdp}+\beta_2^{America}\,(\mbox{gdp})^2 \\
+& +\beta_0^{Europe} +\beta_1^{Europe}\,\mbox{gdp}+\beta_2^{Europe}\,(\mbox{gdp})^2
+\end{align*}
+
+
+This model will fit separate quadratic curves of the form $\beta_0 +\beta_1\,\mbox{gdp}+\beta_2\,(\mbox{gdp})^2$ for each continent!
+This model has 9 parameters to be estimated from the data!
+
+
+We fit it below (which as you can se is very easy since the formula is simply `life_expectancy~ poly(gdp,2)*continent2`) 
+
+
+```{r}
+mod_3.2 <- lm(life_expectancy~ poly(gdp,2)*continent2, 
+                   data=sdg_17)
+
+
+tidy(mod_3.2)[,1:2] %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters of Model 3.2") %>%
+    kable_styling(full_width = F)
+
+```
+and we confirm that 9 parameters have been estimated!
+
+We now plot the fitted model with the data.
+
+```{r}
+
+grid3.2 <- sdg_17 %>% 
+          data_grid(gdp,continent2) %>% 
+            add_predictions(mod_3.2)
+
+graph6.2 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     col = continent2)) + 
+              geom_point() + 
+                  geom_line(data = grid3.2, 
+                            aes(y = pred)) + 
+                    facet_wrap(~ continent2)
+
+graph6.2
+
+
+```
+
+
+which is looks a bit better for America but now has the problem that the predictions suddenly drop  low life expectancies much earlier than with the model without interaction (just one polynomial sifted up and down!).
+
+We now try a generalised linear model (glm) of the form
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp,Afrasia}] & = \beta_0^{Afrasia} +\beta_1\,\log(\mbox{gdp})\\
+E[\mbox{life_expectancy}|\mbox{gdp,America}] & = \beta_0^{America}  +\beta_1\,\log(\mbox{gdp})\\
+E[\mbox{life_expectancy}|\mbox{gdp,Europe}] & =  \beta_0^{Europe} + \beta_1\,\log(\mbox{gdp})\\
+\end{align*}
+
+which it looks the same as model 2 (`mod_2`) but now we assume the probability distribution of the response (`life_expectancy`) is Gamma and the link $g$ is the identity.
+
+Same as model 2, this model will fit parallel curves of the form $\beta_0 +\beta_1\,\log(\mbox{gdp})$ which will shift up or down only  depending on the continent. So only one curve fit  but sifted up or down depending on the continent! This model has 4 regression parameters to be estimated!
+
+```{r}
+mod_4 <- glm(life_expectancy ~ log(gdp) + continent2, 
+             data = sdg_17,
+             family = Gamma(link = "identity"))
+
+
+tidy(mod_4)[,1:2] %>%  
+  kable(digits  = 3,
+        caption = "Estimated parameters of Model 4") %>%
+    kable_styling(full_width = F)
+```
+
+and we confirm that 4 parameters have been estimated!
+
+Finally, we do one more  model attempt but before  we plot the fitted model curves with the data.
+
+```{r}
+grid4 <- sdg_17 %>% 
+          data_grid(gdp,continent2) %>% 
+            add_predictions(mod_4)
+
+graph7 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     col = continent2)) + 
+              geom_point() + 
+                  geom_line(data = grid4, 
+                            aes(y = pred)) + 
+                    facet_wrap(~ continent2)
+
+graph7
+
+
+```
+
+Below we plot separate fits of the  model 
+
+
+$$E[\mbox{life_expectancy}|\mbox{gdp}]=\alpha_0 +s(\mbox{gdp})$$
+for each continent in `continent2` where $s$ is a function to be estimated from the data.
+
+```{r}
+sdg_17 %>% 
+    ggplot(aes(x = gdp,
+               y = life_expectancy,
+               color = continent2)) +
+      geom_point() +
+        geom_smooth(formula=y~ s(x,k=6),method="gam") +
+          facet_wrap(~ continent2) 
+```
+
+Given that we had so few points in America then we had to adjust the number of degrees of freedom in the smooth function to $k=6$.
+
+The fact that the shapes looks somewhat different indicates the following model is sensible
+
+\begin{align*}
+E[\mbox{life_expectancy}|\mbox{gdp, Afrasia}]&=\beta_0 + s_{Afrasia}(gdp)\\
+E[\mbox{life_expectancy}|\mbox{gdp, America}]&=\beta_0 + s_{America}(gdp)\\
+E[\mbox{life_expectancy}|\mbox{gdp, Europe}]&=\beta_0 + s_{Europe}(gdp)
+\end{align*}
+
+where $s_{Afrasia}, s_{America}$ and $s_{Europe}$ are functions estimated by the data.
+We fit this model  below and then we show the fitted model with the data as well
+
+
+```{r}
+library(mgcv)
+mod_5 <- gam(life_expectancy~ s(gdp, by = factor(continent2)), 
+             data=sdg_17)
+
+tidy(mod_5) %>%  
+  kable(digits  = 3,
+        caption = "Estimated smooth functions of Model 5") %>%
+    kable_styling(full_width = F)
+```
+
+
+and we confirm that 3  functions have been estimated!
+
+We now plot the data and the fitted model together
+
+```{r}
+grid5 <- sdg_17 %>% 
+  data_grid(gdp,continent2) %>% 
+  add_predictions(mod_5)
+
+graph8 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     col = continent2)) + 
+              geom_point() + 
+                  geom_line(data = grid5,
+                            aes(y = pred)) + 
+                    facet_wrap(~ continent2)
+
+graph8
+
+```
+
+We can see that indeed three different smooth functions have been fitted to the continents.
+We dont really need to know the details of these functions to plot them (as we just did!) and to interpret them!
+
+We now check the fit of all models using $R^2$
+
+
+```{r}
+sdg_fv<- sdg_17 %>% gather_predictions(mod_0,
+                                       mod_1,
+                                      mod_2,
+                                       mod_3,
+                                       mod_3.2,
+                                       mod_4,
+                                       mod_5,
+                                       .pred ="fitted_vals",
+                                       type = "response")
+
+sdg_fv %>% 
+    ggplot(aes(life_expectancy, fitted_vals)) + 
+      geom_point() +
+        geom_abline(intercept = 0,
+                    slope = 1,
+                    col = "red")  +
+           facet_wrap(~model)
+
+sdg_fv %>% 
+  group_by(model) %>% 
+    summarise(R2 = cor(life_expectancy,fitted_vals)^2) %>% 
+      kable(digits=3) %>% 
+        kable_styling(full_width = FALSE)
+```
+
+
+```{r}
+sdg_resid<- sdg_17 %>% gather_residuals(mod_0,
+                                        mod_1,
+                                        mod_2,
+                                        mod_3,
+                                         mod_3.2,
+                                        mod_4,
+                                        mod_5,
+                                        .resid = "residuals")
+
+
+sdg_resid %>%
+    left_join(sdg_fv) %>% 
+            ggplot(aes(x=fitted_vals,residuals)) +
+              geom_point() +
+                geom_hline(yintercept = 0,
+                           col="red") +
+                  geom_smooth() +
+                    facet_wrap(~model)
+```
+
+So none of the models seem to have improved over model 1 interms of the residual behaviour!
+
+### Task 6
+
+Use the knowledge you have develop so far to explore at least 3  models for the relationship between the response `life_expectancy` and the explanatory variables `gdp`, `years_education`. You explore at least 3 different models. In a short report, discuss the relative merits of each model and compare across models if you think is appropriate.
+
+
+### Solution to task 6
+
+Since $log(gdp)$ is likely to be appropriate, we first see perform an empirical smoothing (LOESS) with only `years_education` as explanatory variable 
+
+```{r}
+sdg_17 %>% 
+    ggplot(aes(x = years_education,
+               y = life_expectancy))+
+      geom_point() +
+        geom_smooth()
+  
+```
+
+
+It looks like a quadratic polynomial might be appropriate
+
+```{r}
+sdg_17 %>% 
+    ggplot(aes(x = years_education,
+               y = life_expectancy))+
+      geom_point() +
+        geom_smooth(formula = y ~ x + I(x^2) + I(x^3),
+                    method = lm)
+  
+```
+
+
+so we try the models 
+
+
+Model 0:
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, years_education}]=\beta_0 + \beta_1 \log(\mbox{gdp}) + \mbox{Poly}_2\mbox{(years_education)}$$
+which can be written more precisely as
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, years_education}]=\beta_0 + \beta_1 \log(\mbox{gdp}) + \zeta_1\,\mbox{years_education} +\zeta_2 (\mbox{years_education})^2$$
+
+
+
+Model 1:
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, years_education}]=\gamma_0 + \gamma_1 \log(\mbox{gdp}) + \mbox{Poly}_2\mbox{(years_education)}+ \mbox{Poly}_2\mbox{(years_education)} \times \log(gdp)$$
+
+which can be written more precisely as
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, years_education}]=\gamma_0 + \gamma_1\,\log(\mbox{gdp})+ \gamma_2\,\log(\mbox{gdp})\,\mbox{years_education}+\ \gamma_3\,\log(\mbox{gdp})\,(\mbox{years_education})^2+
+\theta_1 \,\mbox{years_education} + \theta_2\,(\mbox{years_education})^2$$
+
+Model 2: 
+
+$$E[\mbox{life_expectancy}|\mbox{gdp, years_education}]=\gamma_0 + \gamma_1 \log(\mbox{gdp}) + s(\mbox{years_education})$$
+where $s$ is a function to be estimated by the data.
+
+
+So we fit these models below and then we show the fitted model curves with the data as well.
+
+```{r}
+mod_0 <- lm(life_expectancy~ log(gdp) + poly(years_education,2), 
+             data=sdg_17)
+
+
+mod_1 <- lm(life_expectancy~ log(gdp) * poly(years_education,2), 
+             data=sdg_17)
+
+mod_2<- gam(life_expectancy~ log(gdp) + s(years_education), 
+             data=sdg_17)
+
+```
+
+Now we plot the fitted models with the data
+
+```{r}
+
+grid0 <- sdg_17 %>% 
+  data_grid(gdp = seq_range(gdp,100),
+            years_education = seq_range(years_education,10)) %>% 
+    add_predictions(mod_0)
+
+graph01 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     group =years_education,
+                     colour=years_education)) + 
+              geom_point() + 
+                  geom_line(data = grid0,
+                            aes(y = pred),alpha=0.5) +
+                    guides(col=guide_legend("educ")) +
+                      theme(legend.position = "top")
+
+graph02 <- sdg_17 %>% 
+            ggplot(aes(x   = years_education,
+                     y   = life_expectancy,
+                     group =gdp,
+                     colour=gdp)) + 
+              geom_point() + 
+                  geom_line(data = grid0,
+                            aes(y = pred),alpha=0.5) 
+
+graph01 +graph02
+
+```
+
+So Model 0 can be seen as either:
+
+* a set of parallel (shifted up or down) logarithmic curves (as functions of `gdp`) where the level of each of these curves depends on the level of education, or
+
+* a set of parallel quadratic curves (as functions of `years_education`)   where the level of each of these curves depends on the level of gdp
+
+```{r}
+
+grid1 <- sdg_17 %>% 
+  data_grid(gdp = seq_range(gdp,100),
+            years_education = seq_range(years_education,20)) %>% 
+  add_predictions(mod_1)
+
+graph11 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     group =years_education,
+                     colour=years_education)) + 
+              geom_point() + 
+                  geom_line(data = grid1,
+                            aes(y = pred),alpha=0.3) +
+                    guides(col=guide_legend("educ")) +
+                      theme(legend.position = "top")
+
+
+
+graph12 <- sdg_17 %>% 
+            ggplot(aes(x   = years_education,
+                     y   = life_expectancy,
+                     group =gdp,
+                     colour=gdp)) + 
+              geom_point() + 
+                  geom_line(data = grid1,
+                            aes(y = pred),alpha=0.5) 
+
+graph11 + graph12
+
+```
+
+So Model 1 can be seen as either:
+
+* a set of non-parallel logarithmic curves (as functions of `gdp`) where the level of each of these curves depends on the level of education, or
+
+* a set of non-parallel quadratic curves (as functions of `years_education`)   where the level of each of these curves depends on the level of gdp
+
+```{r}
+
+
+grid2 <- sdg_17 %>% 
+  data_grid(gdp = seq_range(gdp,100),
+            years_education = seq_range(years_education,10)) %>% 
+    add_predictions(mod_2)
+
+graph21 <- sdg_17 %>% 
+            ggplot(aes(x   = gdp,
+                     y   = life_expectancy,
+                     group =years_education,
+                     colour=years_education)) + 
+              geom_point() + 
+                  geom_line(data = grid2,
+                            aes(y = pred),alpha=0.5) +
+                    guides(col=guide_legend("educ")) +
+                      theme(legend.position = "top")
+
+
+
+graph22 <- sdg_17 %>% 
+            ggplot(aes(x   = years_education,
+                     y   = life_expectancy,
+                     group =gdp,
+                     colour=gdp)) + 
+              geom_point() + 
+                  geom_line(data = grid2,
+                            aes(y = pred),alpha=0.5) 
+
+graph21 +graph22
+
+```
+
+So Model 2 can be seen as either:
+
+* a set of parallel logarithmic curves (as functions of `gdp`) where the level of each of these curves depends on the level of education, or
+
+* a set of parallel smooth curves (as functions of `years_education` and which in this case they turn oput to be basically straight lines but this is not the case in general)   where the level of each of these curves depends on the level of gdp.
+
+
+Next we compute fitted values and residuals.
+
+
+```{r}
+
+sdg_resid<- sdg_17 %>% gather_residuals(mod_0,
+                                        mod_1,
+                                        mod_2,
+                                        .resid = "residuals")
+
+sdg_fv<- sdg_17 %>% gather_predictions(mod_0,
+                                       mod_1,
+                                       mod_2,
+                                       .pred ="fitted_vals",
+                                       type = "response")
+
+
+```
+
+
+We now plot observed against fitted values  of the response and compute the corresponding $R^2$.
+
+```{r}
+
+
+sdg_fv %>% 
+    ggplot(aes(life_expectancy, fitted_vals)) + 
+      geom_point() +
+        geom_abline(intercept = 0,
+                    slope = 1,
+                    col = "red")  +
+           facet_wrap(~model)
+sdg_fv %>% 
+  group_by(model) %>% 
+    summarise(R2 = cor(life_expectancy,fitted_vals)^2) %>% 
+      kable(digits=3) %>% 
+        kable_styling(full_width = FALSE)
+```
+
+Finally we plot residuals against fitted values to judge fit of models.
+
+```{r}
+sdg_resid %>%
+    left_join(sdg_fv) %>% 
+            ggplot(aes(x=fitted_vals,residuals)) +
+              geom_point() +
+                geom_hline(yintercept = 0,
+                           col="red") +
+                  geom_smooth() +
+                    facet_wrap(~model)
+
+```
+
+There is no real qualitative difference between models in terms of residual behaviour! Worth noting there are two points which are discrepant and therefore deserve further investigation!
+

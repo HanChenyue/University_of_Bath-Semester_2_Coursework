@@ -1,0 +1,364 @@
+---
+title: "MA50258 Applied Statistics: Coursework 2"
+author: "09618"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    code_folding: hide
+    code_download: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
+```
+
+```{r libraries,echo= FALSE}
+# include your libraries here
+# use echo = FALSE if you do not want the Code button to appear 
+library(tidyverse)
+library(modelr)
+library(readr)
+library(here)
+
+# Load external libraries
+library(dplyr)
+library(janitor)
+library(ggplot2)
+library(kableExtra)
+```
+
+```{r,message=FALSE}
+# read in the data
+sdg <- read_csv(here("data", "sdg.csv"))
+Wine <- read_csv(here("data", "Wine.csv"))
+```
+
+```{r}
+
+
+wine_clean <- Wine %>%
+  clean_names() %>%
+  remove_empty(c("rows", "cols"))
+
+# write_csv(sdg_clean, here("data", "sdg_clean.csv"))
+# write_csv(wine_clean, here("data", "wine_clean.csv"))
+```
+
+```{=html}
+<!--
+You can include non-coding comments using these delimiters. What is written inside these delimiters wont be knitted into the html document!
+
+Do not change the structure of the document, just fill in the sections as indicated 
+You can only change the headings indicated with [*]
+-->
+```
+# Sustainable development goals (SDG) data
+
+## Cleaning the dataset
+
+```{r}
+# Use janitor to clean the data
+sdg_clean <- sdg %>%
+  clean_names() %>%
+  remove_empty(c("rows", "cols")) %>% 
+  drop_na()
+```
+
+## Performing exploratory data analysis
+
+```{r}
+# Check the structure of the data
+str(sdg_clean)
+```
+
+```{r}
+# Summarise the data
+summary(sdg_clean)
+```
+
+
+```{r}
+# Plot the distribution of infant mortality rate
+ggplot(data = sdg_clean, aes(x = infant_mortality_rate)) +
+  geom_histogram(aes(y = ..density..), binwidth = 5, fill = "yellow", color = "gray") +
+  geom_density(color = "red", size = 1) +
+  ggtitle("Distribution of Infant Mortality Rate") +
+  xlab("Infant Mortality Rate") +
+  ylab("Density")
+```
+
+- Distribution of Infant Mortality Rate
+
+The histogram shows that the distribution of infant_mortality_rate is right-skewed. This implies that most countries have low infant mortality rates, while a few have higher rates.
+
+
+```{r, fig.height = 8}
+# Income Class vs. Infant Mortality Rate
+ggplot(data = sdg_clean, aes(x = income_class, y = infant_mortality_rate, fill = income_class)) +
+  geom_boxplot(color = "black") +
+  scale_fill_manual(values = c("H" = "yellow", "UM" = "orange", "LM" = "red", "L" = "magenta")) +
+  ggtitle("Income Class vs. Infant Mortality Rate") +
+  xlab("Income Class") +
+  ylab("Infant Mortality Rate")
+```
+
+```{r, fig.width = 12, fig.height = 12}
+# Plot the infant mortality rate by country
+ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = country)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Infant Mortality Rate by Country", x = "Country", y = "Infant Mortality Rate")
+```
+
+```{r}
+# Show the top 5 countries with the lowest infant mortality rates and their respective income classes and vice versa
+sdg_clean %>%
+  arrange(infant_mortality_rate) %>%
+  select(country, infant_mortality_rate, income_class) %>%
+  head(5) %>%
+  kable(caption = "Top 5 countries with the lowest infant mortality rates") %>%
+  kable_styling(full_width = F)
+```
+
+```{r}
+# Show the bottom 5 countries with the highest infant mortality rates and their respective income classes
+sdg_clean %>%
+  arrange(desc(infant_mortality_rate)) %>%
+  select(country, infant_mortality_rate, income_class) %>%
+  head(5) %>%
+  kable(caption = "Top 5 countries with the highest infant mortality rates") %>%
+  kable_styling(full_width = F)
+```
+
+- Infant Mortality Rate by Country
+
+The bar plot displays the infant mortality rate for each country. There is a clear pattern in that as income class decrease from 'H' (upper) income class to 'L' (low) income class, the infant mortality rate tends to increase.
+
+This is as shown that the table that the top 5 countries with the lowest infant mortality rates are all classified as 'H' (upper) income class countries. Conversely, the bottom 5 countries with the highest infant mortality rates are classified as 'L' (low) or 'LM" (low-middle)  income class countries.
+
+```{r}
+# Plot the relationship between infant mortality rate and years of education
+ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = F, colour = "blue") +
+  # geom_smooth(method = "loess", se = F, colour = "red") +
+  ggtitle("Years of Education vs. Infant Mortality Rate") +
+  xlab("Years of Education") +
+  ylab("Infant Mortality Rate")
+```
+
+- Years of Education vs. Infant Mortality Rate
+
+The scatter plot shows a negative relationship. Countries with higher average years of education tend to have lower infant mortality rates.
+
+```{r}
+# Life Expectancy vs. Infant Mortality Rate
+ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = F, colour = "blue") +
+  # geom_smooth(method = "loess", se = F, colour = "red") +
+  ggtitle("Life Expectancy vs. Infant Mortality Rate") +
+  xlab("Life Expectancy") +
+  ylab("Infant Mortality Rate")
+```
+
+- Life Expectancy vs. Infant Mortality Rate
+
+The scatter plot shows a negative relationship. Countries with higher life expectancy tend to have lower infant mortality rates.
+
+```{r}
+# GDP vs. Infant Mortality Rate
+ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = FALSE, colour = "red") +
+  ggtitle("GDP vs. Infant Mortality Rate") +
+  xlab("GDP per Capita") +
+  ylab("Infant Mortality Rate")
+```
+
+- Life Expectancy vs. Infant Mortality Rate
+
+The scatter plot shows a negative relationship. Countries with higher life expectancy tend to have lower infant mortality rates.
+
+
+Your report here.
+
+# Wine data
+
+Your report here.
+
+# References
+
+```{=html}
+<!--
+Include your references in this section. The ones below are just examples.
+-->
+```
+1.  Wickham, H. *ggplot2: Elegant Graphics for Data Analysis* [on-line version](https://ggplot2-book.org/index.html)
+
+2.  Wickham, H. & Grolemund, G. *R for Data Science.* [on-line version](https://r4ds.had.co.nz/index.html)
+
+3.  [Department of Maths website](https://www.bath.ac.uk/departments/department-of-mathematical-sciences/)
+
+```{r}
+```
+
+```{r}
+# Check the structure of the data
+str(sdg_clean)
+```
+
+```{r}
+# Summarise the data
+summary(sdg_clean)
+```
+
+
+
+```{r, fig.width = 12, fig.height = 12}
+ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = country)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Infant Mortality Rate by Country", x = "Country", y = "Infant Mortality Rate")
+```
+
+```{r, fig.width = 12, fig.height = 12}
+ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate, colour = country)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Infant Mortality Rate by Years of Education", x = "Years of Education", y = "Infant Mortality Rate")
+```
+
+```{r, fig.width = 12, fig.height = 12}
+glm_education_year_vs_infant_mortality_rate <- ggplot(
+      data = sdg_clean,
+      aes(x = years_education,
+          y = infant_mortality_rate,
+          colour = country)) +
+      geom_point() +
+      geom_smooth(
+        method = "glm", 
+        method.args = list(family = binomial(link="logit")), 
+        formula = y ~ x, 
+        se = FALSE, 
+        linewidth = 0.5
+      ) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1), 
+            legend.position = "bottom") +
+      labs(title = "Infant Mortality Rate by Years of Education", 
+           x = "Years of Education", 
+           y = "Infant Mortality Rate")
+glm_education_year_vs_infant_mortality_rate
+
+# Infant Mortality Rate vs. Years of Education:
+# 
+#     There is a general downward trend suggesting that as the average years of education increases, the infant mortality rate tends to decrease.
+#     The trend seems reasonably linear.
+```
+
+```{r, fig.width = 12, fig.height = 12}
+ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate, colour = country)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "bottom") +
+  labs(title = "Infant Mortality Rate by GDP", x = "GDP", y = "Infant Mortality Rate")
+
+# Infant Mortality Rate vs. GDP per Capita:
+# 
+#     There is a significant downward trend indicating that higher GDP per capita correlates with lower infant mortality rates.
+#     The trend is pronounced and suggests a potential exponential relationship.
+```
+
+```{r, fig.width = 12, fig.height = 12}
+ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate, colour = country)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Infant Mortality Rate by Life Expectancy", x = "Life Expectancy", y = "Infant Mortality Rate")
+
+# Infant Mortality Rate vs. Life Expectancy:
+# 
+#     There is a clear downward trend indicating that countries with higher life expectancy generally have lower infant mortality rates.
+#     The trend looks linear, though with some variability.
+```
+
+```{r, fig.width = 12, fig.height = 12}
+ggplot(data = sdg_clean, aes(x = year, y = income_class, colour = country)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Income Class by Year", x = "Year", y = "Income Class")
+```
+
+```{r, fig.width = 12, fig.height = 12}
+ggplot(data = sdg_clean, aes(x = year, y = income_class, colour = country)) +
+  geom_point() +
+  # geom_smooth() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Income Class by Year", x = "Year", y = "Income Class")
+```
+
+```{r}
+# Model 1: Linear Regression for Infant Mortality Rate vs. Years of Education
+model_education_year_vs_infant_mortality_rate <- lm(infant_mortality_rate ~ years_education, data = sdg_clean)
+summary(model_education_year_vs_infant_mortality_rate)
+```
+
+```{r}
+# Model 2: Log-Transformed Linear Regression (Infant Mortality Rate vs. GDP per Capita)
+model_gdp_vs_infant_mortality_rate <- lm(log(infant_mortality_rate) ~ log(gdp), data = sdg_clean)
+summary(model_gdp_vs_infant_mortality_rate)
+```
+
+```{r}
+# Model 3: Linear Regression for Infant Mortality Rate vs. Life Expectancy
+model_life_expectancy_vs_infant_mortality_rate <- lm(infant_mortality_rate ~ life_expectancy, data = sdg_clean)
+summary(model_life_expectancy_vs_infant_mortality_rate)
+```
+
+```{r}
+# Create plots for the models
+ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Infant Mortality Rate vs. Years of Education", x = "Years of Education", y = "Infant Mortality Rate")
+```
+
+```{r}
+ggplot(data = sdg_clean, aes(x = log(gdp), y = log(infant_mortality_rate))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Infant Mortality Rate vs. GDP per Capita", x = "Log(GDP)", y = "Log(Infant Mortality Rate)")
+
+# The first effect plot showcases the relationship between infant_mortality_rate and gdp using Model 2. The plot is on a log scale, and it reveals a strong negative correlation between GDP per capita and infant mortality rate. The red line illustrates the model's predicted values, closely fitting the actual data points.
+# Model 2: Log-Transformed Linear Regression for infant_mortality_rate vs. gdp
+# 
+#     The conditional expectation: E[log⁡(Y)∣X]=4.3785−0.5962⋅log⁡(gdp)E[log(Y)∣X]=4.3785−0.5962⋅log(gdp)
+#     This model provides a strong fit with an R2R2 of 0.777 and the lowest AIC value of 394.6.
+#     This suggests that an exponential decay in infant mortality rate is associated with increasing GDP.
+```
+
+```{r}
+ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Infant Mortality Rate vs. Life Expectancy", x = "Life Expectancy", y = "Infant Mortality Rate")
+
+#The second effect plot demonstrates the relationship between infant_mortality_rate and life_expectancy using Model 3. The negative correlation is evident, with the red line depicting the predicted values. The model aligns well with the data points, showing that higher life expectancy generally corresponds to lower infant mortality rates.
+# Model 3: Linear Regression for infant_mortality_rate vs. life_expectancy
+# 
+#     The conditional expectation: E[Y∣X]=176.7136−2.1573⋅life_expectancyE[Y∣X]=176.7136−2.1573⋅life_expectancy
+#     This model provides a strong fit with an R2R2 of 0.783 and a low AIC value of 1708.0.
+#     This suggests that higher life expectancy generally corresponds to lower infant mortality rates.
+
+```
+
+```{r}
+# GPT conclusions for model 2 and 3
+# Both models indicate strong negative relationships between infant mortality rates and the respective predictors (gdp and life_expectancy). The models highlight the influence of socio-economic and health-related factors on infant mortality. The GDP-based model showcases the impact of economic conditions, while the life expectancy model highlights the impact of health and quality of life on infant mortality.
+```
+
+```{r}
+# Rank infant_mortality_rate by country
+kable(sdg_clean %>% arrange(infant_mortality_rate) %>% select(country, infant_mortality_rate) %>% head(10), caption = "Top 10 countries with the lowest infant mortality rate")
+```
+\`\`\`{r}

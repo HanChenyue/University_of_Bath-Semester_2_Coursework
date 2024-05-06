@@ -1,0 +1,409 @@
+---
+title: 'MA50258 Lab 2'
+author: "Your name here"
+output:
+  html_document:
+    number_sections: no
+    toc: yes
+    toc_float: yes
+    toc_depth: 2
+    code_download: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = TRUE)
+# The option warning = FALSE supresses all the output warnings! 
+# You can  override this option in each code chunk as shown in some cases below!
+```
+
+# Introduction
+
+
+You can download the `*.Rmd` version of this page by clicking in the **Code button** at the top right of this page. If the **Code button** does not work you can download the 'Lab2.Rmd' file from the Moodle page. You should use RStudio,
+ 
+
+
+
+
+## Packages
+
+Below is the list of packages that we will use in this lab. 
+
+```{r}
+#| message: false
+library(tidyverse) 
+library(janitor) # to clean names in a data frame
+library(kableExtra) # for nicer tables
+```
+
+
+## Instructions
+
+1. To answer the following questions, simply fill in the code chunks with your own code.
+
+2. You should use  the `dplyr` verbs introduced in [Chapter 2](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/02-intro-tidyverse.html) of the lecture notes
+
+3. You should use  `ggplot2` commands as introduced in [Chapter 3](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/03-intro-ggplot.html) and [Chapter 4](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/04-intro-regression.html) of the lecture notes. 
+
+4. Label your plots appropriately as well as ensuring that appropriate legends describe different types of objects in the same plot.
+
+5. Once you complete your answers, knit the corresponding Rmarkdown (`.Rmd`) document to
+produce an HTML file.  The name of the HTML file should be Lab2.html. You should submit both Rmd and HTML files in the [submission point in Moodle](https://moodle.bath.ac.uk/mod/assign/view.php?id=1197563). 
+
+6. For all the  questions, only use the subset of the dataset that corresponds to countries in America. 
+
+7. You should get rid of the introduction section (e.g. all of the above)  in your submission.
+
+
+# Gapminder data set
+
+This data set was introduced in [Section 2.3](https://github.bath.ac.uk/pages/kai21/MA50258-lecture-notes/02-intro-tidyverse.html#sec-gapminder-data) of the lecture notes.
+
+The `gapminder` tibble contains a dataset of economic social indicators such as gross domestic product (gdp) per capita, population and life expectancy of many countries over the period from 1952 to 2007 in increments of 5 years.
+
+The  data frame `gapminder` has 1704 rows and 6 variables:
+
+
+* `country` A factor with 142 levels (eg 142 countries in the data set)
+
+* `continent` A factor with 5 levels 
+
+* `year` An integer vector with  years ranging from 1952 to 2007 in increments of 5 years.
+
+* `lifeExp` life expectancy at birth, in years
+
+* `pop` Total population
+
+* `gdpPercap` GDP per capita (US dollars, inflation-adjusted)
+
+
+
+The data can be loaded into `R` using the following command:
+```{r,message=FALSE}
+library(gapminder)
+gapminder <- clean_names(gapminder)
+gapminder <- gapminder %>% filter(continent == "Americas")
+```
+
+
+Note that each row in `gapminder` refers to an specific country in a specific year.
+
+
+
+# Questions
+## Question 1
+
+
+Produce a scatter plot of time in years in the horizontal axis and life expectancy at birth in the vertical axis.
+
+```{r}
+ggplot(data = gapminder, aes(x = year, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "Year",
+    y = "Life expectancy at birth"
+  )
+```
+
+What can you conclude form this plot?
+
+<hr>
+<b><u>My answer</u></b>
+
+There is an gradual increase in life expectancy over time.
+<hr>
+
+## Question 2
+
+Produce a scatter plot of time in years in the horizontal axis and life expectancy at birth in the vertical axis. In the same graph, plot the corresponding fitted linear regression in a different colour. 
+
+```{r}
+ggplot(data = gapminder, aes(x = year, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, aes(colour = "Linear Method"), linewidth = 0.5) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "Year",
+    y = "Life expectancy at birth"
+  ) +
+  scale_color_manual("", 
+                      values = c("Linear Method" = "red"),
+                      labels = c("Linear Method"))
+```
+
+What can you conclude from the linear regression fit?
+```{r}
+summary(lm(life_exp ~ year, data = gapminder))
+
+cat("The estimated increase in life expectancy per year is", round(coef(summary(lm(life_exp ~ year, data = gapminder)))[2], 2))
+```
+<hr>
+<b><u>My answer</u></b>
+
+There is a gradual increase in life expectancy over time. The linear regression fit suggests that life expectancy has increased by approximately <b>0.37 years</b> per year.
+<hr>
+
+## Question 3
+
+Produce a scatter plot of GDP per capita in the horizontal axis and life expectancy at birth in the vertical axis.
+
+```{r}
+ggplot(data = gapminder, aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth"
+  ) + 
+  scale_x_continuous(labels = scales::label_dollar())  
+```
+
+What can you conclude from this plot?
+There is a positive relationship between GDP per capita and life expectancy at birth.
+
+<hr>
+<u>My answer</u>
+
+There is a positive relationship between GDP per capita and life expectancy at birth.
+<hr>
+
+## Question 4
+Produce a scatter plot of GDP per capita in the horizontal axis and life expectancy at birth in the vertical axis. In the same graph, plot the corresponding empirical LOESS regression estimate in a different colour. 
+
+```{r}
+ggplot(data = gapminder, aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(aes(colour = "LOESS Method"), method = "loess", se = FALSE, linewidth = 0.5) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth"
+  ) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_color_manual("", 
+                      values = c("LOESS Method" = "blue"),
+                      labels = c("LOESS Method"))
+```
+
+What can you conclude from the LOESS fit?
+
+<hr>
+<b><u>My answer</u></b>
+
+The LOESS fit suggests that the relationship between GDP per capita and life expectancy at birth is not linear. The relationship is positive but the rate of increase in life expectancy decreases as GDP per capita increases.
+<hr>
+
+## Question 5
+For each observed year, produce a scatter plot of GDP per capita in the horizontal axis and life expectancy at birth in the vertical axis. In each scatter,  also plot the corresponding empirical LOESS regression estimate as well as the corresponding linear regression fit both in different colours.
+
+```{r}
+ggplot(data = gapminder, aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5, size = 0.5) +
+  geom_smooth(aes(colour = "Linear Method"), method = "lm", se = FALSE, linewidth = 0.3) +
+  geom_smooth(aes(colour = "LOESS Method"), method = "loess", se = FALSE, linewidth = 0.3) +
+  facet_wrap(~year) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_color_manual("", 
+                      values = c("Linear Method" = "red", "LOESS Method" = "blue"),
+                      labels = c("Linear Method", "LOESS Method"))
+```
+
+What can you conclude from both fits?
+
+<hr>
+</b><u>My answer</u></b>
+
+LOESS fit is a better fit than the linear regression fit for this dataset.
+The linear regression fit suggests that the relationship between GDP per capita and life expectancy at birth is positive and linear. The LOESS fit suggests that the relationship is positive but the rate of increase in life expectancy decreases as GDP per capita increases.
+<hr>
+
+## Question 6
+
+Using both the linear regression and LOESS fits to _"predict"_ the average life expectancy across countries:
+
+<hr>
+a. with a GDP per capita of 15,000 US dollars in 1982
+
+```{r}
+plot_a <- gapminder %>% 
+  filter(continent == "Americas" & year == 1982) %>% 
+  ggplot(aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = "Linear Method"), linewidth = 0.5) +
+  geom_smooth(method = "loess", se = FALSE, aes(color = "LOESS smoothing"), linewidth = 0.5) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth"
+  ) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_color_manual("", 
+                      values = c("Linear Method" = "red", "LOESS smoothing" = "blue"),
+                      labels = c("Linear Method", "LOESS smoothing")) +
+  geom_vline(xintercept = 15000, linetype = "dashed", color = "black", linewidth = 0.3)
+plot_a
+```
+
+<b><u>Using linear regression</u></b>
+
+
+```{r}
+lm_a <- lm(life_exp ~ gdp_percap, data = gapminder %>% filter(continent == "Americas" & year == 1982)) %>% predict(newdata = data.frame(gdp_percap = 15000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 15,000 US dollars in 1982 using linear regression is", round(lm_a, 2), "years.")
+```
+
+<b><u>Using LOESS</u></b>
+
+```{r}
+loess_a <- loess(life_exp ~ gdp_percap, data = gapminder %>% filter(continent == "Americas" & year == 1982)) %>% predict(newdata = data.frame(gdp_percap = 15000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 15,000 US dollars in 1982 using LOESS is", round(loess_a, 2), "years.")
+```
+
+<hr>
+
+b. with a GDP per capita of 15,000 US dollars in 2002
+
+```{r}
+plot_b <- gapminder %>% 
+  filter(continent == "Americas" & year == 2002) %>% 
+  ggplot(aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = "Linear Method"), linewidth = 0.5) +
+  geom_smooth(method = "loess", se = FALSE, aes(color = "LOESS smoothing"), linewidth = 0.5, span = 0.9) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth"
+  ) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_color_manual("", 
+                      values = c("Linear Method" = "red", "LOESS smoothing" = "blue"),
+                      labels = c("Linear Method", "LOESS smoothing")) +
+  geom_vline(xintercept = 15000, linetype = "dashed", color = "black", linewidth = 0.3)
+plot_b
+```
+
+\underline{Using linear regression}
+
+```{r}
+lm_b <- lm(life_exp ~ gdp_percap, data = gapminder %>% filter(continent == "Americas" & year == 2002)) %>% predict(newdata = data.frame(gdp_percap = 15000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 15,000 US dollars in 2002 using linear regression is", round(lm_b, 2), "years.")
+```
+
+\underline{Using LOESS}
+
+```{r}
+loess_b <- loess(life_exp ~ gdp_percap, span = 0.9, data = gapminder %>% filter(continent == "Americas" & year == 2002)) %>% predict(newdata = data.frame(gdp_percap = 15000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 15,000 US dollars in 2002 using LOESS is", round(loess_b, 2), "years.")
+
+```
+
+<hr>
+
+c. with a GDP per capita of 40,000 US dollars in 1982
+
+```{r}
+plot_c <- gapminder %>% 
+  filter(continent == "Americas" & year == 1982) %>% 
+  ggplot(aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = "Linear Method"), linewidth = 0.5, fullrange = T) +
+  geom_smooth(method = "loess", se = FALSE, aes(color = "LOESS smoothing"), linewidth = 0.5) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth"
+  ) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_color_manual("", 
+                      values = c("Linear Method" = "red", "LOESS smoothing" = "blue"),
+                      labels = c("Linear Method", "LOESS smoothing")) +
+  geom_vline(xintercept = 40000, linetype = "dashed", color = "black", linewidth = 0.3) +
+  coord_cartesian(ylim = c(0, 100), xlim = c(0, 80000))
+plot_c
+```
+
+<b><u>Using linear regression</u></b>
+
+```{r}
+lm_c <- lm(life_exp ~ gdp_percap, data = gapminder %>% filter(continent == "Americas" & year == 1982)) %>% predict(newdata = data.frame(gdp_percap = 40000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 40,000 US dollars in 1982 using linear regression is", round(lm_c, 2), "years.")
+```
+
+<b><u>Using LOESS</u></b>
+
+```{r}
+loess_c <- loess(life_exp ~ gdp_percap, data = gapminder %>% filter(continent == "Americas" & year == 1982)) %>% predict(newdata = data.frame(gdp_percap = 40000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 40,000 US dollars in 1982 using LOESS is", round(loess_c, 2), "years.")
+```
+
+<hr>
+
+
+d. with a GDP per capita of 65,000 US dollars in 2002
+
+```{r}
+plot_d <- gapminder %>% 
+  filter(continent == "Americas" & year == 2002) %>% 
+  ggplot(aes(x = gdp_percap, y = life_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = "Linear Method"), linewidth = 0.5, fullrange = T) +
+  geom_smooth(method = "loess", se = FALSE, aes(color = "LOESS smoothing"), linewidth = 0.5, span = 1, fullrange = T) +
+  labs(
+    title = "Life expectancy at birth in the Americas",
+    x = "GDP per capita",
+    y = "Life expectancy at birth"
+  ) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_color_manual("", 
+                      values = c("Linear Method" = "red", "LOESS smoothing" = "blue"),
+                      labels = c("Linear Method", "LOESS smoothing")) +
+  geom_vline(xintercept = 65000, linetype = "dashed", color = "black", linewidth = 0.3) +
+  coord_cartesian(ylim = c(0, 100), xlim = c(0, 80000))
+plot_d
+```
+
+<b><u>Using linear regression</u></b>
+
+```{r}
+lm_d <- lm(life_exp ~ gdp_percap, data = gapminder %>% filter(continent == "Americas" & year == 2002)) %>% predict(newdata = data.frame(gdp_percap = 65000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 65,000 US dollars in 2002 using linear regression is", round(lm_d, 2), "years.")
+```
+
+<b><u>Using LOESS</u></b>
+
+```{r}
+loess_d <- loess(life_exp ~ gdp_percap, span = 1, data = gapminder %>% filter(continent == "Americas" & year == 2002)) %>% predict(newdata = data.frame(gdp_percap = 65000))
+cat("The predicted life expectancy at birth in the Americas with a GDP per capita of 65,000 US dollars in 2002 using LOESS is", round(loess_d, 2), "years.")
+```
+<b><u>Summary</u></b>
+
+```{r out.width='1000px', out.height='1000px'}
+library(patchwork)
+
+# Combine the plots into a 2x2 grid
+combined_plots <- plot_a + plot_b + plot_c + plot_d
+
+# Print the combined plot
+combined_plots
+```
+
+Here, prediction means evaluating the estimated mean regression line at the required values of the explanatory variables. 
+
+
+Present your results in a table and then below it, explain any similarities and differences between the predictions.
+
+<hr>
+<b><u>My answer</u></b>
+
+Prediction using linear regression and LOESS are similar for lower values of GDP per capita. However, for higher values of GDP per capita, the predictions using LOESS are higher than those using linear regression. This is because the relationship between GDP per capita and life expectancy at birth is not linear. The rate of increase in life expectancy decreases as GDP per capita increases.
+
+<hr>
