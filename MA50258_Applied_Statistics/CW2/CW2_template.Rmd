@@ -27,6 +27,8 @@ library(dplyr)
 library(janitor)
 library(ggplot2)
 library(kableExtra)
+library(MASS)
+library(broom)
 ```
 
 ```{r,message=FALSE}
@@ -82,8 +84,8 @@ summary(sdg_clean)
 ```{r}
 # Plot the distribution of infant mortality rate
 ggplot(data = sdg_clean, aes(x = infant_mortality_rate)) +
-  geom_histogram(aes(y = ..density..), binwidth = 5, fill = "yellow", color = "gray") +
-  geom_density(color = "red", size = 1) +
+  geom_histogram(aes(y = ..density..), binwidth = 5, fill = "yellow", colour = "gray") +
+  geom_density(colour = "red", size = 1) +
   ggtitle("Distribution of Infant Mortality Rate") +
   xlab("Infant Mortality Rate") +
   ylab("Density")
@@ -97,7 +99,7 @@ The histogram shows that the distribution of infant_mortality_rate is right-skew
 ```{r, fig.height = 8}
 # Income Class vs. Infant Mortality Rate
 ggplot(data = sdg_clean, aes(x = income_class, y = infant_mortality_rate, fill = income_class)) +
-  geom_boxplot(color = "black") +
+  geom_boxplot(colour = "black") +
   scale_fill_manual(values = c("H" = "yellow", "UM" = "orange", "LM" = "red", "L" = "magenta")) +
   ggtitle("Income Class vs. Infant Mortality Rate") +
   xlab("Income Class") +
@@ -116,8 +118,8 @@ ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = coun
 # Show the top 5 countries with the lowest infant mortality rates and their respective income classes and vice versa
 sdg_clean %>%
   arrange(infant_mortality_rate) %>%
-  select(country, infant_mortality_rate, income_class) %>%
   head(5) %>%
+  dplyr::select(country, infant_mortality_rate, income_class) %>%
   kable(caption = "Top 5 countries with the lowest infant mortality rates") %>%
   kable_styling(full_width = F)
 ```
@@ -126,7 +128,7 @@ sdg_clean %>%
 # Show the bottom 5 countries with the highest infant mortality rates and their respective income classes
 sdg_clean %>%
   arrange(desc(infant_mortality_rate)) %>%
-  select(country, infant_mortality_rate, income_class) %>%
+  dplyr::select(country, infant_mortality_rate, income_class) %>%
   head(5) %>%
   kable(caption = "Top 5 countries with the highest infant mortality rates") %>%
   kable_styling(full_width = F)
@@ -172,7 +174,7 @@ The scatter plot shows a negative relationship. Countries with higher life expec
 # GDP vs. Infant Mortality Rate
 ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
   geom_point(alpha = 0.5) +
-  geom_smooth(method = "loess", se = FALSE, colour = "red") +
+  geom_smooth(method = "loess", se = FALSE, colour = "red", ) +
   ggtitle("GDP vs. Infant Mortality Rate") +
   xlab("GDP per Capita") +
   ylab("Infant Mortality Rate")
@@ -181,6 +183,123 @@ ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
 - Life Expectancy vs. Infant Mortality Rate
 
 The scatter plot shows a negative relationship. Countries with higher life expectancy tend to have lower infant mortality rates.
+
+## Regression models
+
+Linear Model:
+
+$(E(\text{infant_mortality_rate}) = \beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{gdp} + \beta_3 \times \text{life_expectancy} + \beta_4 \times \text{income_class})$
+
+```{r}
+# Linear Model
+lm_infant <- lm(infant_mortality_rate ~ years_education + gdp + life_expectancy + income_class, data = sdg_clean)
+summary(lm_infant)
+```
+
+
+
+
+
+
+
+
+
+
+Log-Transformed Linear Model:
+
+$E(\ln(\text{infant_mortality_rate})) = \beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{gdp} + \beta_3 \times \text{life_expectancy} + \beta_4 \times \text{income_class}$
+
+```{r}
+# Log-Transformed Linear Model
+log_lm_infant <- lm(log(infant_mortality_rate) ~ years_education + gdp + life_expectancy + income_class, data = sdg_clean)
+tidy(log_lm_infant)
+```
+
+```{r}
+# Generate predictions for the log-transformed model
+prediction_log_lm_infant <- predict(log_lm_infant)
+prediction_log_lm_infant_exp <- exp(prediction_log_lm_infant)
+
+ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_log_lm_infant_exp)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(colour = "purple", size = 1, alpha = 0.4) +
+  ggtitle("Log-Transformed Linear Model Predictions vs. Actual") +
+  xlab("Actual Infant Mortality Rate") +
+  ylab("Predicted Infant Mortality Rate")
+
+# Effect Plot for Life Expectancy
+ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_line(aes(y = prediction_log_lm_infant_exp), colour = "purple", alpha = 0.4) +
+  ggtitle("Log-Transformed Linear Model Effect Plot - Life Expectancy") +
+  xlab("Life Expectancy") +
+  ylab("Infant Mortality Rate")
+
+```
+
+
+The plots for the log-transformed linear model indicate:
+
+- Predictions vs. Actual: The first plot shows a strong alignment between the predicted and actual values, but there are some under-predictions for higher actual values.
+
+- Effect Plot - Life Expectancy: The second plot shows a strong negative relationship between life_expectancy and infant_mortality_rate, similar to the GLM model.
+
+Coefficients for the log-transformed linear model indicate that:
+- Years of Education: For each additional year of education, the infant mortality rate decreases by 14.2% (exp⁡(−0.153)−1exp(−0.153)−1).
+- Life Expectancy: For each additional year of life expectancy, the infant mortality rate decreases by 10.4% (exp⁡(−0.109)−1exp(−0.109)−1).
+- Income Class: Lower income classes are associated with higher infant mortality rates, similar to the GLM model.
+
+
+Generalised Linear Model (GLM):
+
+$E(\text{infant_mortality_rate}) = \exp\left(\beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{gdp} + \beta_3 \times \text{life_expectancy} + \beta_4 \times \text{income_class}\right)$
+
+```{r}
+# GLM
+glm_infant <- glm(infant_mortality_rate ~ years_education + gdp + life_expectancy + income_class, data = sdg_clean, family = poisson(link = "log"))
+summary(glm_infant)
+tidy(glm_infant)
+```
+
+```{r}
+# Generate predictions for the GLM model
+prediction_glm_infant <- predict(glm_infant, type = "response")
+
+ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_glm_infant)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(colour = "purple", size = 1, alpha = 0.4) +
+  ggtitle("GLM Predictions vs. Actual") +
+  xlab("Actual Infant Mortality Rate") +
+  ylab("Predicted Infant Mortality Rate")
+
+ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_line(aes(y = prediction_glm_infant), colour = "purple", alpha = 0.4) +
+  ggtitle("GLM Effect Plot - Life Expectancy") +
+  xlab("Life Expectancy") +
+  ylab("Infant Mortality Rate")
+```
+The plots for the GLM model indicate:
+
+- Predictions vs. Actual: The first plot shows that the predictions closely align with the actual infant mortality rates, but there are some deviations for higher values.
+
+- Effect Plot - Life Expectancy: The second plot shows a strong negative relationship between life_expectancy and infant_mortality_rate, which aligns with our earlier observations.
+
+Coefficients for the GLM model indicate that:
+
+- Years of Education: For each additional year of education, the infant mortality rate decreases by 7.1% (exp⁡(−0.071)−1exp(−0.071)−1).
+- Life Expectancy: For each additional year of life expectancy, the infant mortality rate decreases by 8.4% (exp⁡(−0.084)−1exp(−0.084)−1).
+- Income Class: Lower income classes are associated with higher infant mortality rates, with the coefficients representing the log of the multiplicative effect compared to the "H" (high-income) category.
+
+
+## Conclusion
+
+Both the GLM and log-transformed linear models are effective in characterizing the behavior of infant mortality rate. The GLM model shows a slightly better fit based on the AIC value, but both models highlight the significant negative relationships with years of education and life expectancy, and the influence of income class. The findings suggest that investing in education and healthcare could have positive effects on reducing infant mortality rates across different countries and income classifications. ​
+
+
+
+
+
 
 
 Your report here.
@@ -357,8 +476,4 @@ ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
 # Both models indicate strong negative relationships between infant mortality rates and the respective predictors (gdp and life_expectancy). The models highlight the influence of socio-economic and health-related factors on infant mortality. The GDP-based model showcases the impact of economic conditions, while the life expectancy model highlights the impact of health and quality of life on infant mortality.
 ```
 
-```{r}
-# Rank infant_mortality_rate by country
-kable(sdg_clean %>% arrange(infant_mortality_rate) %>% select(country, infant_mortality_rate) %>% head(10), caption = "Top 10 countries with the lowest infant mortality rate")
-```
 \`\`\`{r}
