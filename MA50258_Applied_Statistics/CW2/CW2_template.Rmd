@@ -30,6 +30,7 @@ library(kableExtra)
 library(MASS)
 library(broom)
 library(stats)
+library(effects)
 ```
 
 ```{r,message=FALSE}
@@ -208,13 +209,11 @@ lm_infant <- lm(infant_mortality_rate ~ years_education + gdp + life_expectancy 
 summary(lm_infant)
 ```
 
-
-
-
-
-
-
-
+```{r, fig.width = 12, fig.height = 8}
+# Using effects library to get the effect of infant mortality rate
+eff_lm_infant <- allEffects(lm_infant)
+plot(eff_lm_infant, main = "Effect of Life Expectancy on Infant Mortality Rate")
+```
 
 
 Log-Transformed Linear Model:
@@ -238,15 +237,6 @@ ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_log_lm_in
   ggtitle("Log-Transformed Linear Model Predictions vs. Actual") +
   xlab("Actual Infant Mortality Rate") +
   ylab("Predicted Infant Mortality Rate")
-
-# Effect Plot for Life Expectancy
-ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
-  geom_point(alpha = 0.5) +
-  geom_line(aes(y = prediction_log_lm_infant_exp), colour = "purple", alpha = 0.4) +
-  ggtitle("Log-Transformed Linear Model Effect Plot - Life Expectancy") +
-  xlab("Life Expectancy") +
-  ylab("Infant Mortality Rate")
-
 ```
 
 
@@ -254,7 +244,6 @@ The plots for the log-transformed linear model indicate:
 
 - Predictions vs. Actual: The first plot shows a strong alignment between the predicted and actual values, but there are some under-predictions for higher actual values.
 
-- Effect Plot - Life Expectancy: The second plot shows a strong negative relationship between life_expectancy and infant_mortality_rate, similar to the GLM model.
 
 Coefficients for the log-transformed linear model indicate that:
 - Years of Education: For each additional year of education, the infant mortality rate decreases by 14.2% (exp⁡(−0.153)−1exp(−0.153)−1).
@@ -284,12 +273,12 @@ ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_glm_infan
   xlab("Actual Infant Mortality Rate") +
   ylab("Predicted Infant Mortality Rate")
 
-ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
-  geom_point(alpha = 0.5) +
-  geom_line(aes(y = prediction_glm_infant), colour = "purple", alpha = 0.4) +
-  ggtitle("GLM Effect Plot - Life Expectancy") +
-  xlab("Life Expectancy") +
-  ylab("Infant Mortality Rate")
+# ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
+#   geom_point(alpha = 0.5) +
+#   geom_line(aes(y = prediction_glm_infant), colour = "purple", alpha = 0.4) +
+#   ggtitle("GLM Effect Plot - Life Expectancy") +
+#   xlab("Life Expectancy") +
+#   ylab("Infant Mortality Rate")
 ```
 The plots for the GLM model indicate:
 
@@ -549,7 +538,11 @@ ggplot(data = wine_clean_year, aes(x = rating, y = prediction_glm_model_4)) +
 
 The plot shows the relationship between the actual and predicted ratings using the preferred GLM Gaussian model. The red line represents the predicted values, which closely align with the actual data points. The LOESS model provides a good fit for the data, capturing the general trend of the relationship between price, number of ratings, and rating.
 
-
+```{r}
+# Using effects library to get the effect of log(price) and log(number_of_ratings)
+eff_glm_model_4 <- allEffects(glm_model_4)
+plot(eff_glm_model_4, main = "Effect of Log(Price) and Log(NumberofRatings) on Rating")
+```
 
 
 
