@@ -324,6 +324,9 @@ wine_clean <- Wine %>%
   clean_names() %>%
   remove_empty(c("rows", "cols"))
 
+# Make year to be numeric
+wine_clean$year <- as.numeric(wine_clean$year)
+
 # check unique values in the year column
 # unique(wine_clean$year)
 ```
@@ -331,6 +334,8 @@ wine_clean <- Wine %>%
 # remove the year column with "N.V." values
 wine_clean_year <- wine_clean %>%
   filter(year != "N.V.")
+
+
 ```
 
 ```{r}
@@ -338,6 +343,11 @@ wine_clean_year <- wine_clean %>%
 ggplot(data = wine_clean_year, aes(x=rating)) +
   geom_histogram(binwidth=0.1, fill="yellow", color="gray", alpha=0.7) +
   labs(title="Distribution of Wine Ratings", x="Rating", y="Frequency")
+```
+```{r}
+ggplot(data = wine_clean_year,
+       aes(x = rating, y = number_of_ratings, colour = variety)) + 
+  geom_point(alpha = 0.5)
 ```
 
 Distribution of Wine Ratings shows a normal distribution with a peak around 3.8. This indicates that most wines have ratings around 3.8, with fewer wines having higher or lower ratings.
@@ -371,7 +381,8 @@ ggplot(data = wine_clean_year, aes(x=price, y=rating)) +
 # Explore the ratings over the years
 ggplot(data = wine_clean_year, aes(x=year, y=rating, colour=variety)) +
   geom_point(alpha=0.8) +
-  geom_smooth(method="loess", se=FALSE) +
+  # geom_line() +
+  geom_smooth(method="loess", se=FALSE, size = 1.5) +
   labs(title="Ratings over the Years", x="Year", y="Rating") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
@@ -382,7 +393,31 @@ ggplot(data = wine_clean_year, aes(x=year, y=rating, colour=variety)) +
 
 ## Regression models
 
-The first model will be a simple linear regression of 'Rating' on 'Price'. We use a logarithmic transformation on the price because of its skewed distribution.
+The first model will be a simple linear model to find how price changes with the year for different varieties of wine.
+
+$E(Price | Year, Variety) = \beta_0 + \beta_1 \times \text{Year} + \zeta_{\text{Red}} \times Variety_{Red} + \zeta_{\text{Rose}} \times Variety_{Rose} + \zeta_{\text{Sparkling}} \times Variety_{Sparkling} + \zeta_{\text{White}} \times Variety_{White}$
+
+```{r, fig.width = 12, fig.height = 8}
+# Linear regression model for 'Price' and 'Year' for different 'Varieties' with shared y-axis limits
+ggplot(wine_clean_year, aes(x = year, y = price, color = variety)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, aes(colour = variety), formula = y ~ x) +
+  facet_wrap(~ variety, scales = "free_x") +
+  labs(title = "Linear Regression: Price vs. Year for Different Varieties",
+       x = "Year",
+       y = "Price") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  coord_cartesian(ylim = c(0, 300))
+
+# Linear model for 'Price' and 'Year' for different 'Varieties'
+lm_price_year_variety <- lm(price ~ year + variety - 1, data = wine_clean_year)
+summary(lm_price_year_variety)
+
+```
+
+
+The second model will be a linear regression of 'Rating' on 'Price'. We use a logarithmic transformation on the price because of its skewed distribution.
 
 $E(\text{Rating}) = \beta_0 + \beta_1 \times \log(\text{Price})$
 
@@ -449,13 +484,70 @@ Given the similarity in AIC values for the two models, the model with 'Price' an
 Therefore, the linear regression model with 'log(Price)' as a predictor provides a good fit for the data and captures the relationship between price and rating effectively.
 
 
+GLM Gaussian Model:
+
+Given our histograms in our EDA section showing a normal distribution of ratings, we can use a Gaussian GLM model to analyse the dataset.
+
+We can either use a Gaussian GLM with identity link or log link. To determine, we check for AIC as well as plot the residuals.
+
+```{r}
+# Gaussian GLM with identity link
+glm_model_1 <- glm(rating ~ log(price), data = wine_clean_year, family = gaussian(link = "identity"))
+glm_model_2 <- glm(rating ~ log(price) + log(number_of_ratings), data = wine_clean_year, family = gaussian(link = "identity"))
+glm_model_3 <- glm(rating ~ log(price), data = wine_clean_year, family = gaussian(link = "log"))
+glm_model_4 <- glm(rating ~ log(price) + log(number_of_ratings), data = wine_clean_year, family = gaussian(link = "log"))
+
+# Generate a table with AIC and R-squared values
+kable(data.frame(Model = c("Identity Link, Rating | Log(Price)", "Identity Link, Rating | Log(Price), Log(NumberofRatings)", "Log Link, Rating | Log(Price)", "Log Link, Rating | Log(Price), Log(NumberofRatings)"),
+                 AIC = c(AIC(glm_model_1), AIC(glm_model_2), AIC(glm_model_3), AIC(glm_model_4))))
+```
+
+```{r}
+# Residuals plots for GLM Gaussian (Identity Link)
+# Rating | Log(Price)
+qqnorm(residuals(glm_model_1))
+qqline(residuals(glm_model_1))
+```
+
+```{r}
+# Residuals plots for GLM Gaussian (Identity Link)
+# Rating | Log(Price), Log(NumberofRatings)
+qqnorm(residuals(glm_model_2))
+qqline(residuals(glm_model_2))
+```
+
+```{r}
+# Residuals plots for GLM Gaussian (Log Link)
+# Rating | Log(Price)
+qqnorm(residuals(glm_model_3))
+qqline(residuals(glm_model_3))
+```
+
+```{r}
+# Residuals plots for GLM Gaussian (Log Link)
+# Rating | Log(Price), Log(NumberofRatings)
+qqnorm(residuals(glm_model_4))
+qqline(residuals(glm_model_4))
+```
 
 
+From the QQ plots, we can see that the residuals in all 4 plots mostly fit the straight line with minor skewness. This suggests that the Gaussian GLM models are appropriate for the dataset. Thus, we use AIC to determine the preferred model.
 
+From the AIC comparison, model 4 $(\text{Rating} | \log(\text{Price}), \log(\text{NumberofRatings})) = \beta_0 + \beta_1 \times \log(\text{Price}) + \beta_2 \times \log(\text{NumberofRatings})$ has the lowest AIC value, indicating that it is the preferred model.
 
+```{r} 
+# Generate predictions for the preferred GLM Gaussian model
+prediction_glm_model_4 <- predict(glm_model_4)
 
+ggplot(data = wine_clean_year, aes(x = rating, y = prediction_glm_model_4)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = FALSE, colour = "red") +
+  ggtitle("GLM Gaussian Model Predictions vs. Actual") +
+  xlab("Actual Rating") +
+  ylab("Predicted Rating")
+```
 
-
+The plot shows the relationship between the actual and predicted ratings using the preferred GLM Gaussian model. The red line represents the predicted values, which closely align with the actual data points. The LOESS model provides a good fit for the data, capturing the general trend of the relationship between price, number of ratings, and rating.
 
 
 
