@@ -29,6 +29,7 @@ library(ggplot2)
 library(kableExtra)
 library(MASS)
 library(broom)
+library(stats)
 ```
 
 ```{r,message=FALSE}
@@ -37,16 +38,7 @@ sdg <- read_csv(here("data", "sdg.csv"))
 Wine <- read_csv(here("data", "Wine.csv"))
 ```
 
-```{r}
 
-
-wine_clean <- Wine %>%
-  clean_names() %>%
-  remove_empty(c("rows", "cols"))
-
-# write_csv(sdg_clean, here("data", "sdg_clean.csv"))
-# write_csv(wine_clean, here("data", "wine_clean.csv"))
-```
 
 ```{=html}
 <!--
@@ -155,7 +147,7 @@ ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
 
 The scatter plot shows a negative relationship. Countries with higher average years of education tend to have lower infant mortality rates.
 
-```{r}
+```{r, fig.width = 12, fig.height = 12}
 # Life Expectancy vs. Infant Mortality Rate
 ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
   geom_point(alpha = 0.5) +
@@ -166,11 +158,12 @@ ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
   ylab("Infant Mortality Rate")
 ```
 
+
 - Life Expectancy vs. Infant Mortality Rate
 
 The scatter plot shows a negative relationship. Countries with higher life expectancy tend to have lower infant mortality rates.
 
-```{r}
+```{r, fig.width = 12, fig.height = 8}
 # GDP vs. Infant Mortality Rate
 ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
   geom_point(alpha = 0.5) +
@@ -178,6 +171,25 @@ ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
   ggtitle("GDP vs. Infant Mortality Rate") +
   xlab("GDP per Capita") +
   ylab("Infant Mortality Rate")
+
+# GDP vs. Infant Mortality Rate for each continent
+ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate, colour = continent)) +
+  geom_point(alpha = 0.5) +
+  # geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~continent) +
+  ggtitle("GDP vs. Infant Mortality Rate by Continent") +
+  xlab("GDP per Capita") +
+  ylab("Infant Mortality Rate")
+
+# GDP vs. Infant Mortality Rate for each income class
+ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate, colour = income_class)) +
+  geom_point(alpha = 0.5) +
+  # geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~income_class) +
+  ggtitle("GDP vs. Infant Mortality Rate by Income Class") +
+  xlab("GDP per Capita") +
+  ylab("Infant Mortality Rate")
+
 ```
 
 - Life Expectancy vs. Infant Mortality Rate
@@ -306,7 +318,181 @@ Your report here.
 
 # Wine data
 
-Your report here.
+```{r}
+# Use janitor to clean the data
+wine_clean <- Wine %>%
+  clean_names() %>%
+  remove_empty(c("rows", "cols"))
+
+# check unique values in the year column
+# unique(wine_clean$year)
+```
+```{r}
+# remove the year column with "N.V." values
+wine_clean_year <- wine_clean %>%
+  filter(year != "N.V.")
+```
+
+```{r}
+# Distribution of wine ratings
+ggplot(data = wine_clean_year, aes(x=rating)) +
+  geom_histogram(binwidth=0.1, fill="yellow", color="gray", alpha=0.7) +
+  labs(title="Distribution of Wine Ratings", x="Rating", y="Frequency")
+```
+
+Distribution of Wine Ratings shows a normal distribution with a peak around 3.8. This indicates that most wines have ratings around 3.8, with fewer wines having higher or lower ratings.
+
+```{r}
+# Plot the relationship between rating and wine variety
+ggplot(wine_clean_year, aes(x = variety, y = rating)) +
+  geom_boxplot(color = "black", aes(fill = variety)) +
+  scale_fill_manual(values = c("White" = "yellow", "Sparkling" = "orange", 
+                               "Red" = "red", "Rose" = "magenta")) +
+  labs(title = "Ratings by Wine Variety", x = "Variety", y = "Rating")
+```
+
+```{r, fig.width = 12, fig.height = 8}
+# Rating by country
+ggplot(wine_clean_year, aes(x = country, y = rating)) +
+  geom_boxplot(color = "black", aes(fill = country)) +
+  labs(title = "Ratings by Country", x = "Country", y = "Rating") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom")
+```
+
+```{r}
+# Explore how rating correlate with price of wine
+ggplot(data = wine_clean_year, aes(x=price, y=rating)) +
+  geom_point(alpha=0.3) +
+  scale_x_log10() +
+  labs(title="Ratings vs. Price", x="Price (Euros)", y="Rating")
+```
+
+```{r, fig.width = 12, fig.height = 5}
+# Explore the ratings over the years
+ggplot(data = wine_clean_year, aes(x=year, y=rating, colour=variety)) +
+  geom_point(alpha=0.8) +
+  geom_smooth(method="loess", se=FALSE) +
+  labs(title="Ratings over the Years", x="Year", y="Rating") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+```
+
+
+## Regression models
+
+The first model will be a simple linear regression of 'Rating' on 'Price'. We use a logarithmic transformation on the price because of its skewed distribution.
+
+$E(\text{Rating}) = \beta_0 + \beta_1 \times \log(\text{Price})$
+
+```{r}
+# Linear regression model
+lm_wine <- lm(rating ~ log(price), data = wine_clean_year)
+summary(lm_wine)
+```
+
+The linear regression model on 'Rating' using 'log(Price)' as a predictor can be expressed as
+
+$E(\text{Rating}) = 3.131  + 0.249 \times \log(\text{Price})$
+
+```{r}
+# Generate predictions for the linear model
+prediction_lm_wine <- predict(lm_wine)
+
+ggplot(data = wine_clean_year, aes(x = rating, y = prediction_lm_wine)) +
+  geom_point(alpha = 0.5) +
+  # scale_x_log10() +
+  # geom_abline(colour = "purple", size = 2, alpha = 0.4) +
+  # geom_smooth(method = "lm", se = FALSE, colour = "blue") +
+  geom_smooth(method = "loess", se = FALSE, colour = "red") +
+  ggtitle("Linear Model Predictions vs. Actual") +
+  xlab("Actual Rating") +
+  ylab("Predicted Rating")
+```
+
+The plot shows the relationship between the actual and predicted ratings using the linear model. The red line represents the predicted values, which closely align with the actual data points. The LOESS model provides a good fit for the data, capturing the general trend of the relationship between price and rating.
+
+Next, we consider a linear regression on 'Price' and 'NumberofRatings' as predictors of 'Rating'.
+
+$E(\text{Rating}) = \beta_0 + \beta_1 \times \log(\text{Price}) + \beta_2 \times \log(\text{NumberofRatings})$
+
+```{r}
+# Linear regression model with Price and NumberofRatings as predictors
+lm_wine_price_ratings <- lm(rating ~ log(price) + log(number_of_ratings), data = wine_clean_year)
+
+summary(lm_wine_price_ratings)
+```
+
+The linear regression model on 'Rating' using 'log(Price)' and 'log(NumberofRatings)' as predictors can be expressed as
+
+$E(\text{Rating}) = 3.044 + 0.248 \times \log(\text{Price}) + 0.018 \times \log(\text{NumberofRatings})$
+
+```{r}
+# Generate predictions for the linear model with Price and NumberofRatings as predictors
+prediction_lm_wine_price_ratings <- predict(lm_wine_price_ratings)
+
+ggplot(data = wine_clean_year, aes(x = rating, y = prediction_lm_wine_price_ratings)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = FALSE, colour = "red") +
+  ggtitle("Linear Model with Price and Number of Ratings Predictions vs. Actual") +
+  xlab("Actual Rating") +
+  ylab("Predicted Rating")
+```
+
+```{r}
+# Obtain the AIC values for the models
+AIC(lm_wine, lm_wine_price_ratings)
+```
+Given the similarity in AIC values for the two models, the model with 'Price' and 'NumberofRatings' as predictors does not provide a significant improvement over the simpler model with only 'Price' as a predictor. The simpler model may be preferred due to its parsimony and similar predictive performance.
+
+Therefore, the linear regression model with 'log(Price)' as a predictor provides a good fit for the data and captures the relationship between price and rating effectively.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # References
 
@@ -335,13 +521,6 @@ summary(sdg_clean)
 ```
 
 
-
-```{r, fig.width = 12, fig.height = 12}
-ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = country)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-  labs(title = "Infant Mortality Rate by Country", x = "Country", y = "Infant Mortality Rate")
-```
 
 ```{r, fig.width = 12, fig.height = 12}
 ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate, colour = country)) +
@@ -474,6 +653,13 @@ ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
 ```{r}
 # GPT conclusions for model 2 and 3
 # Both models indicate strong negative relationships between infant mortality rates and the respective predictors (gdp and life_expectancy). The models highlight the influence of socio-economic and health-related factors on infant mortality. The GDP-based model showcases the impact of economic conditions, while the life expectancy model highlights the impact of health and quality of life on infant mortality.
+```
+
+
+```{r}
+# write_csv(wine_clean_year, here("data", "wine_clean_year.csv"))
+# write_csv(sdg_clean, here("data", "sdg_clean.csv"))
+# write_csv(wine_clean, here("data", "wine_clean.csv"))
 ```
 
 \`\`\`{r}
