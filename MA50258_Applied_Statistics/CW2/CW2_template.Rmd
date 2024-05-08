@@ -252,7 +252,7 @@ task1_lm_model_3 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + li
 task1_lm_model_4 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + years_education * log10(gdp), data = sdg_clean)
 task1_lm_model_5 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + years_education * life_expectancy, data = sdg_clean)
 task1_lm_model_6 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + log10(gdp) * life_expectancy, data = sdg_clean)
-task1_lm_model_7 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + income_class + years_education * log10(gdp) * life_expectancy, data = sdg_clean)
+task1_lm_model_7 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + years_education * log10(gdp) * life_expectancy, data = sdg_clean)
 
 # Generate a table with AIC and R-squared values
 kable(data.frame(Model = c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", "Model 6", "Model 7"),
@@ -287,7 +287,7 @@ kable(model_7_summary_subset, format = "html", digits = 4) %>%
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-It has shown that 'log10(gdp)' and its subsequent interaction terms are not statistically significant as their p-values are greater than 0.05. This suggests that the interaction terms may not be necessary in the model.
+It has shown that 'life_expectancy' is not statistically significant as their p-values are greater than 0.05.
 
 Thus, we can simplify the model to:
 
@@ -295,13 +295,13 @@ Final Model:
 
 $$
 \begin{array}{rcl}
-E(\text{Infant Mortality Rate | Years of Education, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} +  \beta_3 \times \text{Life Expectancy}\\
-&& + \beta_4 \times \text{Years of Education} \times \text{Life Expectancy}
+E(\text{Infant Mortality Rate | Years of Education, GDP}) &=& \beta_0 + \beta_1 \times \text{Years of Education} +  \beta_2 \times \text{log10(GDP)}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}
 \end{array}
 $$
 
 ```{r}
-task1_lm_model_final <- lm(infant_mortality_rate ~ years_education + life_expectancy + years_education * life_expectancy, data = sdg_clean)
+task1_lm_model_final <- lm(infant_mortality_rate ~ years_education + log10(gdp) + years_education * log10(gdp), data = sdg_clean)
 
 final_model_summary <- tidy(task1_lm_model_final)
 
@@ -315,13 +315,13 @@ kable(final_model_summary_subset, format = "html", digits = 2) %>%
 
 Interpretation:
 
-- Intercept $B_0$: This is the expected value of the Infant Mortality Rate when all other predictors are zero which is 235.54
+- Intercept $B_0$: This is the expected value of the Infant Mortality Rate when all other predictors are zero which is 147.10
 
-- Years of Education $B_1$: For each additional year of education, the Infant Mortality Rate decreases by 11.51
+- Years of Education $B_1$: For each additional year of education, the Infant Mortality Rate decreases by 8.73
 
-- Life Expectancy $B_3$: For each additional year of life expectancy, the Infant Mortality Rate decreases by 2.81
+- GDP $B_2$: For every tenfold increase in GDP, the Infant Mortality Rate decreases by 30.45
 
-- Interaction Term $B_4$: The interaction term between Years of Education and Life Expectancy is 0.14, the positive coefficient suggests that the effect of Years of Education and Life Expectancy increases the Infant Mortality Rate, indicating that there is a complex relationship at play here.
+- Interaction Term $B_4$: The interaction term between Years of Education and log10(GDP) is 1.83, the positive coefficient suggests that the effect of Years of Education and log10(GDP) increases the Infant Mortality Rate, indicating that there is a complex relationship at play here.
 
 ```{r}
 # Generate predictions for the final model
@@ -340,20 +340,28 @@ ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_final_mod
 The plot shows the relationship between the actual and predicted infant mortality rates using this model. The purple line represents the predicted values, which closely align with the actual data points. This indicates that this model is effective in predicting infant mortality rates based on years of education, life expectancy, with interaction terms.
 
 ```{r}
-# Split the life expectancy into 5 quartiles
-sdg_clean$life_expectancy_quartile <- cut(sdg_clean$life_expectancy, breaks = quantile(sdg_clean$life_expectancy, probs = seq(0, 1, 0.2)), include.lowest = TRUE)
+# ensure gdp is numeric
+sdg_clean$gdp <- as.numeric(sdg_clean$gdp)
 
-# Plot the scatterplot with different colours for life expectancy quartiles as linear model and facet wrap by GDP quartile
-ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate, colour = life_expectancy_quartile)) +
+# Create a new column for log10(gdp)
+sdg_quartile_plot <- sdg_clean %>% 
+  mutate(gdp_quartile = log10(gdp))
+
+
+# Split gdp into 5 quartiles
+sdg_quartile_plot$gdp_quartile <- cut(sdg_quartile_plot$gdp_quartile, breaks = quantile(sdg_quartile_plot$gdp_quartile, probs = seq(0, 1, 0.2)), include.lowest = TRUE)
+
+# Plot the relationship between years of education and infant mortality rate by life expectancy quartile
+ggplot(data = sdg_quartile_plot, aes(x = years_education, y = infant_mortality_rate, colour = gdp_quartile)) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", se = F) +
-  ggtitle("Years of Education vs. Infant Mortality Rate by Life Expectancy Quartile") +
+  ggtitle("Years of Education vs. Infant Mortality Rate by log10(GDP) Quartile in USD") +
   xlab("Years of Education") +
   ylab("Infant Mortality Rate") +
-  labs(colour = "Life Expectancy Quartile (in Years)")
+  labs(colour = "log10(GDP) Quartile in USD")
 ```
 
-By splitting the life expectancy into 5 different levels, we can see how the relationship between years of education and infant mortality rate varies across different life expectancy levels. We noticed that the rate of decrease in infant mortality rate with years of education is more pronounced in countries with lower life expectancy. If life expectancy is high, as years of education increase, the rate of decrease in infant mortality rate is less pronounced.
+By splitting the log10(GDP) into 5 different levels, we can see how the relationship between years of education and infant mortality rate varies across different GDP levels. We noticed that the rate of decrease in infant mortality rate with years of education is more pronounced in countries with lower GDP. If GDP is high, as years of education increase, the rate of decrease in infant mortality rate is less pronounced.
 
 
 ```{r}
@@ -362,9 +370,9 @@ eff_lm_infant <- allEffects(task1_lm_model_final)
 plot(eff_lm_infant, multiline = TRUE)
 ```
 
-This plot illustrates the interaction effects between years of education and life expectancy on infant mortality rates, depicting how these two variables jointly influence infant mortality across different contexts of life expectancy.
+This plot illustrates the interaction effects between years of education and GDP on infant mortality rates, depicting how these two variables jointly influence infant mortality across different contexts of life expectancy.
 
-The plot shows multiple lines, each representing a different fixed value of life expectancy (57, 64, 70, 84 years). As life expectancy increases, the baseline infant mortality rates start at a lower value. This suggests that in contexts with higher life expectancy, which may reflect better overall health and social conditions, infant mortality rates are initially lower. The slope of each line demonstrates the rate of decrease in infant mortality rates with increasing years of education. The steeper slopes at lower life expectancy levels imply that education has a more pronounced effect in reducing infant mortality rates in less developed health contexts. Conversely, in settings with high life expectancy, the impact of education, while still positive, shows a less steep decline in infant mortality rates.
+The plot shows multiple lines, each representing a different fixed value of GDP. As GDP increases, the baseline infant mortality rates start at a lower value. This suggests that in contexts with higher GDP, which may reflect better overall health and social conditions, infant mortality rates are initially lower. The slope of each line demonstrates the rate of decrease in infant mortality rates with increasing years of education. The steeper slopes at lower GDP levels imply that education has a more pronounced effect in reducing infant mortality rates in less developed health contexts. Conversely, in settings with high GDP, the impact of education, while still positive, shows a less steep decline in infant mortality rates.
 
 Thus the effect library has shown a close agreement with our final linear model.
 
@@ -376,7 +384,10 @@ Log-Transformed Linear Model:
 $$
 \begin{array}{rcl}
 E(\text{infant_mortality_rate}) &=& \exp\left(\beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{log(gdp)} + \beta_3 \times \text{life_expectancy}\right)\\
-&& + \beta_4 \times \text{years_education} \times \text{log(gdp)} \times \text{life_expectancy}
+&& + \beta_4 \times \text{years_education} \times \text{log(gdp)}\\
+&& + \beta_5 \times \text{years_education} \times \text{life_expectancy}\\
+&& + \beta_6 \times \text{log(gdp)} \times \text{life_expectancy}\\
+&& + \beta_7 \times \text{years_education} \times \text{log(gdp)} \times \text{life_expectancy}
 \end{array}
 $$
 
@@ -420,7 +431,17 @@ Since all p-value is less than 0.05, all predictors are statistically significan
 
 - Years of Education $B_1$: For each additional year of education, the log-transformed Infant Mortality Rate increase by 3.80
 
-- ln(gdp) $B_2$: For each additional unit of log-transformed GDP, the log-transformed Infant Mortality Rate increase by 3.00
+- GDP $B_2$: For each additional unit of log-transformed GDP, the log-transformed Infant Mortality Rate increase by 3.00
+
+- Life Expectancy $B_3$: For each additional year of life expectancy, the log-transformed Infant Mortality Rate increase by 0.27
+
+- Interaction between Years of Education and GDP $B_4$: The interaction indicates that the combined increase of education and GDP reduces the mortality rate by a factor of exp(-0.44)
+
+- Interaction between Years of Education and Life Expectancy $B_5$: The interaction indicates that the combined increase of education and life expectancy reduces the mortality rate by a factor of exp(-0.05)
+
+- Interaction between GDP and Life Expectancy $B_6$: The interaction indicates that the combined increase of GDP and life expectancy reduces the mortality rate by a factor of exp(-0.04)
+
+- Triple interaction between Years of Education, GDP, and Life Expectancy $B_7$: The triple interaction indicates that the combined increase of education, GDP, and life expectancy increases the mortality rate by a factor of exp(0.01)
 
 
 Generalised Linear Model (GLM):
