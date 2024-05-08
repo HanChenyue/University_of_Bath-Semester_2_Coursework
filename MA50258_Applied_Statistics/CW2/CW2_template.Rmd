@@ -94,7 +94,7 @@ ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = coun
 
 Distribution of Infant Mortality Rate
 
-The histogram shows that the distribution of infant_mortality_rate is right-skewed. This implies that most countries have low infant mortality rates, while a few have higher rates when we take a look at the bar plot of infant mortality rate by country, we can see that the distribution is consistent with the histogram. The bar plot shows the infant mortality rate for each country, with some countries having higher rates than others.
+The histogram shows that the distribution of infant mortality rate is right-skewed. This implies that most countries have low-to-moderate infant mortality rates, while a few have higher rates. When we take a look at the bar plot of infant mortality rate by country, we can see that the distribution is consistent with the histogram. The bar plot shows the infant mortality rate for each country, with some countries having higher rates than others.
 
 ```{r}
 # Use qqplot to check the distribution of infant mortality rate
@@ -102,9 +102,9 @@ qqnorm(sdg_clean$infant_mortality_rate)
 qqline(sdg_clean$infant_mortality_rate)
 ```
 
-Given the skewness in both the histogram and qq-plot, a Poisson or Negative Binomial distribution may be appropriate for GLM modelling.
+Given the skewness in both the histogram and qq-plot, a Poisson or Negative Binomial distribution may be appropriate for GLM modelling at a later section.
 
-We then explore the relationship between infant mortality rate and other variables such as income class, years of education, life expectancy, and GDP per capita.
+But we first explore the relationship between infant mortality rate and other variables such as income class, years of education, life expectancy, and GDP per capita.
 
 ```{r}
 ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
@@ -157,11 +157,11 @@ ggplot(data = sdg_clean, aes(x = log10(gdp), y = infant_mortality_rate, colour =
 
 As shown above:
 
-- As years of education increase, infant mortality rates tend to decrease. This suggests that education may play a role in reducing infant mortality rates. A simple linear regression model has shown that the decrease is linear.
+- As years of education increase, infant mortality rates tend to decrease. This suggests that education may play a role in reducing infant mortality rates. A simple linear regression model $E(\text{Infant Mortality Rate | Years of Education}) = \beta_0 + \beta_1 \times \text{Years of Education}$ has shown that the decrease is linear.
 
-- As life expectancy increases, infant mortality rates tend to decrease. This is consistent with the idea that better healthcare and living conditions can lead to lower infant mortality rates. A simple linear regression model has shown that the decrease is linear.
+- As life expectancy increases, infant mortality rates tend to decrease. This is consistent with the idea that better healthcare and living conditions can lead to lower infant mortality rates. A simple linear regression model $E(\text{Infant Mortality Rate | Life Expectancy}) = \beta_0 + \beta_1 \times \text{Life Expectancy}$ has shown that the decrease is linear.
 
-- As GDP per capita increases, infant mortality rates tend to decrease. This suggests that wealthier countries tend to have lower infant mortality rates. The relationship is not strictly linear, as the LOESS curve shows that the decrease is more pronounced at lower GDP levels (around USD $25000) but levels off after that. By log-transforming the GDP values, we can see a clearer linear relationship between GDP and infant mortality rates as shown by a simple linear regression model that the decrease is linear.
+- As GDP per capita increases, infant mortality rates tend to decrease. This suggests that wealthier countries tend to have lower infant mortality rates. The relationship is not strictly linear, as the LOESS curve shows that the decrease is more pronounced at lower GDP levels (around USD $25000) but levels off after that. By log-transforming the GDP values, we can see a clearer linear relationship between GDP and infant mortality rates as shown by a simple linear regression model $E(\text{Infant Mortality Rate | GDP}) = \beta_0 + \beta_1 \times \text{log10(GDP)}$ that the decrease is linear.
 
 - The facet plot of GDP vs. Infant Mortality Rate by continent shows that the relationship between GDP and infant mortality rate varies by continent. In Africa, the the infant mortality rate concentration is high, Asia has a mixed infant mortality rate concentration, America has a moderately low infant mortality rate concentration, and Europe and Oceania have the least infant mortality rate concentrations.
 
@@ -199,12 +199,13 @@ sdg_clean %>%
   kable_styling(full_width = F)
 ```
 
-- Infant Mortality Rate by Country
+Infant Mortality Rate by Country:
 
 The bar plot displays the infant mortality rate for each country. There is a clear pattern in that as income class decrease from 'H' (upper) income class to 'L' (low) income class, the infant mortality rate tends to increase.
 
 This is also shown that the table that the top 10 countries with the lowest infant mortality rates are all classified as 'H' (upper) income class countries. Conversely, the bottom 10 countries with the highest infant mortality rates are classified as 'L' (low) or 'LM" (low-middle) income class countries. This suggests a strong relationship between income class and infant mortality rate, while also highlight that as income class decreases to 'L' or 'LM', the infant mortality rate will likely increase.
 
+## Regression models
 
 Next, we attempt to find the best linear model to predict infant mortality rate using years of education, GDP per capita, and life expectancy as predictors. Given there are multiple combinations possible, we first start with 7 models and use AIC and R-squared values to determine the best model before checking the significance of the predictors.
 
@@ -235,10 +236,13 @@ E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \
 \end{array}
 $$
 
-- Model 7: $$
+Model 7: $$
 \begin{array}{rcl}
 E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
-&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}\times \text{Life Expectancy}
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}\\
+&& + \beta_5 \times \text{Years of Education} \times \text{Life Expectancy}\\
+&& + \beta_6 \times \text{log10(GDP)} \times \text{Life Expectancy}\\
+&& + \beta_7 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}\\
 \end{array}
 $$
 
@@ -266,7 +270,10 @@ Given Model 7 has the lowest AIC value and the highest R-squared value, thus far
 Model 7: $$
 \begin{array}{rcl}
 E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
-&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}\\
+&& + \beta_5 \times \text{Years of Education} \times \text{Life Expectancy}\\
+&& + \beta_6 \times \text{log10(GDP)} \times \text{Life Expectancy}\\
+&& + \beta_7 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}\\
 \end{array}
 $$
 
@@ -281,6 +288,9 @@ model_7_summary_subset <- model_7_summary[, c("term", "estimate", "p.value")]
 # # Round the estimate to 2 significant figures and format the p-value
 # model_7_summary_subset$estimate <- signif(model_7_summary_subset$estimate, digits = 2)
 # model_7_summary_subset$p.value <- formatC(model_7_summary_subset$p.value, format = "e", digits = 2)
+
+# Change the names
+model_7_summary_subset$term <- c("Intercept", "Years of Education", "log(GDP)", "Life Expectancy", "Interaction: Years of Education & log(GDP)", "Interaction: Years of Education & Life Expectancy", "Interactions: log(GDP) & Life Expectancy", "Interactions: Years of Education & log(GDP) & Life Expectancy")
 
 # Use kable to create a nicely formatted table
 kable(model_7_summary_subset, format = "html", digits = 4) %>%
@@ -307,6 +317,9 @@ final_model_summary <- tidy(task1_lm_model_final)
 
 # Subset to keep only the estimate and p-value columns
 final_model_summary_subset <- final_model_summary[, c("term", "estimate")]
+
+# Change the names
+final_model_summary_subset$term <- c("Intercept", "Years of Education", "log(GDP)", "Interaction: Years of Education & log(GDP)")
 
 # Use kable to create a nicely formatted table
 kable(final_model_summary_subset, format = "html", digits = 2) %>%
@@ -372,10 +385,13 @@ plot(eff_lm_infant, multiline = TRUE)
 
 This plot illustrates the interaction effects between years of education and GDP on infant mortality rates, depicting how these two variables jointly influence infant mortality across different contexts of life expectancy.
 
-The plot shows multiple lines, each representing a different fixed value of GDP. As GDP increases, the baseline infant mortality rates start at a lower value. This suggests that in contexts with higher GDP, which may reflect better overall health and social conditions, infant mortality rates are initially lower. The slope of each line demonstrates the rate of decrease in infant mortality rates with increasing years of education. The steeper slopes at lower GDP levels imply that education has a more pronounced effect in reducing infant mortality rates in less developed health contexts. Conversely, in settings with high GDP, the impact of education, while still positive, shows a less steep decline in infant mortality rates.
+The plot shows multiple lines, each representing a different fixed value of GDP.
 
-Thus the effect library has shown a close agreement with our final linear model.
+As GDP increases, the baseline infant mortality rates start at a lower value. This suggests that in contexts with higher GDP, which may reflect better overall health and social conditions, infant mortality rates are initially lower. It is interesting to note that at higher GDP levels, the lines are flatter and even shows a slight increase if the graph starts with a very low baseline but the increase is very minimal and the slight increase may be attributed to the variability in the data.
+ 
+Conversely, the steeper slopes at lower GDP levels imply that education has a more pronounced effect in reducing infant mortality rates in less developed health contexts.
 
+Thus the effect library has shown a close agreement with our final linear model except for when the baseline is very low.
 
 Next, we explore two additional models: a log-transformed linear model and a Generalised Linear Model (GLM) to predict infant mortality rates.
 
@@ -400,6 +416,9 @@ log_lm_infant_summary <- tidy(log_lm_infant)[, c("term", "estimate", "p.value")]
 
 log_lm_infant_summary$estimate <- signif(log_lm_infant_summary$estimate, digits = 2)
 log_lm_infant_summary$p.value <- formatC(log_lm_infant_summary$p.value, format = "e", digits = 2)
+
+# Change the name
+log_lm_infant_summary$term <- c("Intercept", "Years of Education", "log(GDP)", "Life Expectancy", "Interaction: Years of Education & log(GDP)", "Interaction: Years of Education & Life Expectancy", "Interactions: log(GDP) & Life Expectancy", "Interactions: Years of Education & log(GDP) & Life Expectancy")
 
 kable(log_lm_infant_summary, format = "html", digits = 2) %>%
   kable_styling(bootstrap_options = c("striped"))
@@ -427,13 +446,13 @@ Interpretation:
 
 Since all p-value is less than 0.05, all predictors are statistically significant in the log-transformed linear model. The coefficients indicate the following:
 
-- Intercept $B_0$: This is the expected value of the log-transformed Infant Mortality Rate when all other predictors are zero which is -16.00
+- Intercept $B_0$: This is the expected value of the log-transformed Infant Mortality Rate when all other predictors are zero which is exp(-16.00)
 
-- Years of Education $B_1$: For each additional year of education, the log-transformed Infant Mortality Rate increase by 3.80
+- Years of Education $B_1$: For each additional year of education, the log-transformed Infant Mortality Rate increase by exp(3.80)
 
-- GDP $B_2$: For each additional unit of log-transformed GDP, the log-transformed Infant Mortality Rate increase by 3.00
+- GDP $B_2$: For each additional unit of log-transformed GDP, the log-transformed Infant Mortality Rate increase by exp(3.00)
 
-- Life Expectancy $B_3$: For each additional year of life expectancy, the log-transformed Infant Mortality Rate increase by 0.27
+- Life Expectancy $B_3$: For each additional year of life expectancy, the log-transformed Infant Mortality Rate increase by exp(0.27)
 
 - Interaction between Years of Education and GDP $B_4$: The interaction indicates that the combined increase of education and GDP reduces the mortality rate by a factor of exp(-0.44)
 
@@ -472,13 +491,24 @@ kable(
   kable_styling(full_width = F)
 ```
 
-The AIC value indicates that Negative Binomial with a Square Root link function (with interaction) is the best GLM model out of these 4.
+The AIC value indicates that Negative Binomial with a Square Root link function (with interaction) is the best GLM model.
 
 - $\text{Infant Mortality Rate} = \sqrt{(\mu)}$, where $\mu$ is the expected count of infant mortality rate given the predictor
 
 - Link function, $\text{g}(\mu) = \sqrt{(\mu)}$, where $\text{g}()$ is the link function
 
-- Linear predictor, $\text{g}(\mu) = \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy} + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)} + \beta_5 \times \text{Years of Education} \times \text{Life Expectancy} + \beta_6 \times \text{log10(GDP)} \times \text{Life Expectancy} + \beta_7 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}$
+- Linear predictor,
+$$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}\\
+&& + \beta_5 \times \text{Years of Education} \times \text{Life Expectancy}\\
+&& + \beta_6 \times \text{log10(GDP)} \times \text{Life Expectancy}\\
+&& + \beta_7 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}
+\end{array}
+$$
+
+
 
 ```{r}
 # Generate predictions for the GLM model
@@ -501,6 +531,9 @@ The plot shows the relationship between the actual and predicted infant mortalit
 
 # only include the estimates
 glm_infant_negative_binomial_interaction_squareroot_summary <- tidy(glm_infant_negative_binomial_interaction_squareroot)[, c("term", "estimate")]
+
+# Change the names of the coefficients
+glm_infant_negative_binomial_interaction_squareroot_summary$term <- c("Intercept", "Years of Education", "log10(GDP)", "Life Expectancy", "Interaction: Years of Education & log10(GDP)", "Interaction: Years of Education & Life Expectancy", "Interaction: log(GDP) & Life Expectancy", "Triple Interaction: Year of Education & log10(GDP) & Life Expectancy")
 
 # Use kable to create a nicely formatted table
 kable(glm_infant_negative_binomial_interaction_squareroot_summary, format = "html", digits = 2) %>%
@@ -535,19 +568,20 @@ plot(eff_glm_infant, multiline = TRUE)
 
 - Impact of Life Expectancy: Panels with higher life expectancy (77, 84 years) generally show lower rates of infant mortality across all levels of education and GDP, indicating a strong negative correlation between life expectancy and infant mortality rates except for a few exceptions in the panel with a life expectancy of 84 years which shows a slight increase in infant mortality rates at higher levels of education.
 
-- Impact of Education: In panels with lower life expectancy (57, 64, and 70 years), an increase in years of education seems to have a more pronounced decrease in infant mortality rates. This trend is less steep or almost flat in panels with higher life expectancy. The only exception is the blue line of GDP 300, that increases as years of education increase. This shows that in our GLM model, the impact of GDP will influence the relationship between education and infant mortality rates at different levels.
+- Impact of Education: In panels with lower life expectancy (57, 64, and 70 years), an increase in years of education seems to have a more pronounced decrease in infant mortality rates. This trend is less steep or almost flat in panels with higher life expectancy. The only exception is the blue line that increases as years of education increase. This shows that in our GLM model, the impact of GDP will influence the relationship between education and infant mortality rates at different levels.
 
 - The impact of increasing years of education on reducing infant mortality rates varies significantly with changes in GDP levels. For example, in the panel with a life expectancy of 57 years, the differences between GDP levels are more marked as education increases. Conversely, at a life expectancy of 84 years, the GDP lines are closely clustered together, suggesting that higher life expectancy might mitigate the relative impact of GDP and education differences.
 
 
-## Conclusion
+## Task 1 Conclusion
 
 These findings suggest that investing in education, healthcare, and overall economy will have positive effects on reducing infant mortality rates across different countries and income classifications. ​
 
 
-Your report here.
 
 # Wine data
+
+## Cleaning the dataset
 
 ```{r}
 # Use janitor to clean the data
@@ -565,9 +599,9 @@ wine_clean$year <- as.numeric(wine_clean$year)
 # remove the year column with "N.V." values
 wine_clean_year <- wine_clean %>%
   filter(year != "N.V.")
-
-
 ```
+
+## Performing Exploratory Data Analysis
 
 ```{r}
 # Distribution of wine ratings
@@ -589,7 +623,9 @@ qqnorm(wine_clean_year$rating)
 qqline(wine_clean_year$rating)
 ```
 
-Given the histogram and qq-plot which has very minor skewness, a Gaussian distribution is an appropriate choice for GLM modelling.
+Given the histogram and qq-plot which has very minor skewness, a Gaussian distribution is an appropriate choice for GLM modelling in later section.
+
+Before that, we attempt to find the relationship between wine ratings and other variables such as wine variety, country, price, and number of ratings.
 
 ```{r}
 # Plot the relationship between rating and wine variety
@@ -600,7 +636,7 @@ ggplot(wine_clean_year, aes(x = variety, y = rating)) +
   labs(title = "Ratings by Wine Variety", x = "Variety", y = "Rating")
 ```
 
-While Sparkling wines has the overall highest ratings, the difference isn't pronounce.
+While Sparkling wines has the overall highest ratings, the differences between variety aren't very pronounce.
 
 ```{r, fig.width = 12, fig.height = 8}
 # Rating by country
@@ -610,7 +646,7 @@ ggplot(wine_clean_year, aes(x = country, y = rating)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom")
 ```
 
-The boxplot shows the distribution of wine ratings by country. The ratings are relatively consistent across different countries within the 3.0 to 4.5 range. Indicating that no country has a significant advantage over its counterparts in terms of wine ratings.
+The boxplot shows the distribution of wine ratings by country. The ratings are relatively consistent across different countries within the 3.0 to 4.5 range. Indicating that no country has a significant advantage (monopoly) over its counterparts in terms of wine ratings.
 
 
 ```{r}
@@ -689,7 +725,9 @@ This is useful information as when we consider that the price of wine decreasing
 
 There are a few possible linear regression model to consider to test if the price of wine is related to the rating of wine:
 
-- Model 1: $E(\text{Rating | Price}) = \beta_0 + \beta_1 \times \log10(\text{Price})$
+- Model 1: 
+
+$$E(\text{Rating | Price}) = \beta_0 + \beta_1 \times \log10(\text{Price})$$
 
 - Model 2:
 
@@ -735,6 +773,8 @@ lm_wine_price_ratings <- lm(rating ~ log10(price) + log10(number_of_ratings) + l
 
 lm_wine_price_ratings_summary <- tidy(lm_wine_price_ratings)[, c("term", "estimate")]
 
+lm_wine_price_ratings_summary$term <- c("Intercept", "Price", "Number of Ratings", "Interaction: Price & Number of Ratings")
+
 lm_wine_price_ratings_summary$estimate <- signif(lm_wine_price_ratings_summary$estimate, digits = 2)
 
 kable(lm_wine_price_ratings_summary, format = "html", digits = 2) %>%
@@ -753,7 +793,7 @@ Interpretation:
 
 - Number of Ratings $B_2$: For every one unit increase in the logarithm of the number of ratings, the wine rating is expected to increase by 0.07 points
 
-- Interaction between Price and Number of Ratings $B_3$: The interaction term between log(Price) and log(Number of Ratings) is -0.02, suggesting that the combined effect of price and number of ratings on the rating differs from the effect of either of these variables alone. Specifically, the negative coefficient indicates that higher prices diminish the positive effect of the number of ratings on the wine rating.
+- Interaction between Price and Number of Ratings $B_3$: The interaction term between log(Price) and log(Number of Ratings) is -0.02, suggesting that the combined effect of price and number of ratings on the rating differs from the effect of either of these variables alone.
 
 
 
@@ -778,6 +818,20 @@ Given our histograms in our EDA section showing a normal distribution of ratings
 
 We can either use a Gaussian GLM with identity link or log link. To determine, we check for AIC as well as plot the residuals.
 
+The 6 models are
+
+- Model 1: Gaussian GLM with identity link and Price as predictor
+
+- Model 2: Gaussian GLM with identity link and Price and Number of Ratings as predictors
+
+- Model 3: Gaussian GLM with identity link and Price, Number of Ratings, and their interaction as predictors
+
+- Model 4: Gaussian GLM with log link and Price as predictor
+
+- Model 5: Gaussian GLM with log link and Price and Number of Ratings as predictors
+
+- Model 6: Gaussian GLM with log link and Price, Number of Ratings, and their interaction as predictors
+
 ```{r}
 # Gaussian GLM with identity link
 glm_model_1 <- glm(rating ~ log10(price), data = wine_clean_year, family = gaussian(link = "identity"))
@@ -788,36 +842,55 @@ glm_model_5 <- glm(rating ~ log10(price) + log10(number_of_ratings), data = wine
 glm_model_6 <- glm(rating ~ log10(price) + log10(number_of_ratings) + log10(price) * log10(number_of_ratings), data = wine_clean_year, family = gaussian(link = "log"))
 ```
 
+
+QQ plots for the 6 models
+
+Model 1:
+```{r}
+qqnorm(residuals(glm_model_1))
+qqline(residuals(glm_model_1))
+```
+
+Model 2:
+```{r}
+# <!-- qqnorm(residuals(glm_model_2)) -->
+# <!-- qqline(residuals(glm_model_2)) -->
+```
+
+Model 3:
+```{r}
+qqnorm(residuals(glm_model_3))
+qqline(residuals(glm_model_3))
+```
+
+Model 4:
+```{r}
+qqnorm(residuals(glm_model_4))
+qqline(residuals(glm_model_4))
+```
+
+Model 5:
+```{r}
+qqnorm(residuals(glm_model_5))
+qqline(residuals(glm_model_5))
+```
+
+Model 6:
+```{r}
+qqnorm(residuals(glm_model_6))
+qqline(residuals(glm_model_6))
+```
+
+
+From the QQ plots, we can see that the residuals in all 6 plots mostly fit the straight line with minor skewness. This suggests that the Gaussian GLM models with either log or identity links are appropriate for the dataset. Thus, we use AIC to determine the preferred model.
+
+
 ```{r}
 # Generate a table with AIC and R-squared values
 kable(data.frame(Model = c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", "Model 6"),
                  AIC = c(AIC(glm_model_1), AIC(glm_model_2), AIC(glm_model_3), AIC(glm_model_4), AIC(glm_model_5), AIC(glm_model_6)))) %>% 
   kable_styling(full_width = F)
 ```
-
-<!-- QQ plots for the 6 models -->
-
-<!-- ```{r} -->
-<!-- qqnorm(residuals(glm_model_1)) -->
-<!-- qqline(residuals(glm_model_1)) -->
-
-<!-- qqnorm(residuals(glm_model_2)) -->
-<!-- qqline(residuals(glm_model_2)) -->
-
-<!-- qqnorm(residuals(glm_model_3)) -->
-<!-- qqline(residuals(glm_model_3)) -->
-
-<!-- qqnorm(residuals(glm_model_4)) -->
-<!-- qqline(residuals(glm_model_4)) -->
-
-<!-- qqnorm(residuals(glm_model_5)) -->
-<!-- qqline(residuals(glm_model_5)) -->
-
-<!-- qqnorm(residuals(glm_model_6)) -->
-<!-- qqline(residuals(glm_model_6)) -->
-<!-- ``` -->
-
-From the QQ plots, we can see that the residuals in all 6 plots mostly fit the straight line with minor skewness. This suggests that the Gaussian GLM models are appropriate for the dataset. Thus, we use AIC to determine the preferred model.
 
 From the AIC comparison, model 3 has the lowest AIC. We will then use this a Gaussian with identity link as our GLM model for analysis.
 
@@ -848,7 +921,10 @@ glm_model_3 <- glm(rating ~ log10(price) + log10(number_of_ratings) + log10(pric
 # Generate the summary of the GLM Gaussian model and its coefficients
 glm_model_3_summary <- tidy(glm_model_3)[, c("term", "estimate")]
 
+glm_model_3_summary$term <- c("Intercept", "log10(Price)", "log10(Number of Ratings)", "Interaction: log10(Price) & log10(Number of Ratings)")
+
 glm_model_3_summary$estimate <- signif(glm_model_3_summary$estimate, digits = 2)
+
 
 kable(glm_model_3_summary, format = "html", digits = 2) %>%
   kable_styling(bootstrap_options = c("striped"))
@@ -883,7 +959,7 @@ The provided plots depict the effects of price on wine ratings at different leve
 
 - As price increases, we expect an increase in rating as well but up to a certain point only as diminishing returns occurs past a certain threshold, this suggests that there is a limit to how much increasing the price can influence the rating of a wine.
 
-This indicates that the price of wine is not the only factor that determines the rating of wine, and other factors such as the number of ratings also play a significant role in influencing the rating of wine.
+This indicates that the price of wine is not the only factor that determines the rating of wine, and other factors such as the number of ratings also play a significant role in influencing the rating of wine as well.
 
 
 # References
@@ -898,5 +974,7 @@ Include your references in this section. The ones below are just examples.
 2.  Wickham, H. & Grolemund, G. *R for Data Science.* [on-line version](https://r4ds.had.co.nz/index.html)
 
 3.  https://www.graphpad.com/support/faq/testing-data-for-normal-distrbution/
+
+4.  https://www.statology.org/q-q-plot-normality/
 
 \`\`\`{r}
