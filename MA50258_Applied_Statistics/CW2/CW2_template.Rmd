@@ -102,7 +102,7 @@ qqnorm(sdg_clean$infant_mortality_rate)
 qqline(sdg_clean$infant_mortality_rate)
 ```
 
-Given the skewness in both the histogram and qq-plot, a Poisson distribution may be appropriate for GLM modelling.
+Given the skewness in both the histogram and qq-plot, a Poisson or Negative Binomial distribution may be appropriate for GLM modelling.
 
 We then explore the relationship between infant mortality rate and other variables such as income class, years of education, life expectancy, and GDP per capita.
 
@@ -446,54 +446,87 @@ Since all p-value is less than 0.05, all predictors are statistically significan
 
 Generalised Linear Model (GLM):
 
-$E(\text{infant_mortality_rate}) = \exp\left(\beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{gdp} + \beta_3 \times \text{life_expectancy} + \beta_4 \times \text{income_class}\right)$
+Given the histogram and qqplot has indicated that the infant mortality rate is right-skewed, we can use a Poisson or Negative Binomial distribution to model the relationship between infant mortality rate and other predictors. 
+
+First we check for AIC
 
 ```{r}
 # GLM
-glm_infant <- glm(infant_mortality_rate ~ years_education + gdp + life_expectancy + income_class, data = sdg_clean, family = poisson(link = "log"))
-summary(glm_infant)
-tidy(glm_infant)
+glm_infant_poisson_log <- glm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy, data = sdg_clean, family = poisson(link = "log"))
+glm_infant_poisson_squareroot <- glm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy, data = sdg_clean, family = poisson(link = "sqrt"))
+glm_infant_poisson_interaction_log <- glm(infant_mortality_rate ~ years_education * log10(gdp) * life_expectancy, data = sdg_clean, family = poisson(link = "log"))
+glm_infant_poisson_interaction_squareroot <- glm(infant_mortality_rate ~ years_education * log10(gdp) * life_expectancy, data = sdg_clean, family = poisson(link = "sqrt"))
+glm_infant_negative_binomial_log <- glm.nb(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy, data = sdg_clean, link = "log")
+glm_infant_negative_binomial_squareroot <- glm.nb(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy, data = sdg_clean, link = "sqrt")
+glm_infant_negative_binomial_interaction_log <- glm.nb(infant_mortality_rate ~ years_education * log10(gdp) * life_expectancy, data = sdg_clean, link = "log")
+glm_infant_negative_binomial_interaction_squareroot <- glm.nb(infant_mortality_rate ~ years_education * log10(gdp) * life_expectancy, data = sdg_clean, link = "sqrt")
 ```
+
+
+```{r}
+# Compare AIC values
+kable(
+  data.frame(Model = c("Poisson with Log link", "Poisson with Square Root link", "Poisson with Interaction and Log link", "Poisson with Interaction and Square Root link", "Negative Binomial with Log link", "Negative Binomial with Square Root link", "Negative Binomial with Interaction and Log link", "Negative Binomial with Interaction and Square Root link"),
+             AIC = c(AIC(glm_infant_poisson_log), AIC(glm_infant_poisson_squareroot), AIC(glm_infant_poisson_interaction_log), AIC(glm_infant_poisson_interaction_squareroot), AIC(glm_infant_negative_binomial_log), AIC(glm_infant_negative_binomial_squareroot), AIC(glm_infant_negative_binomial_interaction_log), AIC(glm_infant_negative_binomial_interaction_squareroot))
+)) %>% 
+  kable_styling(full_width = F)
+```
+
+The AIC value indicates that Negative Binomial with a Square Root link function (with interaction) is the best GLM model out of these 4.
+
+- $\text{Infant Mortality Rate} = \sqrt{(\mu)}$, where $\mu$ is the expected count of infant mortality rate given the predictor
+
+- Link function, $\text{g}(\mu) = \sqrt{(\mu)}$, where $\text{g}()$ is the link function
+
+- Linear predictor, $\text{g}(\mu) = \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy} + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)} + \beta_5 \times \text{Years of Education} \times \text{Life Expectancy} + \beta_6 \times \text{log10(GDP)} \times \text{Life Expectancy} + \beta_7 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}$
 
 ```{r}
 # Generate predictions for the GLM model
-prediction_glm_infant <- predict(glm_infant, type = "response")
+prediction_glm_infant <- predict(glm_infant_negative_binomial_interaction_squareroot, type = "response")
 
+# Plot the predictions vs. actual values
 ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_glm_infant)) +
   geom_point(alpha = 0.5) +
   geom_abline(colour = "purple", size = 1, alpha = 0.4) +
-  ggtitle("GLM Predictions vs. Actual") +
+  ggtitle("GLM Model Predictions vs. Actual") +
   xlab("Actual Infant Mortality Rate") +
   ylab("Predicted Infant Mortality Rate")
-
-# ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
-#   geom_point(alpha = 0.5) +
-#   geom_line(aes(y = prediction_glm_infant), colour = "purple", alpha = 0.4) +
-#   ggtitle("GLM Effect Plot - Life Expectancy") +
-#   xlab("Life Expectancy") +
-#   ylab("Infant Mortality Rate")
 ```
 The plots for the GLM model indicate:
 
-- Predictions vs. Actual: The first plot shows that the predictions closely align with the actual infant mortality rates, but there are some deviations for higher values.
+The plot shows the relationship between the actual and predicted infant mortality rates using this model. The purple line represents the predicted values, which closely align with the actual data points. This indicates that this model is effective in predicting infant mortality rates based on years of education, life expectancy, gdp, with interaction terms.
 
-- Effect Plot - Life Expectancy: The second plot shows a strong negative relationship between life_expectancy and infant_mortality_rate, which aligns with our earlier observations.
+```{r}
+# Generate the summary of the GLM model and its coefficients
 
-Coefficients for the GLM model indicate that:
+# only include the estimates
+glm_infant_negative_binomial_interaction_squareroot_summary <- tidy(glm_infant_negative_binomial_interaction_squareroot)[, c("term", "estimate")]
 
-- Years of Education: For each additional year of education, the infant mortality rate decreases by 7.1% (exp⁡(−0.071)−1exp(−0.071)−1).
-- Life Expectancy: For each additional year of life expectancy, the infant mortality rate decreases by 8.4% (exp⁡(−0.084)−1exp(−0.084)−1).
-- Income Class: Lower income classes are associated with higher infant mortality rates, with the coefficients representing the log of the multiplicative effect compared to the "H" (high-income) category.
+# Use kable to create a nicely formatted table
+kable(glm_infant_negative_binomial_interaction_squareroot_summary, format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Interpretation:
+
+
+
+```{r, fig.width = 12, fig.height = 10}
+# Generate the effect of infant mortality rate
+eff_glm_infant <- allEffects(glm_infant_negative_binomial_interaction_squareroot)
+plot(eff_glm_infant, multiline = TRUE)
+```
+
+- Impact of Life Expectancy: Panels with higher life expectancy (77, 84 years) generally show lower rates of infant mortality across all levels of education and GDP, indicating a strong negative correlation between life expectancy and infant mortality rates except for a few exceptions in the panel with a life expectancy of 84 years which shows a slight increase in infant mortality rates at higher levels of education.
+
+- Impact of Education: In panels with lower life expectancy (57, 64, and 70 years), an increase in years of education seems to have a more pronounced decrease in infant mortality rates. This trend is less steep or almost flat in panels with higher life expectancy. The only exception is the blue line of GDP 300, that increases as years of education increase. This shows that in our GLM model, the impact of GDP will influence the relationship between education and infant mortality rates at different levels.
+
+- The impact of increasing years of education on reducing infant mortality rates varies significantly with changes in GDP levels. For example, in the panel with a life expectancy of 57 years, the differences between GDP levels are more marked as education increases. Conversely, at a life expectancy of 84 years, the GDP lines are closely clustered together, suggesting that higher life expectancy might mitigate the relative impact of GDP and education differences.
 
 
 ## Conclusion
 
-Both the GLM and log-transformed linear models are effective in characterizing the behavior of infant mortality rate. The GLM model shows a slightly better fit based on the AIC value, but both models highlight the significant negative relationships with years of education and life expectancy, and the influence of income class. The findings suggest that investing in education and healthcare could have positive effects on reducing infant mortality rates across different countries and income classifications. ​
-
-
-
-
-
+These findings suggest that investing in education, healthcare, and overall economy will have positive effects on reducing infant mortality rates across different countries and income classifications. ​
 
 
 Your report here.
