@@ -10,6 +10,12 @@ output:
     code_download: yes
 ---
 
+### Disclaimer:
+
+ChatGPT and GitHub CoPilot used for code and discussion suggestions, debugging purpose, and to check the correctness of the code.
+
+---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE,warning = FALSE, message = FALSE)
 ```
@@ -65,12 +71,7 @@ sdg_clean <- sdg %>%
 
 ```{r}
 # Check the structure of the data
-str(sdg_clean)
-```
-
-```{r}
-# Summarise the data
-summary(sdg_clean)
+# str(sdg_clean)
 ```
 
 
@@ -83,13 +84,92 @@ ggplot(data = sdg_clean, aes(x = infant_mortality_rate)) +
   xlab("Infant Mortality Rate") +
   ylab("Density")
 ```
+```{r, fig.width = 12, fig.height = 12}
+# Plot the infant mortality rate by country
+ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = country)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
+  labs(title = "Infant Mortality Rate by Country", x = "Country", y = "Infant Mortality Rate")
+```
 
-- Distribution of Infant Mortality Rate
+Distribution of Infant Mortality Rate
 
-The histogram shows that the distribution of infant_mortality_rate is right-skewed. This implies that most countries have low infant mortality rates, while a few have higher rates.
+The histogram shows that the distribution of infant_mortality_rate is right-skewed. This implies that most countries have low infant mortality rates, while a few have higher rates when we take a look at the bar plot of infant mortality rate by country, we can see that the distribution is consistent with the histogram. The bar plot shows the infant mortality rate for each country, with some countries having higher rates than others.
 
+```{r}
+# Use qqplot to check the distribution of infant mortality rate
+qqnorm(sdg_clean$infant_mortality_rate)
+qqline(sdg_clean$infant_mortality_rate)
+```
 
-```{r, fig.height = 8}
+Given the skewness in both the histogram and qq-plot, a Poisson distribution may be appropriate for GLM modelling.
+
+We then explore the relationship between infant mortality rate and other variables such as income class, years of education, life expectancy, and GDP per capita.
+
+```{r}
+ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = F, colour = "blue") +
+  ggtitle("Years of Education vs. Infant Mortality Rate") +
+  xlab("Years of Education") +
+  ylab("Infant Mortality Rate")
+
+ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = F, colour = "blue") +
+  ggtitle("Life Expectancy vs. Infant Mortality Rate") +
+  xlab("Life Expectancy") +
+  ylab("Infant Mortality Rate")
+
+ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "loess", se = FALSE, colour = "red") +
+  ggtitle("GDP vs. Infant Mortality Rate") +
+  xlab("GDP per Capita in USD") +
+  ylab("Infant Mortality Rate")
+
+# log the GDP values
+ggplot(data = sdg_clean, aes(x = log10(gdp), y = infant_mortality_rate)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = F, colour = "blue") +
+  ggtitle("log10(GDP) vs. Infant Mortality Rate") +
+  xlab("log10(GDP per Capita in USD)") +
+  ylab("Infant Mortality Rate")
+
+# GDP vs. Infant Mortality Rate for each continent
+ggplot(data = sdg_clean, aes(x = log10(gdp), y = infant_mortality_rate, colour = continent)) +
+  geom_point(alpha = 0.5) +
+  # geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~continent) +
+  ggtitle("GDP vs. Infant Mortality Rate by Continent") +
+  xlab("log10(GDP per Capita in USD)") +
+  ylab("Infant Mortality Rate")
+
+# GDP vs. Infant Mortality Rate for each income class
+ggplot(data = sdg_clean, aes(x = log10(gdp), y = infant_mortality_rate, colour = income_class)) +
+  geom_point(alpha = 0.5) +
+  # geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~income_class) +
+  ggtitle("GDP vs. Infant Mortality Rate by Income Class") +
+  xlab("log10(GDP per Capita in USD)") +
+  ylab("Infant Mortality Rate")
+```
+
+As shown above:
+
+- As years of education increase, infant mortality rates tend to decrease. This suggests that education may play a role in reducing infant mortality rates. A simple linear regression model has shown that the decrease is linear.
+
+- As life expectancy increases, infant mortality rates tend to decrease. This is consistent with the idea that better healthcare and living conditions can lead to lower infant mortality rates. A simple linear regression model has shown that the decrease is linear.
+
+- As GDP per capita increases, infant mortality rates tend to decrease. This suggests that wealthier countries tend to have lower infant mortality rates. The relationship is not strictly linear, as the LOESS curve shows that the decrease is more pronounced at lower GDP levels (around USD $25000) but levels off after that. By log-transforming the GDP values, we can see a clearer linear relationship between GDP and infant mortality rates as shown by a simple linear regression model that the decrease is linear.
+
+- The facet plot of GDP vs. Infant Mortality Rate by continent shows that the relationship between GDP and infant mortality rate varies by continent. In Africa, the the infant mortality rate concentration is high, Asia has a mixed infant mortality rate concentration, America has a moderately low infant mortality rate concentration, and Europe and Oceania have the least infant mortality rate concentrations.
+
+- The facet plot of GDP vs. Infant Mortality Rate by income class shows that the relationship between GDP and infant mortality rate varies by income class. The 'H' (high) income class countries have the lowest infant mortality rates concentration, while the 'UM' (upper-middle) income class countries have mixed level of infant mortality rates concentration. 'LM' (lower-middle) income class countries has a mixed infant mortality rate concentration as a noticeable proportion of countries seems to have high infant mortality rate concentration, and 'L' (low) income class countries have the highest infant mortality rate concentration.
+
+Next, we explore the relationship between income class and infant mortality rate.
+
+```{r}
 # Income Class vs. Infant Mortality Rate
 ggplot(data = sdg_clean, aes(x = income_class, y = infant_mortality_rate, fill = income_class)) +
   geom_boxplot(colour = "black") +
@@ -99,31 +179,23 @@ ggplot(data = sdg_clean, aes(x = income_class, y = infant_mortality_rate, fill =
   ylab("Infant Mortality Rate")
 ```
 
-```{r, fig.width = 12, fig.height = 12}
-# Plot the infant mortality rate by country
-ggplot(data = sdg_clean, aes(x = country, y = infant_mortality_rate, fill = country)) +
-  geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-  labs(title = "Infant Mortality Rate by Country", x = "Country", y = "Infant Mortality Rate")
-```
-
 ```{r}
-# Show the top 5 countries with the lowest infant mortality rates and their respective income classes and vice versa
+# Show the top 10 countries with the lowest infant mortality rates and their respective income classes and vice versa
 sdg_clean %>%
   arrange(infant_mortality_rate) %>%
-  head(5) %>%
+  head(10) %>%
   dplyr::select(country, infant_mortality_rate, income_class) %>%
-  kable(caption = "Top 5 countries with the lowest infant mortality rates") %>%
+  kable(caption = "Top 10 countries with the lowest infant mortality rates") %>%
   kable_styling(full_width = F)
 ```
 
 ```{r}
-# Show the bottom 5 countries with the highest infant mortality rates and their respective income classes
+# Show the bottom 10 countries with the highest infant mortality rates and their respective income classes
 sdg_clean %>%
   arrange(desc(infant_mortality_rate)) %>%
   dplyr::select(country, infant_mortality_rate, income_class) %>%
-  head(5) %>%
-  kable(caption = "Top 5 countries with the highest infant mortality rates") %>%
+  head(10) %>%
+  kable(caption = "Top 10 countries with the highest infant mortality rates") %>%
   kable_styling(full_width = F)
 ```
 
@@ -131,99 +203,195 @@ sdg_clean %>%
 
 The bar plot displays the infant mortality rate for each country. There is a clear pattern in that as income class decrease from 'H' (upper) income class to 'L' (low) income class, the infant mortality rate tends to increase.
 
-This is as shown that the table that the top 5 countries with the lowest infant mortality rates are all classified as 'H' (upper) income class countries. Conversely, the bottom 5 countries with the highest infant mortality rates are classified as 'L' (low) or 'LM" (low-middle)  income class countries.
+This is also shown that the table that the top 10 countries with the lowest infant mortality rates are all classified as 'H' (upper) income class countries. Conversely, the bottom 10 countries with the highest infant mortality rates are classified as 'L' (low) or 'LM" (low-middle) income class countries. This suggests a strong relationship between income class and infant mortality rate, while also highlight that as income class decreases to 'L' or 'LM', the infant mortality rate will likely increase.
+
+
+Next, we attempt to find the best linear model to predict infant mortality rate using years of education, GDP per capita, and life expectancy as predictors. Given there are multiple combinations possible, we first start with 7 models and use AIC and R-squared values to determine the best model before checking the significance of the predictors.
+
+- Model 1: $$E(\text{Infant Mortality Rate | Years of Education}) = \beta_0 + \beta_1 \times \text{Years of Education}$$
+
+- Model 2: $$E(\text{Infant Mortality Rate | Years of Education, GDP}) = \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)}$$
+
+- Model 3: $$E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) = \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}$$
+
+- Model 4: $$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}
+\end{array}
+$$
+
+- Model 5: $$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{Life Expectancy}
+\end{array}
+$$
+
+- Model 6: $$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{log10(GDP)} \times \text{Life Expectancy}
+\end{array}
+$$
+
+- Model 7: $$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)}\times \text{Life Expectancy}
+\end{array}
+$$
+
+
 
 ```{r}
-# Plot the relationship between infant mortality rate and years of education
-ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
+# Using AIC and R-squared to determine the best model
+task1_lm_model_1 <- lm(infant_mortality_rate ~ years_education, data = sdg_clean)
+task1_lm_model_2 <- lm(infant_mortality_rate ~ years_education + log10(gdp), data = sdg_clean)
+task1_lm_model_3 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy, data = sdg_clean)
+task1_lm_model_4 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + years_education * log10(gdp), data = sdg_clean)
+task1_lm_model_5 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + years_education * life_expectancy, data = sdg_clean)
+task1_lm_model_6 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + log10(gdp) * life_expectancy, data = sdg_clean)
+task1_lm_model_7 <- lm(infant_mortality_rate ~ years_education + log10(gdp) + life_expectancy + income_class + years_education * log10(gdp) * life_expectancy, data = sdg_clean)
+
+# Generate a table with AIC and R-squared values
+kable(data.frame(Model = c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", "Model 6", "Model 7"),
+                 AIC = c(AIC(task1_lm_model_1), AIC(task1_lm_model_2), AIC(task1_lm_model_3), AIC(task1_lm_model_4), AIC(task1_lm_model_5), AIC(task1_lm_model_6), AIC(task1_lm_model_7)),
+                 R_squared = c(summary(task1_lm_model_1)$r.squared, summary(task1_lm_model_2)$r.squared, summary(task1_lm_model_3)$r.squared, summary(task1_lm_model_4)$r.squared, summary(task1_lm_model_5)$r.squared, summary(task1_lm_model_6)$r.squared, summary(task1_lm_model_7)$r.squared))) %>% 
+  kable_styling(full_width = F)
+```
+
+Given Model 7 has the lowest AIC value and the highest R-squared value, thus far, it is the best model to predict infant mortality rate using years of education, GDP per capita, life expectancy, and income class as predictors.
+
+Model 7: $$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, GDP, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} + \beta_2 \times \text{log10(GDP)} + \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{log10(GDP)} \times \text{Life Expectancy}
+\end{array}
+$$
+
+However, we can check whether the effects are statistically significant by examining if the p-value is less than 0.05
+
+```{r}
+model_7_summary <- tidy(task1_lm_model_7)
+
+# Subset to keep only the estimate and p-value columns
+model_7_summary_subset <- model_7_summary[, c("term", "estimate", "p.value")]
+# 
+# # Round the estimate to 2 significant figures and format the p-value
+# model_7_summary_subset$estimate <- signif(model_7_summary_subset$estimate, digits = 2)
+# model_7_summary_subset$p.value <- formatC(model_7_summary_subset$p.value, format = "e", digits = 2)
+
+# Use kable to create a nicely formatted table
+kable(model_7_summary_subset, format = "html", digits = 4) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+It has shown that 'log10(gdp)' and its subsequent interaction terms are not statistically significant as their p-values are greater than 0.05. This suggests that the interaction terms may not be necessary in the model.
+
+Thus, we can simplify the model to:
+
+Final Model:
+
+$$
+\begin{array}{rcl}
+E(\text{Infant Mortality Rate | Years of Education, Life Expectancy}) &=& \beta_0 + \beta_1 \times \text{Years of Education} +  \beta_3 \times \text{Life Expectancy}\\
+&& + \beta_4 \times \text{Years of Education} \times \text{Life Expectancy}
+\end{array}
+$$
+
+```{r}
+task1_lm_model_final <- lm(infant_mortality_rate ~ years_education + life_expectancy + years_education * life_expectancy, data = sdg_clean)
+
+final_model_summary <- tidy(task1_lm_model_final)
+
+# Subset to keep only the estimate and p-value columns
+final_model_summary_subset <- final_model_summary[, c("term", "estimate")]
+
+# Use kable to create a nicely formatted table
+kable(final_model_summary_subset, format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+Interpretation:
+
+- Intercept $B_0$: This is the expected value of the Infant Mortality Rate when all other predictors are zero which is 235.54
+
+- Years of Education $B_1$: For each additional year of education, the Infant Mortality Rate decreases by 11.51
+
+- Life Expectancy $B_3$: For each additional year of life expectancy, the Infant Mortality Rate decreases by 2.81
+
+- Interaction Term $B_4$: The interaction term between Years of Education and Life Expectancy is 0.14, the positive coefficient suggests that the effect of Years of Education and Life Expectancy increases the Infant Mortality Rate, indicating that there is a complex relationship at play here.
+
+```{r}
+# Generate predictions for the final model
+prediction_final_model <- predict(task1_lm_model_final)
+
+# Plot the predictions vs. actual values
+ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_final_model)) +
   geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = F, colour = "blue") +
-  # geom_smooth(method = "loess", se = F, colour = "red") +
-  ggtitle("Years of Education vs. Infant Mortality Rate") +
+  geom_abline(colour = "purple", size = 1, alpha = 0.4) +
+  ggtitle("Final Model Predictions vs. Actual") +
+  xlab("Actual Infant Mortality Rate") +
+  ylab("Predicted Infant Mortality Rate")
+```
+
+
+The plot shows the relationship between the actual and predicted infant mortality rates using this model. The purple line represents the predicted values, which closely align with the actual data points. This indicates that this model is effective in predicting infant mortality rates based on years of education, life expectancy, with interaction terms.
+
+```{r}
+# Split the life expectancy into 5 quartiles
+sdg_clean$life_expectancy_quartile <- cut(sdg_clean$life_expectancy, breaks = quantile(sdg_clean$life_expectancy, probs = seq(0, 1, 0.2)), include.lowest = TRUE)
+
+# Plot the scatterplot with different colours for life expectancy quartiles as linear model and facet wrap by GDP quartile
+ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate, colour = life_expectancy_quartile)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = F) +
+  ggtitle("Years of Education vs. Infant Mortality Rate by Life Expectancy Quartile") +
   xlab("Years of Education") +
-  ylab("Infant Mortality Rate")
+  ylab("Infant Mortality Rate") +
+  labs(colour = "Life Expectancy Quartile (in Years)")
 ```
 
-- Years of Education vs. Infant Mortality Rate
+By splitting the life expectancy into 5 different levels, we can see how the relationship between years of education and infant mortality rate varies across different life expectancy levels. We noticed that the rate of decrease in infant mortality rate with years of education is more pronounced in countries with lower life expectancy. If life expectancy is high, as years of education increase, the rate of decrease in infant mortality rate is less pronounced.
 
-The scatter plot shows a negative relationship. Countries with higher average years of education tend to have lower infant mortality rates.
-
-```{r, fig.width = 12, fig.height = 12}
-# Life Expectancy vs. Infant Mortality Rate
-ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "lm", se = F, colour = "blue") +
-  # geom_smooth(method = "loess", se = F, colour = "red") +
-  ggtitle("Life Expectancy vs. Infant Mortality Rate") +
-  xlab("Life Expectancy") +
-  ylab("Infant Mortality Rate")
-```
-
-
-- Life Expectancy vs. Infant Mortality Rate
-
-The scatter plot shows a negative relationship. Countries with higher life expectancy tend to have lower infant mortality rates.
-
-```{r, fig.width = 12, fig.height = 8}
-# GDP vs. Infant Mortality Rate
-ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "loess", se = FALSE, colour = "red", ) +
-  ggtitle("GDP vs. Infant Mortality Rate") +
-  xlab("GDP per Capita") +
-  ylab("Infant Mortality Rate")
-
-# GDP vs. Infant Mortality Rate for each continent
-ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate, colour = continent)) +
-  geom_point(alpha = 0.5) +
-  # geom_smooth(method = "loess", se = FALSE) +
-  facet_wrap(~continent) +
-  ggtitle("GDP vs. Infant Mortality Rate by Continent") +
-  xlab("GDP per Capita") +
-  ylab("Infant Mortality Rate")
-
-# GDP vs. Infant Mortality Rate for each income class
-ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate, colour = income_class)) +
-  geom_point(alpha = 0.5) +
-  # geom_smooth(method = "loess", se = FALSE) +
-  facet_wrap(~income_class) +
-  ggtitle("GDP vs. Infant Mortality Rate by Income Class") +
-  xlab("GDP per Capita") +
-  ylab("Infant Mortality Rate")
-
-```
-
-- Life Expectancy vs. Infant Mortality Rate
-
-The scatter plot shows a negative relationship. Countries with higher life expectancy tend to have lower infant mortality rates.
-
-## Regression models
-
-Linear Model:
-
-$(E(\text{infant_mortality_rate}) = \beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{gdp} + \beta_3 \times \text{life_expectancy} + \beta_4 \times \text{income_class})$
 
 ```{r}
-# Linear Model
-lm_infant <- lm(infant_mortality_rate ~ years_education + gdp + life_expectancy + income_class, data = sdg_clean)
-summary(lm_infant)
-```
-
-```{r, fig.width = 12, fig.height = 8}
 # Using effects library to get the effect of infant mortality rate
-eff_lm_infant <- allEffects(lm_infant)
-plot(eff_lm_infant, main = "Effect of Life Expectancy on Infant Mortality Rate")
+eff_lm_infant <- allEffects(task1_lm_model_final)
+plot(eff_lm_infant, multiline = TRUE)
 ```
 
+This plot illustrates the interaction effects between years of education and life expectancy on infant mortality rates, depicting how these two variables jointly influence infant mortality across different contexts of life expectancy.
+
+The plot shows multiple lines, each representing a different fixed value of life expectancy (57, 64, 70, 84 years). As life expectancy increases, the baseline infant mortality rates start at a lower value. This suggests that in contexts with higher life expectancy, which may reflect better overall health and social conditions, infant mortality rates are initially lower. The slope of each line demonstrates the rate of decrease in infant mortality rates with increasing years of education. The steeper slopes at lower life expectancy levels imply that education has a more pronounced effect in reducing infant mortality rates in less developed health contexts. Conversely, in settings with high life expectancy, the impact of education, while still positive, shows a less steep decline in infant mortality rates.
+
+Thus the effect library has shown a close agreement with our final linear model.
+
+
+Next, we explore two additional models: a log-transformed linear model and a Generalised Linear Model (GLM) to predict infant mortality rates.
 
 Log-Transformed Linear Model:
 
-$E(\ln(\text{infant_mortality_rate})) = \beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{gdp} + \beta_3 \times \text{life_expectancy} + \beta_4 \times \text{income_class}$
+$$
+\begin{array}{rcl}
+E(\text{infant_mortality_rate}) &=& \exp\left(\beta_0 + \beta_1 \times \text{years_education} + \beta_2 \times \text{log(gdp)} + \beta_3 \times \text{life_expectancy}\right)\\
+&& + \beta_4 \times \text{years_education} \times \text{log(gdp)} \times \text{life_expectancy}
+\end{array}
+$$
+
 
 ```{r}
 # Log-Transformed Linear Model
-log_lm_infant <- lm(log(infant_mortality_rate) ~ years_education + gdp + life_expectancy + income_class, data = sdg_clean)
-tidy(log_lm_infant)
+log_lm_infant <- lm(log(infant_mortality_rate) ~ years_education + log(gdp) + life_expectancy + years_education * log(gdp) * life_expectancy, data = sdg_clean)
+
+log_lm_infant_summary <- tidy(log_lm_infant)[, c("term", "estimate", "p.value")]
+
+log_lm_infant_summary$estimate <- signif(log_lm_infant_summary$estimate, digits = 2)
+log_lm_infant_summary$p.value <- formatC(log_lm_infant_summary$p.value, format = "e", digits = 2)
+
+kable(log_lm_infant_summary, format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped"))
 ```
 
 ```{r}
@@ -242,13 +410,17 @@ ggplot(data = sdg_clean, aes(x = infant_mortality_rate, y = prediction_log_lm_in
 
 The plots for the log-transformed linear model indicate:
 
-- Predictions vs. Actual: The first plot shows a strong alignment between the predicted and actual values, but there are some under-predictions for higher actual values.
+The plot shows the relationship between the actual and predicted infant mortality rates using this model. The purple line represents the predicted values, which closely align with the actual data points. This indicates that this model is effective in predicting infant mortality rates based on years of education, life expectancy, gdp, with interaction terms.
 
+Interpretation:
 
-Coefficients for the log-transformed linear model indicate that:
-- Years of Education: For each additional year of education, the infant mortality rate decreases by 14.2% (exp⁡(−0.153)−1exp(−0.153)−1).
-- Life Expectancy: For each additional year of life expectancy, the infant mortality rate decreases by 10.4% (exp⁡(−0.109)−1exp(−0.109)−1).
-- Income Class: Lower income classes are associated with higher infant mortality rates, similar to the GLM model.
+Since all p-value is less than 0.05, all predictors are statistically significant in the log-transformed linear model. The coefficients indicate the following:
+
+- Intercept $B_0$: This is the expected value of the log-transformed Infant Mortality Rate when all other predictors are zero which is -16.00
+
+- Years of Education $B_1$: For each additional year of education, the log-transformed Infant Mortality Rate increase by 3.80
+
+- ln(gdp) $B_2$: For each additional unit of log-transformed GDP, the log-transformed Infant Mortality Rate increase by 3.00
 
 
 Generalised Linear Model (GLM):
@@ -339,7 +511,16 @@ ggplot(data = wine_clean_year,
   geom_point(alpha = 0.5)
 ```
 
+
 Distribution of Wine Ratings shows a normal distribution with a peak around 3.8. This indicates that most wines have ratings around 3.8, with fewer wines having higher or lower ratings.
+
+```{r}
+# Use qqplot to check the distribution of wine ratings
+qqnorm(wine_clean_year$rating)
+qqline(wine_clean_year$rating)
+```
+
+Given the histogram and qq-plot which has very minor skewness, a Gaussian distribution is an appropriate choice for GLM modelling.
 
 ```{r}
 # Plot the relationship between rating and wine variety
@@ -387,8 +568,14 @@ The first model will be a simple linear model to find how price changes with the
 $E(Price | Year, Variety) = \beta_0 + \beta_1 \times \text{Year} + \zeta_{\text{Red}} \times Variety_{Red} + \zeta_{\text{Rose}} \times Variety_{Rose} + \zeta_{\text{Sparkling}} \times Variety_{Sparkling} + \zeta_{\text{White}} \times Variety_{White}$
 
 ```{r, fig.width = 12, fig.height = 8}
+# remove the outlier in "Sparkling" variety with year < 1980
+wine_clean_year_special_case <- wine_clean_year %>%
+  filter(!(variety == "Sparkling" & year < 1980)) 
+```
+
+```{r} 
 # Linear regression model for 'Price' and 'Year' for different 'Varieties' with shared y-axis limits
-ggplot(wine_clean_year, aes(x = year, y = price, color = variety)) +
+ggplot(wine_clean_year_special_case, aes(x = year, y = price, color = variety)) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "lm", se = FALSE, aes(colour = variety), formula = y ~ x) +
   facet_wrap(~ variety, scales = "free_x") +
@@ -400,7 +587,7 @@ ggplot(wine_clean_year, aes(x = year, y = price, color = variety)) +
   coord_cartesian(ylim = c(0, 300))
 
 # Linear model for 'Price' and 'Year' for different 'Varieties'
-lm_price_year_variety <- lm(price ~ year + variety - 1, data = wine_clean_year)
+lm_price_year_variety <- lm(price ~ year + variety - 1, data = wine_clean_year_special_case)
 summary(lm_price_year_variety)
 
 ```
@@ -590,7 +777,8 @@ Include your references in this section. The ones below are just examples.
 
 2.  Wickham, H. & Grolemund, G. *R for Data Science.* [on-line version](https://r4ds.had.co.nz/index.html)
 
-3.  [Department of Maths website](https://www.bath.ac.uk/departments/department-of-mathematical-sciences/)
+3.  https://www.graphpad.com/support/faq/testing-data-for-normal-distrbution/
+
 
 ```{r}
 ```
