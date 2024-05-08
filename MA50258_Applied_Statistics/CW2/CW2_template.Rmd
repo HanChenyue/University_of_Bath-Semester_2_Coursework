@@ -509,6 +509,22 @@ kable(glm_infant_negative_binomial_interaction_squareroot_summary, format = "htm
 
 Interpretation:
 
+- Intercept $B_0$: This is the expected value of the Infant Mortality Rate when all other predictors are zero which is -22.18
+
+- Years of Education $B_1$: For each additional year of education is associated with an increase in the square root of the expected infant mortality rate by 7.62 units on the logarithmic scale
+
+- GDP $B_2$: For each tenfold increase in GDP, the square root of the expected infant mortality rate increases by 13.13 on the logarithmic scale
+
+- Life Expectancy $B_3$: Each additional year in life expectancy is associated with an increase of 0.35 units in the square root of the expected infant mortality rate on the logarithmic scale
+
+- Interaction between Years of Education and GDP $B_4$: The interaction term between Years of Education and log10(GDP) is -2.26, suggesting that the combined effect of education and log(GDP) on infant mortality rate differs from the effect of either of these variables alone. Specifically, the negative coefficient indicates that higher GDP diminishes the positive effect of education on the infant mortality rate.
+
+- Interaction between Years of Education and Life Expectancy $B_5$: The interaction term between Years of Education and Life Expectancy is -0.10, a small negative effect, implying that the combined increase in years of education and life expectancy has a slightly mitigating effect on the positive association of each individual factor with infant mortality rates.
+
+- Interaction between GDP and Life Expectancy $B_6$: The interaction term between log10(GDP) and Life Expectancy is -0.17, indicating that the interaction between GDP and life expectancy decreases the square root of the expected infant mortality rate.
+
+- Triple interaction between Years of Education, GDP, and Life Expectancy $B_7$: The triple interaction term is 0.03. This three-way interaction term suggests a slight positive effect when all three variables increase together, contrasting with some of the negative two-way interactions.
+
 
 
 ```{r, fig.width = 12, fig.height = 10}
@@ -565,7 +581,6 @@ ggplot(data = wine_clean_year,
   geom_point(alpha = 0.5)
 ```
 
-
 Distribution of Wine Ratings shows a normal distribution with a peak around 3.8. This indicates that most wines have ratings around 3.8, with fewer wines having higher or lower ratings.
 
 ```{r}
@@ -585,6 +600,8 @@ ggplot(wine_clean_year, aes(x = variety, y = rating)) +
   labs(title = "Ratings by Wine Variety", x = "Variety", y = "Rating")
 ```
 
+While Sparkling wines has the overall highest ratings, the difference isn't pronounce.
+
 ```{r, fig.width = 12, fig.height = 8}
 # Rating by country
 ggplot(wine_clean_year, aes(x = country, y = rating)) +
@@ -593,31 +610,21 @@ ggplot(wine_clean_year, aes(x = country, y = rating)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom")
 ```
 
+The boxplot shows the distribution of wine ratings by country. The ratings are relatively consistent across different countries within the 3.0 to 4.5 range. Indicating that no country has a significant advantage over its counterparts in terms of wine ratings.
+
+
 ```{r}
 # Explore how rating correlate with price of wine
 ggplot(data = wine_clean_year, aes(x=price, y=rating)) +
   geom_point(alpha=0.3) +
+  geom_smooth(method="loess", se=FALSE, size = 1.5, colour = "red") +
   scale_x_log10() +
   labs(title="Ratings vs. Price", x="Price (Euros)", y="Rating")
 ```
 
-```{r, fig.width = 12, fig.height = 5}
-# Explore the ratings over the years
-ggplot(data = wine_clean_year, aes(x=year, y=rating, colour=variety)) +
-  geom_point(alpha=0.8) +
-  # geom_line() +
-  geom_smooth(method="loess", se=FALSE, size = 1.5) +
-  labs(title="Ratings over the Years", x="Year", y="Rating") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
+The plot shows a positive correlation between the price of wine and its rating. As the price of wine increases, the rating also tends to increase. The LOESS curve provides a smooth fit to the data, capturing the general trend of the relationship between price and rating. The LOESS curve shows a logarithmic behaviour, indicating that after a certain point, the marginal increase in rating decreases as the price continues to increase.
 
-```{r}
-```
-
-
-## Regression models
-
-The first model will be a simple linear model to find how price changes with the year for different varieties of wine.
+To aid our analysis, we find how the price of wine varies with the year and variety of wine. We will use a linear regression model to predict the price of wine based on the year and variety of wine.
 
 $E(Price | Year, Variety) = \beta_0 + \beta_1 \times \text{Year} + \zeta_{\text{Red}} \times Variety_{Red} + \zeta_{\text{Rose}} \times Variety_{Rose} + \zeta_{\text{Sparkling}} \times Variety_{Sparkling} + \zeta_{\text{White}} \times Variety_{White}$
 
@@ -641,57 +648,114 @@ ggplot(wine_clean_year_special_case, aes(x = year, y = price, color = variety)) 
   coord_cartesian(ylim = c(0, 300))
 
 # Linear model for 'Price' and 'Year' for different 'Varieties'
-lm_price_year_variety <- lm(price ~ year + variety - 1, data = wine_clean_year_special_case)
-summary(lm_price_year_variety)
-
+# lm_price_year_variety <- lm(price ~ year + variety - 1, data = wine_clean_year_special_case)
+# summary(lm_price_year_variety)
 ```
 
+The graphs shows us that Red, Sparkling, and White's prices have decrease over the years while Rose's price remains with little changes.
 
-The second model will be a linear regression of 'Rating' on 'Price'. We use a logarithmic transformation on the price because of its skewed distribution.
-
-$E(\text{Rating}) = \beta_0 + \beta_1 \times \log(\text{Price})$
+Next, we attempt to find if Number of Ratings has an effect on Ratings of wine.
 
 ```{r}
-# Linear regression model
-lm_wine <- lm(rating ~ log(price), data = wine_clean_year)
-summary(lm_wine)
+# Explore how rating correlate with number of ratings
+ggplot(data = wine_clean_year, aes(x=log(number_of_ratings), y=rating)) +
+  geom_point(alpha=0.3) +
+  geom_smooth(method = "loess", se=FALSE, size = 1.5, colour = "red") +
+  labs(title="Ratings vs. Number of Ratings", x="Number of Ratings", y="Rating")
 ```
 
-The linear regression model on 'Rating' using 'log(Price)' as a predictor can be expressed as
+The LOESS curve shows a very slight increase in rating as the number of ratings increases. This indicates that popular wines with more ratings tend to have slightly higher ratings, but the relationship is not very strong.
 
-$E(\text{Rating}) = 3.131  + 0.249 \times \log(\text{Price})$
+```{r, fig.width = 12, fig.height = 5}
+# Remove the 2 outliers by keeping the year range after 1980
+wine_after_year_1980 <- wine_clean_year %>%
+  filter(year >= 1980)
+
+# Explore the ratings over the years
+ggplot(data = wine_after_year_1980, aes(x=year, y=rating, colour=variety)) +
+  geom_point(alpha=0.8) +
+  # geom_line() +
+  geom_smooth(method="loess", se=FALSE, size = 1.2) +
+  labs(title="Ratings over the Years", x="Year", y="Rating") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Red, sparkling, and white variety have shown a graduate decline over the years, only sparkling and white begin to recover around 2015 and 2018 respectively. We only have data for the rose variety from 2012 onwards, its rating does not change significantly over the years and only experiencing a slight increase in 2018.
+
+This is useful information as when we consider that the price of wine decreasing over the years may be the reason why the ratings of the three wines have also decreased over the years per our previous EDA.
+
+
+## Regression models
+
+There are a few possible linear regression model to consider to test if the price of wine is related to the rating of wine:
+
+- Model 1: $E(\text{Rating | Price}) = \beta_0 + \beta_1 \times \log10(\text{Price})$
+
+- Model 2:
+
+$$
+\begin{array}{rcl}
+E(\text{Rating | Price, Number of Ratings}) &=& \beta_0 + \beta_1 \times \log10(\text{Price})\\
+&& + \beta_2 \times \log10(\text{NumberofRatings})
+\end{array}
+$$
+
+- Model 3:
+
+$$
+\begin{array}{rcl}
+E(\text{Rating | Price, Number of Ratings}) &=& \beta_0 + \beta_1 \times \log10(\text{Price})\\
+&& + \beta_2 \times \log10(\text{NumberofRatings})\\
+&& + \beta_3 \times \log10(\text{Price}) \times \log10(\text{NumberofRatings})
+\end{array}
+$$
 
 ```{r}
-# Generate predictions for the linear model
-prediction_lm_wine <- predict(lm_wine)
+# Find the AIC and R-squared values for the models
+task2_model1 <- lm(rating ~ log10(price), data = wine_clean_year)
+task2_model2 <- lm(rating ~ log10(price) + log10(number_of_ratings), data = wine_clean_year)
+task2_model3 <- lm(rating ~ log10(price) + log10(number_of_ratings) + log10(price) * log10(number_of_ratings), data = wine_clean_year)
 
-ggplot(data = wine_clean_year, aes(x = rating, y = prediction_lm_wine)) +
-  geom_point(alpha = 0.5) +
-  # scale_x_log10() +
-  # geom_abline(colour = "purple", size = 2, alpha = 0.4) +
-  # geom_smooth(method = "lm", se = FALSE, colour = "blue") +
-  geom_smooth(method = "loess", se = FALSE, colour = "red") +
-  ggtitle("Linear Model Predictions vs. Actual") +
-  xlab("Actual Rating") +
-  ylab("Predicted Rating")
+kable(
+  data.frame(Model = c("Model 1", "Model 2", "Model 3"),
+             AIC = c(AIC(task2_model1), AIC(task2_model2), AIC(task2_model3)),
+             R_squared = c(summary(task2_model1)$r.squared, summary(task2_model2)$r.squared, summary(task2_model3)$r.squared))) %>% 
+  kable_styling(full_width = F)
 ```
 
-The plot shows the relationship between the actual and predicted ratings using the linear model. The red line represents the predicted values, which closely align with the actual data points. The LOESS model provides a good fit for the data, capturing the general trend of the relationship between price and rating.
+We will go with Model 3 as it has the lowest AIC value and the highest R-squared value.
 
-Next, we consider a linear regression on 'Price' and 'NumberofRatings' as predictors of 'Rating'.
+We consider a linear regression on 'Price' and 'NumberofRatings' as predictors of 'Rating' to find out if the number of ratings has an effect on the rating of wine.
 
-$E(\text{Rating}) = \beta_0 + \beta_1 \times \log(\text{Price}) + \beta_2 \times \log(\text{NumberofRatings})$
+$E(\text{Rating | Price, Number of Rating}) = \beta_0 + \beta_1 \times \log10(\text{Price}) + \beta_2 \times \log10(\text{NumberofRatings}) + \beta_3 \times \log10(\text{Price}) \times \log10(\text{NumberofRatings})$
 
 ```{r}
 # Linear regression model with Price and NumberofRatings as predictors
-lm_wine_price_ratings <- lm(rating ~ log(price) + log(number_of_ratings), data = wine_clean_year)
+lm_wine_price_ratings <- lm(rating ~ log10(price) + log10(number_of_ratings) + log10(price) * log10(number_of_ratings), data = wine_clean_year)
 
-summary(lm_wine_price_ratings)
+lm_wine_price_ratings_summary <- tidy(lm_wine_price_ratings)[, c("term", "estimate")]
+
+lm_wine_price_ratings_summary$estimate <- signif(lm_wine_price_ratings_summary$estimate, digits = 2)
+
+kable(lm_wine_price_ratings_summary, format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped"))
 ```
 
-The linear regression model on 'Rating' using 'log(Price)' and 'log(NumberofRatings)' as predictors can be expressed as
+The linear regression model on 'Rating' using log(Price) and log(Number of Ratings) as predictors can be expressed as
 
-$E(\text{Rating}) = 3.044 + 0.248 \times \log(\text{Price}) + 0.018 \times \log(\text{NumberofRatings})$
+$E(\text{Rating}) = 3.00 + 0.62 \times \log10(\text{Price}) + 0.07 \times \log10(\text{NumberofRatings}) - 0.02 \times \log10(\text{Price}) \times \log10(\text{NumberofRatings})$
+
+Interpretation:
+
+- Intercept $B_0$: This is the expected value of the rating when both log(Price) and log(Number of Ratings) are zero, which is 3.00
+
+- Price $B_1$: For every one unit increase in the logarithm of the price, the wine rating is expected to increase by 0.62 points
+
+- Number of Ratings $B_2$: For every one unit increase in the logarithm of the number of ratings, the wine rating is expected to increase by 0.07 points
+
+- Interaction between Price and Number of Ratings $B_3$: The interaction term between log(Price) and log(Number of Ratings) is -0.02, suggesting that the combined effect of price and number of ratings on the rating differs from the effect of either of these variables alone. Specifically, the negative coefficient indicates that higher prices diminish the positive effect of the number of ratings on the wine rating.
+
+
 
 ```{r}
 # Generate predictions for the linear model with Price and NumberofRatings as predictors
@@ -705,13 +769,7 @@ ggplot(data = wine_clean_year, aes(x = rating, y = prediction_lm_wine_price_rati
   ylab("Predicted Rating")
 ```
 
-```{r}
-# Obtain the AIC values for the models
-AIC(lm_wine, lm_wine_price_ratings)
-```
-Given the similarity in AIC values for the two models, the model with 'Price' and 'NumberofRatings' as predictors does not provide a significant improvement over the simpler model with only 'Price' as a predictor. The simpler model may be preferred due to its parsimony and similar predictive performance.
-
-Therefore, the linear regression model with 'log(Price)' as a predictor provides a good fit for the data and captures the relationship between price and rating effectively.
+The plot shows the relationship between the actual and predicted ratings using the linear model with Price and Number of Ratings as predictors. The red line represents the predicted values, which closely align with the actual data points. The LOESS model provides a good fit for the data, capturing the general trend of the relationship between price, number of ratings, and rating.
 
 
 GLM Gaussian Model:
@@ -722,54 +780,60 @@ We can either use a Gaussian GLM with identity link or log link. To determine, w
 
 ```{r}
 # Gaussian GLM with identity link
-glm_model_1 <- glm(rating ~ log(price), data = wine_clean_year, family = gaussian(link = "identity"))
-glm_model_2 <- glm(rating ~ log(price) + log(number_of_ratings), data = wine_clean_year, family = gaussian(link = "identity"))
-glm_model_3 <- glm(rating ~ log(price), data = wine_clean_year, family = gaussian(link = "log"))
-glm_model_4 <- glm(rating ~ log(price) + log(number_of_ratings), data = wine_clean_year, family = gaussian(link = "log"))
+glm_model_1 <- glm(rating ~ log10(price), data = wine_clean_year, family = gaussian(link = "identity"))
+glm_model_2 <- glm(rating ~ log10(price) + log10(number_of_ratings), data = wine_clean_year, family = gaussian(link = "identity"))
+glm_model_3 <- glm(rating ~ log10(price) + log10(number_of_ratings) + log10(price) * log10(number_of_ratings), data = wine_clean_year, family = gaussian(link = "identity"))
+glm_model_4 <- glm(rating ~ log10(price), data = wine_clean_year, family = gaussian(link = "log"))
+glm_model_5 <- glm(rating ~ log10(price) + log10(number_of_ratings), data = wine_clean_year, family = gaussian(link = "log"))
+glm_model_6 <- glm(rating ~ log10(price) + log10(number_of_ratings) + log10(price) * log10(number_of_ratings), data = wine_clean_year, family = gaussian(link = "log"))
+```
 
+```{r}
 # Generate a table with AIC and R-squared values
-kable(data.frame(Model = c("Identity Link, Rating | Log(Price)", "Identity Link, Rating | Log(Price), Log(NumberofRatings)", "Log Link, Rating | Log(Price)", "Log Link, Rating | Log(Price), Log(NumberofRatings)"),
-                 AIC = c(AIC(glm_model_1), AIC(glm_model_2), AIC(glm_model_3), AIC(glm_model_4))))
+kable(data.frame(Model = c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", "Model 6"),
+                 AIC = c(AIC(glm_model_1), AIC(glm_model_2), AIC(glm_model_3), AIC(glm_model_4), AIC(glm_model_5), AIC(glm_model_6)))) %>% 
+  kable_styling(full_width = F)
 ```
 
-```{r}
-# Residuals plots for GLM Gaussian (Identity Link)
-# Rating | Log(Price)
-qqnorm(residuals(glm_model_1))
-qqline(residuals(glm_model_1))
-```
+<!-- QQ plots for the 6 models -->
 
-```{r}
-# Residuals plots for GLM Gaussian (Identity Link)
-# Rating | Log(Price), Log(NumberofRatings)
-qqnorm(residuals(glm_model_2))
-qqline(residuals(glm_model_2))
-```
+<!-- ```{r} -->
+<!-- qqnorm(residuals(glm_model_1)) -->
+<!-- qqline(residuals(glm_model_1)) -->
 
-```{r}
-# Residuals plots for GLM Gaussian (Log Link)
-# Rating | Log(Price)
-qqnorm(residuals(glm_model_3))
-qqline(residuals(glm_model_3))
-```
+<!-- qqnorm(residuals(glm_model_2)) -->
+<!-- qqline(residuals(glm_model_2)) -->
 
-```{r}
-# Residuals plots for GLM Gaussian (Log Link)
-# Rating | Log(Price), Log(NumberofRatings)
-qqnorm(residuals(glm_model_4))
-qqline(residuals(glm_model_4))
-```
+<!-- qqnorm(residuals(glm_model_3)) -->
+<!-- qqline(residuals(glm_model_3)) -->
 
+<!-- qqnorm(residuals(glm_model_4)) -->
+<!-- qqline(residuals(glm_model_4)) -->
 
-From the QQ plots, we can see that the residuals in all 4 plots mostly fit the straight line with minor skewness. This suggests that the Gaussian GLM models are appropriate for the dataset. Thus, we use AIC to determine the preferred model.
+<!-- qqnorm(residuals(glm_model_5)) -->
+<!-- qqline(residuals(glm_model_5)) -->
 
-From the AIC comparison, model 4 $(\text{Rating} | \log(\text{Price}), \log(\text{NumberofRatings})) = \beta_0 + \beta_1 \times \log(\text{Price}) + \beta_2 \times \log(\text{NumberofRatings})$ has the lowest AIC value, indicating that it is the preferred model.
+<!-- qqnorm(residuals(glm_model_6)) -->
+<!-- qqline(residuals(glm_model_6)) -->
+<!-- ``` -->
+
+From the QQ plots, we can see that the residuals in all 6 plots mostly fit the straight line with minor skewness. This suggests that the Gaussian GLM models are appropriate for the dataset. Thus, we use AIC to determine the preferred model.
+
+From the AIC comparison, model 3 has the lowest AIC. We will then use this a Gaussian with identity link as our GLM model for analysis.
+
+$$
+\begin{array}{rcl}
+E(\text{Rating | Price, Number of Ratings}) &=& \beta_0 + \beta_1 \times \log10(\text{Price})\\
+&& + \beta_2 \times \log10(\text{NumberofRatings})\\
+&& + \beta_3 \times \log10(\text{Price}) \times \log10(\text{NumberofRatings}) + \epsilon
+\end{array}
+$$
 
 ```{r} 
 # Generate predictions for the preferred GLM Gaussian model
-prediction_glm_model_4 <- predict(glm_model_4)
+prediction_glm_model_task_2 <- predict(glm_model_3)
 
-ggplot(data = wine_clean_year, aes(x = rating, y = prediction_glm_model_4)) +
+ggplot(data = wine_clean_year, aes(x = rating, y = prediction_glm_model_task_2)) +
   geom_point(alpha = 0.5) +
   geom_smooth(method = "loess", se = FALSE, colour = "red") +
   ggtitle("GLM Gaussian Model Predictions vs. Actual") +
@@ -780,44 +844,46 @@ ggplot(data = wine_clean_year, aes(x = rating, y = prediction_glm_model_4)) +
 The plot shows the relationship between the actual and predicted ratings using the preferred GLM Gaussian model. The red line represents the predicted values, which closely align with the actual data points. The LOESS model provides a good fit for the data, capturing the general trend of the relationship between price, number of ratings, and rating.
 
 ```{r}
-# Using effects library to get the effect of log(price) and log(number_of_ratings)
-eff_glm_model_4 <- allEffects(glm_model_4)
-plot(eff_glm_model_4, main = "Effect of Log(Price) and Log(NumberofRatings) on Rating")
+glm_model_3 <- glm(rating ~ log10(price) + log10(number_of_ratings) + log10(price) * log10(number_of_ratings), data = wine_clean_year, family = gaussian(link = "identity"))
+# Generate the summary of the GLM Gaussian model and its coefficients
+glm_model_3_summary <- tidy(glm_model_3)[, c("term", "estimate")]
+
+glm_model_3_summary$estimate <- signif(glm_model_3_summary$estimate, digits = 2)
+
+kable(glm_model_3_summary, format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped"))
 ```
 
+Interpretation:
+
+- Intercept $B_0$: This is the expected value of the rating when both log(Price) and log(Number of Ratings) are zero. Since these terms are log-transformed, a value of zero corresponds to the log of 1, so this is when both price and number of ratings are 1. Thus, when the price and the number of ratings are at their minimum (1), the predicted rating is 3.00
+
+- Price $B_1$: For every tenfold increase in the price, the rating is expected to increase by 0.62 points
+
+- Number of Ratings $B_2$: For every tenfold increase in the number of ratings, the rating is expected to increase by 0.07 points
+
+- Interaction between Price and Number of Ratings $B_3$: The interaction term between log(Price) and log(Number of Ratings) is -0.02, suggesting that the combined effect of price and number of ratings on the rating differs from the effect of either of these variables alone. Specifically, the negative sign suggests that the positive impact of increasing either price or number of ratings on wine ratings is less pronounced when the other variable is also high. This can be understood as a kind of diminishing returns or counteractive effect: as more ratings are accumulated, the additional positive impact of price on rating becomes smaller, and as prices rise, the additional positive impact of increasing the number of ratings also diminishes.
 
 
+```{r, fig.width = 12, fig.height = 8}
+# Using effects library to get the effect of log(price) and log(number_of_ratings)
+eff_glm_model_task2 <- allEffects(glm_model_3)
+plot(eff_glm_model_task2, main = "Effect of Log(Price) and Log(Number of Ratings) on Rating")
+```
 
+The provided plots depict the effects of price on wine ratings at different levels of the number of ratings. These plots are generated using a GLM with interaction terms, and the predictions are shown across varying prices and fixed numbers of ratings, indicating how the relationship between price and ratings changes as the number of ratings increases.
 
+- As price increases, rating increases but the rate of increment slows down after a certain point of price rise. The behaviour is logarithmic, indicating that the marginal increase in rating decreases as the price continues to increase after a certain point and began to show diminishing returns.
 
+- For low number of ratings (25 and 5100), the starting baseline rating is lower than those of moderate to large number of ratings (10000, 15000, 20000). However, as price rises, the rating increases in a similar manner and diminishing returns are observed across all pass a certain price threshold.
 
+## Task 2 Conclusion
 
+- For popular wine with many ratings are generally trusted or perceived to be of better quality at lower price points.
 
+- As price increases, we expect an increase in rating as well but up to a certain point only as diminishing returns occurs past a certain threshold, this suggests that there is a limit to how much increasing the price can influence the rating of a wine.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+This indicates that the price of wine is not the only factor that determines the rating of wine, and other factors such as the number of ratings also play a significant role in influencing the rating of wine.
 
 
 # References
@@ -832,161 +898,5 @@ Include your references in this section. The ones below are just examples.
 2.  Wickham, H. & Grolemund, G. *R for Data Science.* [on-line version](https://r4ds.had.co.nz/index.html)
 
 3.  https://www.graphpad.com/support/faq/testing-data-for-normal-distrbution/
-
-
-```{r}
-```
-
-```{r}
-# Check the structure of the data
-str(sdg_clean)
-```
-
-```{r}
-# Summarise the data
-summary(sdg_clean)
-```
-
-
-
-```{r, fig.width = 12, fig.height = 12}
-ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate, colour = country)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-  labs(title = "Infant Mortality Rate by Years of Education", x = "Years of Education", y = "Infant Mortality Rate")
-```
-
-```{r, fig.width = 12, fig.height = 12}
-glm_education_year_vs_infant_mortality_rate <- ggplot(
-      data = sdg_clean,
-      aes(x = years_education,
-          y = infant_mortality_rate,
-          colour = country)) +
-      geom_point() +
-      geom_smooth(
-        method = "glm", 
-        method.args = list(family = binomial(link="logit")), 
-        formula = y ~ x, 
-        se = FALSE, 
-        linewidth = 0.5
-      ) +
-      theme(axis.text.x = element_text(angle = 90, hjust = 1), 
-            legend.position = "bottom") +
-      labs(title = "Infant Mortality Rate by Years of Education", 
-           x = "Years of Education", 
-           y = "Infant Mortality Rate")
-glm_education_year_vs_infant_mortality_rate
-
-# Infant Mortality Rate vs. Years of Education:
-# 
-#     There is a general downward trend suggesting that as the average years of education increases, the infant mortality rate tends to decrease.
-#     The trend seems reasonably linear.
-```
-
-```{r, fig.width = 12, fig.height = 12}
-ggplot(data = sdg_clean, aes(x = gdp, y = infant_mortality_rate, colour = country)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "bottom") +
-  labs(title = "Infant Mortality Rate by GDP", x = "GDP", y = "Infant Mortality Rate")
-
-# Infant Mortality Rate vs. GDP per Capita:
-# 
-#     There is a significant downward trend indicating that higher GDP per capita correlates with lower infant mortality rates.
-#     The trend is pronounced and suggests a potential exponential relationship.
-```
-
-```{r, fig.width = 12, fig.height = 12}
-ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate, colour = country)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-  labs(title = "Infant Mortality Rate by Life Expectancy", x = "Life Expectancy", y = "Infant Mortality Rate")
-
-# Infant Mortality Rate vs. Life Expectancy:
-# 
-#     There is a clear downward trend indicating that countries with higher life expectancy generally have lower infant mortality rates.
-#     The trend looks linear, though with some variability.
-```
-
-```{r, fig.width = 12, fig.height = 12}
-ggplot(data = sdg_clean, aes(x = year, y = income_class, colour = country)) +
-  geom_point() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-  labs(title = "Income Class by Year", x = "Year", y = "Income Class")
-```
-
-```{r, fig.width = 12, fig.height = 12}
-ggplot(data = sdg_clean, aes(x = year, y = income_class, colour = country)) +
-  geom_point() +
-  # geom_smooth() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1), legend.position = "bottom") +
-  labs(title = "Income Class by Year", x = "Year", y = "Income Class")
-```
-
-```{r}
-# Model 1: Linear Regression for Infant Mortality Rate vs. Years of Education
-model_education_year_vs_infant_mortality_rate <- lm(infant_mortality_rate ~ years_education, data = sdg_clean)
-summary(model_education_year_vs_infant_mortality_rate)
-```
-
-```{r}
-# Model 2: Log-Transformed Linear Regression (Infant Mortality Rate vs. GDP per Capita)
-model_gdp_vs_infant_mortality_rate <- lm(log(infant_mortality_rate) ~ log(gdp), data = sdg_clean)
-summary(model_gdp_vs_infant_mortality_rate)
-```
-
-```{r}
-# Model 3: Linear Regression for Infant Mortality Rate vs. Life Expectancy
-model_life_expectancy_vs_infant_mortality_rate <- lm(infant_mortality_rate ~ life_expectancy, data = sdg_clean)
-summary(model_life_expectancy_vs_infant_mortality_rate)
-```
-
-```{r}
-# Create plots for the models
-ggplot(data = sdg_clean, aes(x = years_education, y = infant_mortality_rate)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Infant Mortality Rate vs. Years of Education", x = "Years of Education", y = "Infant Mortality Rate")
-```
-
-```{r}
-ggplot(data = sdg_clean, aes(x = log(gdp), y = log(infant_mortality_rate))) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Infant Mortality Rate vs. GDP per Capita", x = "Log(GDP)", y = "Log(Infant Mortality Rate)")
-
-# The first effect plot showcases the relationship between infant_mortality_rate and gdp using Model 2. The plot is on a log scale, and it reveals a strong negative correlation between GDP per capita and infant mortality rate. The red line illustrates the model's predicted values, closely fitting the actual data points.
-# Model 2: Log-Transformed Linear Regression for infant_mortality_rate vs. gdp
-# 
-#     The conditional expectation: E[log⁡(Y)∣X]=4.3785−0.5962⋅log⁡(gdp)E[log(Y)∣X]=4.3785−0.5962⋅log(gdp)
-#     This model provides a strong fit with an R2R2 of 0.777 and the lowest AIC value of 394.6.
-#     This suggests that an exponential decay in infant mortality rate is associated with increasing GDP.
-```
-
-```{r}
-ggplot(data = sdg_clean, aes(x = life_expectancy, y = infant_mortality_rate)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Infant Mortality Rate vs. Life Expectancy", x = "Life Expectancy", y = "Infant Mortality Rate")
-
-#The second effect plot demonstrates the relationship between infant_mortality_rate and life_expectancy using Model 3. The negative correlation is evident, with the red line depicting the predicted values. The model aligns well with the data points, showing that higher life expectancy generally corresponds to lower infant mortality rates.
-# Model 3: Linear Regression for infant_mortality_rate vs. life_expectancy
-# 
-#     The conditional expectation: E[Y∣X]=176.7136−2.1573⋅life_expectancyE[Y∣X]=176.7136−2.1573⋅life_expectancy
-#     This model provides a strong fit with an R2R2 of 0.783 and a low AIC value of 1708.0.
-#     This suggests that higher life expectancy generally corresponds to lower infant mortality rates.
-
-```
-
-```{r}
-# GPT conclusions for model 2 and 3
-# Both models indicate strong negative relationships between infant mortality rates and the respective predictors (gdp and life_expectancy). The models highlight the influence of socio-economic and health-related factors on infant mortality. The GDP-based model showcases the impact of economic conditions, while the life expectancy model highlights the impact of health and quality of life on infant mortality.
-```
-
-
-```{r}
-# write_csv(wine_clean_year, here("data", "wine_clean_year.csv"))
-# write_csv(sdg_clean, here("data", "sdg_clean.csv"))
-# write_csv(wine_clean, here("data", "wine_clean.csv"))
-```
 
 \`\`\`{r}
